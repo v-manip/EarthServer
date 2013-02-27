@@ -1,0 +1,816 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="generator" content="JsDoc Toolkit" />
+		
+		<title>JsDoc Reference - EarthServerGenericClient.SceneManager</title>
+
+		<style type="text/css">
+			/* default.css */
+body
+{
+	font: 12px "Lucida Grande", Tahoma, Arial, Helvetica, sans-serif;
+	width: 800px;
+}
+
+.header
+{
+	clear: both;
+	background-color: #ccc;
+	padding: 8px;
+}
+
+h1
+{
+	font-size: 150%;
+	font-weight: bold;
+	padding: 0;
+	margin: 1em 0 0 .3em;
+}
+
+hr
+{
+	border: none 0;
+	border-top: 1px solid #7F8FB1;
+	height: 1px;
+}
+
+pre.code
+{
+	display: block;
+	padding: 8px;
+	border: 1px dashed #ccc;
+}
+
+#index
+{
+	margin-top: 24px;
+	float: left;
+	width: 160px;
+	position: absolute;
+	left: 8px;
+	background-color: #F3F3F3;
+	padding: 8px;
+}
+
+#content
+{
+	margin-left: 190px;
+	width: 600px;
+}
+
+.classList
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0 0 0 8px;
+	font-family: arial, sans-serif;
+	font-size: 1em;
+	overflow: auto;
+}
+
+.classList li
+{
+	padding: 0;
+	margin: 0 0 8px 0;
+}
+
+.summaryTable { width: 100%; }
+
+h1.classTitle
+{
+	font-size:170%;
+	line-height:130%;
+}
+
+h2 { font-size: 110%; }
+caption, div.sectionTitle
+{
+	background-color: #7F8FB1;
+	color: #fff;
+	font-size:130%;
+	text-align: left;
+	padding: 2px 6px 2px 6px;
+	border: 1px #7F8FB1 solid;
+}
+
+div.sectionTitle { margin-bottom: 8px; }
+.summaryTable thead { display: none; }
+
+.summaryTable td
+{
+	vertical-align: top;
+	padding: 4px;
+	border-bottom: 1px #7F8FB1 solid;
+	border-right: 1px #7F8FB1 solid;
+}
+
+/*col#summaryAttributes {}*/
+.summaryTable td.attributes
+{
+	border-left: 1px #7F8FB1 solid;
+	width: 140px;
+	text-align: right;
+}
+
+td.attributes, .fixedFont
+{
+	line-height: 15px;
+	color: #002EBE;
+	font-family: "Courier New",Courier,monospace;
+	font-size: 13px;
+}
+
+.summaryTable td.nameDescription
+{
+	text-align: left;
+	font-size: 13px;
+	line-height: 15px;
+}
+
+.summaryTable td.nameDescription, .description
+{
+	line-height: 15px;
+	padding: 4px;
+	padding-left: 4px;
+}
+
+.summaryTable { margin-bottom: 8px; }
+
+ul.inheritsList
+{
+	list-style: square;
+	margin-left: 20px;
+	padding-left: 0;
+}
+
+.detailList {
+	margin-left: 20px; 
+	line-height: 15px;
+}
+.detailList dt { margin-left: 20px; }
+
+.detailList .heading
+{
+	font-weight: bold;
+	padding-bottom: 6px;
+	margin-left: 0;
+}
+
+.light, td.attributes, .light a:link, .light a:visited
+{
+	color: #777;
+	font-style: italic;
+}
+
+.fineprint
+{
+	text-align: right;
+	font-size: 10px;
+}
+		</style>
+	</head>
+
+	<body>
+<!-- ============================== header ================================= -->	
+		<!-- begin static/header.html -->
+		<div id="header">
+</div>
+		<!-- end static/header.html -->
+
+<!-- ============================== classes index ============================ -->
+		<div id="index">
+			<!-- begin publish.classesIndex -->
+			<div align="center"><a href="../index.html">Class Index</a>
+| <a href="../files.html">File Index</a></div>
+<hr />
+<h2>Classes</h2>
+<ul class="classList">
+	
+	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
+	
+</ul>
+<hr />
+			<!-- end publish.classesIndex -->
+		</div>
+		
+		<div id="content">
+<!-- ============================== class title ============================ -->
+			<h1 class="classTitle">
+				
+				Class EarthServerGenericClient.SceneManager
+			</h1>
+
+<!-- ============================== class summary ========================== -->			
+			<p class="description">
+				
+				
+			
+				SceneManager is the main class of the unified client.All scene models are registered in this class with the add() function.The createScene() function creates a x3dom scene with all scene models.
+				
+				
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneModules.js.html">SceneModules.js</a>.
+				
+			</p>
+
+<!-- ============================== constructor summary ==================== -->			
+			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class EarthServerGenericClient.SceneManager.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#constructor">EarthServerGenericClient.SceneManager</a></b>()
+							</div>
+							<div class="description"></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
+
+<!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.SceneManager.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-maxResolution">maxResolution</a></b>
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+
+<!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class EarthServerGenericClient.SceneManager.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addModel">addModel</a></b>(model)
+								</div>
+								<div class="description">Adds any scene model to the scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createModels">createModels</a></b>()
+								</div>
+								<div class="description">This function starts to load all models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createScene">createScene</a></b>(x3dID, sceneID, cubeSizeX, cubeSizeY, cubeSizeZ)
+								</div>
+								<div class="description">Creates and returns the whole X3DOM Scene in the fishtank/cube with all added scene models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createUI">createUI</a></b>(domElementID)
+								</div>
+								<div class="description">This creates the UI for the Scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getMaxResolution">getMaxResolution</a></b>()
+								</div>
+								<div class="description">Returns the maximum resolution per dimension of a scene model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setView">setView</a></b>(camID)
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateElevation">updateElevation</a></b>(value)
+								</div>
+								<div class="description">This changes the scaling on the Y-Axis(Elevation).</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateOffset">updateOffset</a></b>(which, value)
+								</div>
+								<div class="description">Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateTransparency">updateTransparency</a></b>(value)
+								</div>
+								<div class="description">Changes the transparency of the Scene Model.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
+<!-- ============================== events summary ======================== -->
+			
+
+<!-- ============================== constructor details ==================== -->		
+			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>EarthServerGenericClient.SceneManager</b>()
+				</div>
+				
+				<div class="description">
+					
+					
+				</div>
+				
+				
+				
+				
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
+			
+
+<!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="-maxResolution"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>maxResolution</b>
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								1000 / 200 on a mobile platform
+							</dd>
+							</dl>
+						
+
+					
+				
+			
+
+<!-- ============================== method details ========================= -->		
+			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="addModel"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>addModel</b>(model)
+					
+					</div>
+					<div class="description">
+						Adds any scene model to the scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>model</b>
+									
+								</dt>
+								<dd>- any scene model.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="createModels"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>createModels</b>()
+					
+					</div>
+					<div class="description">
+						This function starts to load all models. You call this when the html is loaded or later on a click.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="createScene"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>createScene</b>(x3dID, sceneID, cubeSizeX, cubeSizeY, cubeSizeZ)
+					
+					</div>
+					<div class="description">
+						Creates and returns the whole X3DOM Scene in the fishtank/cube with all added scene models.The Sizes of the cube are aspected as aspect ratios with values between 0 and 1.Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>x3dID</b>
+									
+								</dt>
+								<dd>- ID of the x3d dom element</dd>
+							
+								<dt>
+									<b>sceneID</b>
+									
+								</dt>
+								<dd>- ID of the scene elemenet</dd>
+							
+								<dt>
+									<b>cubeSizeX</b>
+									
+								</dt>
+								<dd>- width of the cube</dd>
+							
+								<dt>
+									<b>cubeSizeY</b>
+									
+								</dt>
+								<dd>- height of the cube</dd>
+							
+								<dt>
+									<b>cubeSizeZ</b>
+									
+								</dt>
+								<dd>- depth of the cube</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="createUI"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>createUI</b>(domElementID)
+					
+					</div>
+					<div class="description">
+						This creates the UI for the Scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>domElementID</b>
+									
+								</dt>
+								<dd>- The dom element where to append the UI.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getMaxResolution"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>getMaxResolution</b>()
+					
+					</div>
+					<div class="description">
+						Returns the maximum resolution per dimension of a scene model.This number depends on power templates (e.g. mobile device).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd>maximum Resolution</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="setView"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setView</b>(camID)
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>camID</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateElevation"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateElevation</b>(value)
+					
+					</div>
+					<div class="description">
+						This changes the scaling on the Y-Axis(Elevation).
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- The base elevation is multiplied by this value</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateOffset"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateOffset</b>(which, value)
+					
+					</div>
+					<div class="description">
+						Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>which</b>
+									
+								</dt>
+								<dd>- Which Axis will be changed (0:X 1:Y 2:Z)</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- The new position</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateTransparency"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateTransparency</b>(value)
+					
+					</div>
+					<div class="description">
+						Changes the transparency of the Scene Model.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- New Transparency between 0-1 (Fully Opaque - Fully Transparent)</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					
+				
+			
+			
+<!-- ============================== event details ========================= -->		
+			
+			
+			<hr />
+		</div>
+
+		
+<!-- ============================== footer ================================= -->
+		<div class="fineprint" style="clear:both">
+			
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Feb 26 2013 17:55:26 GMT+0100 (MEZ)
+		</div>
+	</body>
+</html>
