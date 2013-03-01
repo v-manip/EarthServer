@@ -323,15 +323,12 @@ function ServerRequest(forwardTo)
     //==================================================================================================================
     var getCoverageWCPS = function(url, query, mode)
     {
-        console.time("WCPS_Image: "+url);
-
         try
         {
             "use strict";
 
             responseData.texture.onload = function()
             {
-                console.time("WCPS_Image_process: "+url);
                 if(!mode)
                 {
                     responseData.heightmapUrl = responseData.texture.src;
@@ -371,7 +368,6 @@ function ServerRequest(forwardTo)
                 x3dom.debug.logInfo("Server request done.");
                 context = null;
                 canvas = null;
-                console.timeEnd("WCPS_Image_process: "+url);
                 forwardReply.receiveData(responseData);
             }
             responseData.texture.onerror = function()
@@ -387,83 +383,10 @@ function ServerRequest(forwardTo)
         {
             x3dom.debug.logInfo('ServerRequest::getCoverageWCPS(): ' + error);
         }
-
-        console.timeEnd("WCPS_Image: "+url);
-    };
-
-    //==================================================================================================================
-    //Tries to get the EX_GeographicBoundingBox from the given srs/EPSG Namecode.
-    //Stores the min/max long/lat in the given array
-    //==================================================================================================================
-    /*var setSrsByWCS = function()
-    {
-        console.log("wat")
-        if (srsSource !== undefined )
-        {
-            ajaxRequest('http://kahlua.eecs.jacobs-university.de:8080/def/crs/EPSG/0/', 'GET', 'xml', srsSource, onSetSrsByWCS);
-        }
-    };
-
-    var onSetSrsByWCS = function(content)
-    {
-        $(content).find('EX_GeographicBoundingBox').each(function()
-        {
-            var bound = $(this).find('westBoundLongitude');
-            var westBoundLong = parseFloat($(bound).find('Decimal').text());
-
-            bound = $(this).find('eastBoundLongitude');
-            var eastBoundLong = parseFloat($(bound).find('Decimal').text());
-            boundLongitude = [westBoundLong, eastBoundLong];
-
-            bound = $(this).find('northBoundLatitude');
-            var northBoundLat = parseFloat($(bound).find('Decimal').text());
-
-            bound = $(this).find('southBoundLatitude');
-            var southBoundLat = parseFloat($(bound).find('Decimal').text());
-            boundLatitude = [northBoundLat, southBoundLat];
-            bound = null;
-            return true;
-        });
-    }*/
-
-    //==================================================================================================================
-    //
-    //==================================================================================================================
-    var checkBounds = function()
-    {
-        try
-        {
-            if(subSetX[0] < minLatitude)
-            {
-                throw "MinLatidude " + subSetX[0] +" not in " + minLatitude;
-            }
-
-            if(subSetX[1] > maxLatitude)
-            {
-                throw "\tMaxLatidude " + subSetX[1] +" not in " + maxLatitude;
-            }
-
-            if(subSetY[0] < minLongitude)
-            {
-                throw "\tMinlongitude " + subSetY[0] +" not in " + minLongitude;
-            }
-
-            if(subSetY[1] > maxLongitude)
-            {
-                throw "\tMaxlongitude " + subSetY[1] +" not in " + maxLongitude;
-            }
-            return true;
-        }
-        catch(error)
-        {
-            x3dom.debug.logInfo('ServerRequest::checkBounds(): ' + error);
-            return false;
-        }
     };
 
     var ajaxRequest = function(url, type, dataType, data, callback)
     {
-        console.time("AjaxRequest: "+url);
         $.ajax(
             {
                 url: url,
@@ -480,7 +403,5 @@ function ServerRequest(forwardTo)
                 }
             }
         );
-
-        console.timeEnd("AjaxRequest: "+url);
     };
 }

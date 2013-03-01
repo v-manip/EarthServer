@@ -218,16 +218,10 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
-        console.time("create models");
-        console.time("create models_0");
-        console.time("create models_1");
-        var i;
-        for(i=0; i< this.models.length; i++)
+        for(var i=0; i< this.models.length; i++)
         {
             this.models[i].createModel(this.trans, i,this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ);
-            console.timeEnd("create models_"+i);
         }
-        console.timeEnd("create models");
     };
 
     /**

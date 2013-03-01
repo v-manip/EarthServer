@@ -31,7 +31,7 @@ function Chunk(parentNode,chunkInfo, hf,imageURL)
     //==================================================================================================================
     function setupChunk()
     {
-        console.time("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_all_");
+
         try
         {
             var elevationGrid, imageTexture, shape, appearance,imageTransform, shf;
@@ -61,10 +61,7 @@ function Chunk(parentNode,chunkInfo, hf,imageURL)
 
                 //Build the ElavationsGrid
                 //shrink the heightfield to the correct size for this detail level
-
-                console.time("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_shrinkHM_"+i);
                 shf = shrinkHeightMap(hf, info.width, info.height,Math.pow(2,i));
-                console.timeEnd("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_shrinkHM_"+i);
 
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", chunkInfo.modelIndex+"hm"+ info.ID+"_"+i);
@@ -74,10 +71,8 @@ function Chunk(parentNode,chunkInfo, hf,imageURL)
                 elevationGrid.setAttribute("xDimension", parseInt(info.width/Math.pow(2,i))+add);//fewer elements in every step
                 elevationGrid.setAttribute("zDimension", parseInt(info.height/Math.pow(2,i))+add);
                 elevationGrid.setAttribute("height", shf );
-
-                console.time("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_calcTC_"+i);
                 elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.width, info.height, info.hmWidth, info.hmHeight,Math.pow(2,i)));
-                console.timeEnd("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_calcTC_"+i);
+
 
                 //Set texture
                 appearance = document.createElement('Appearance');
@@ -111,10 +106,8 @@ function Chunk(parentNode,chunkInfo, hf,imageURL)
                 elevationGrid = null;
             }
 
-            console.time("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_append_");
             geometry.transform.appendChild(geometry.lodNode);
             parentNode.appendChild(geometry.transform);
-            console.timeEnd("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_append_");
             hf = null;
         }
         catch(error)
@@ -122,7 +115,6 @@ function Chunk(parentNode,chunkInfo, hf,imageURL)
             alert('Chunk::setupChunk(): ' + error);
         }
 
-        console.timeEnd("chunk_"+chunkInfo.modelIndex+"_"+chunkInfo.ID+"_all_");
         console.timeEnd("terrain_"+chunkInfo.modelIndex+"_"+chunkInfo.ID);
     }
 
