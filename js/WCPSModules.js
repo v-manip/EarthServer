@@ -4,6 +4,7 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
 /**
  * @class Scene Model: WCPS Image with DEM in Alpha Channel
  * 1 URL for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
  */
 EarthServerGenericClient.Model_WCPSDemAlpha = function()
 {
@@ -212,6 +213,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement= functi
 /**
  * @class Scene Model: WCPS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
  */
 EarthServerGenericClient.Model_WCPSDemWCS = function()
 {
