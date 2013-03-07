@@ -502,8 +502,6 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.modelID);
         var scaleX,scaleY,scaleZ;
 
-        //console.log(XRes + "/" + YRes + "/" + ZRes);
-
         this.YResolution = YRes;
 
         scaleX = (cubeSizeX*this.xScale)/(parseInt(XRes)-1);
@@ -525,7 +523,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     this.setDefaults = function(){
         /**
          * Name of the model. This will be display in the UI.
-         * @default "Name is given by the module"
+         * @default Name is given by the module
          * @type {String}
          */
         this.name = "No name given";
