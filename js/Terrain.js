@@ -2,9 +2,10 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 
-EarthServerGenericClient.AbstractLODTerrain = function()
+EarthServerGenericClient.AbstractTerrain = function()
 {
     var AppearanceDefined = [];
+    this.materialNodes = [];
 
     this.createCanvas =  function(texture,index)
     {
@@ -61,10 +62,20 @@ EarthServerGenericClient.AbstractLODTerrain = function()
         }
         catch(error)
         {
-            alert('AbstractLODTerrain::getHeightMap(): ' + error);
+            alert('AbstractTerrain::getHeightMap(): ' + error);
             return null;
         }
     };
+
+    this.setTransparency = function(value)
+    {
+        // materialNode.setAttribute("transparency",value);
+        for(var k=0;k<this.materialNodes.length;k++)
+        {
+            this.materialNodes[k].setAttribute("transparency",value);
+        }
+    };
+
 
     this.getAppearances = function(AppearanceName,AppearanceCount,modelIndex,canvasTexture,transparency)
     {
@@ -114,102 +125,79 @@ EarthServerGenericClient.AbstractLODTerrain = function()
         }
         catch(error)
         {
-            alert('AbstractLODTerrain::getAppearances(): ' + error);
+            alert('AbstractTerrain::getAppearances(): ' + error);
             return null;
         }
     }
 
 };
 
-EarthServerGenericClient.ProgressiveLODTerrain = function(root,index,numberOfLevels)
+EarthServerGenericClient.ProgressiveTerrain = function(index)
 {
-    //Prepare Terrain
-    this.materialNodes  = [];
+    var chunkInfo;
+    var chunkSize = 256;
+    var canvasTexture;
+    var currentData = 0;
 
-    //var appearances = [numberOfLevels];
-    var chunkInfo   = [numberOfLevels];
-    var canvasTexture = [numberOfLevels];
-    var currentLevel  = numberOfLevels-1;
-
-    var LODNodes  = [];
-    var lodRange1       = 5000;
-    var lodRange2       = 10000;
-    var ranges = ["100,2000","100",""];
-
-    this.getRange = function(currentLevel)
+    this.insertLevel = function(root,data)
     {
-        return ranges[currentLevel];
-    };
+        canvasTexture = this.createCanvas(data.texture,index);
+        chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
-    this.insertLevel = function(data)
-    {
-        canvasTexture[currentLevel] = this.createCanvas(data.texture,index);
-        chunkInfo[currentLevel]   = this.calcNumberOfChunks(data.width,data.height,252/Math.pow(2,currentLevel) );
+        //Remove all childs
+        while (root.firstChild)
+        {
+            root.removeChild(root.firstChild);
+        }
 
-        for(var currentChunk=0; currentChunk< chunkInfo[currentLevel].numChunks;currentChunk++)
+        for(var currentChunk=0; currentChunk< chunkInfo.numChunks; currentChunk++)
         {
             try
             {
                 var info = {
-                    xpos:parseInt(currentChunk%chunkInfo[currentLevel].numChunksX)*252/Math.pow(2,currentLevel),
-                    ypos:parseInt(currentChunk/chunkInfo[currentLevel].numChunksX)*252/Math.pow(2,currentLevel),
+                    xpos:parseInt(currentChunk%chunkInfo.numChunksX)*(chunkSize-1),
+                    ypos:parseInt(currentChunk/chunkInfo.numChunksX)*(chunkSize-1),
                     width:0,
                     height:0,
                     hmWidth: data.width,
                     hmHeight: data.height,
-                    ID:currentLevel + "_" + currentChunk,
+                    ID: currentChunk,
                     modelIndex: index
                 };
 
-                if( currentChunk%chunkInfo[currentLevel].numChunksX === (chunkInfo[currentLevel].numChunksX-1) )
-                {   info.width = data.width - parseInt((chunkInfo[currentLevel].numChunksX-1)*252/Math.pow(2,currentLevel));   }
+                if( currentChunk%chunkInfo.numChunksX === (chunkInfo.numChunksX-1) )
+                {   info.width = data.width - parseInt((chunkInfo.numChunksX-1)*chunkSize);   }
                 else
-                {   info.width = (252/Math.pow(2,currentLevel))+1;   }
+                {   info.width = chunkSize;   }
 
-                if( currentChunk >= chunkInfo[currentLevel].numChunks - chunkInfo[currentLevel].numChunksX)
-                {   info.height = data.height - parseInt((chunkInfo[currentLevel].numChunksY-1)*252/Math.pow(2,currentLevel)); }
+                if( currentChunk >= chunkInfo.numChunks - chunkInfo.numChunksX)
+                {   info.height = data.height - parseInt((chunkInfo.numChunksY-1)*chunkSize); }
                 else
-                {   info.height = (252/Math.pow(2,currentLevel))+1;  }
+                {   info.height = chunkSize  }
 
-                var appendAfter = false;
-                if( LODNodes[currentChunk] === undefined)
-                {
-                    appendAfter = true;
-                    var transform = document.createElement('Transform');
-                    transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
-                    transform.setAttribute("scale", "1.0 1.0 1.0");
 
-                    var lodNode = document.createElement('LOD');
-                    //lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
-                    lodNode.setAttribute("Range", this.getRange(currentLevel));
-                    lodNode.setAttribute("id", 'lod' + info.ID);
-                    //lodNode.setAttribute("forceTransitions", true);
+                var transform = document.createElement('Transform');
+                transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
+                transform.setAttribute("scale", "1.0 1.0 1.0");
 
-                    LODNodes[currentChunk] = lodNode;
-
-                }
                 var hm = this.getHeightMap(info,data.heightmap);           //create height map
-                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentLevel,1,index,canvasTexture[currentLevel],data.transparency);
+                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,canvasTexture,data.transparency);
 
-                new Chunk(LODNodes[currentChunk],info, hm, appearance);
-                LODNodes[currentChunk].setAttribute("Range", this.getRange(currentLevel));
+                new Chunk(transform,info, hm, appearance);
 
-                if(appendAfter)
-                {
-                    transform.appendChild(lodNode);
-                    root.appendChild(transform);
-                }
+                root.appendChild(transform);
+
             }
             catch(error)
             {
                 alert('Terrain::CreateNewChunk(): ' + error);
                 return null;
             }
+            currentData++;
         }
-        currentLevel--;
     };
 };
-EarthServerGenericClient.ProgressiveLODTerrain.inheritsFrom( EarthServerGenericClient.AbstractLODTerrain);
+EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
 
 
 
@@ -223,7 +211,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
     var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,252);
 
     var chunkArray      = [chunkInfo.numChunks];
-    this.materialNodes  = [];
 
     //==================================================================================================================
     // This function build all chunks.
@@ -307,18 +294,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
     };
 
     //==================================================================================================================
-    // Changes the transparency of all chunks.
-    //==================================================================================================================
-    this.setTransparency = function(value)
-    {
-       // materialNode.setAttribute("transparency",value);
-        for(var k=0;k<this.materialNodes.length;k++)
-        {
-            this.materialNodes[k].setAttribute("transparency",value);
-        }
-    };
-
-    //==================================================================================================================
     // DESTRUCTOR
     //==================================================================================================================
     this.destructor = function()
@@ -330,4 +305,4 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
         chunkArray = {};
     };
 };
-EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractLODTerrain);
+EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);

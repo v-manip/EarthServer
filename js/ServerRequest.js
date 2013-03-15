@@ -3,12 +3,12 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
 
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          //Heightmap
-    this.heightmapUrl = "";           //If available, you can use the link as alternative.
+    this.heightmapUrl = "";         //If available, you can use the link as alternative.
     this.texture = new Image();     //Texture as image object
     this.texture.crossOrigin = '';
-    this.textureUrl = "";             //If available, you can use the link as alternative.
-    this.width = 0;                   //Hm width
-    this.height = 0;                  //Hm height
+    this.textureUrl = "";           //If available, you can use the link as alternative.
+    this.width = 0;                 //Hm width
+    this.height = 0;                //Hm height
     this.minMSAT = 1000000;
     this.maxMSAT = -1000000;
     this.averageMSAT = 0;

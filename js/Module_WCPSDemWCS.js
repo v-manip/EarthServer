@@ -149,7 +149,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
     console.timeEnd(this.name+"_request");
 
     if( data === null)
-    { console.log("Model_WCPSDemWCS: Request not successful.");}
+    { console.log("Model_WCPSDemWCS" + this.name +": Request not successful.");}
     else
     {
         var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );

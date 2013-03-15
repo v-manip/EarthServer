@@ -10,7 +10,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha = function()
 {
     this.setDefaults();
     this.name = "WCPS Image with DEM in alpha channel.";
-    this.transformNode = null;
     /**
      * Determines if progressive or complete loading of the model is used.
      * @default false
@@ -200,16 +199,18 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
 {
     console.timeEnd(this.name+"_request");
     if( data === null)
-    { console.log("WCPSDemAlpha: Request not successful.");}
+    { console.log("WCPSDemAlpha "+ this.name +": Request not successful.");}
     else
     {
-        if( this.transformNode === null)
-        {
-            var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-            var transform = this.createTransform(this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ,data.width,YResolution,data.height,parseFloat(data.minMSAT));
-            this.transformNode = transform;
-            this.root.appendChild( transform);
-        }
+        //If progressive loading is enabled this function is called multiple times.
+        //The lower resolution version shall be removed and replaced with the new one.
+        //So the old transformNode will be removed and a new one created.
+        if(this.transformNode !== undefined )
+        {   this.root.removeChild(this.transformNode); }
+
+        var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
+        this.transformNode = this.createTransform(this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ,data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        this.root.appendChild(this.transformNode);
 
         //Set transparency
         data.transparency =  this.transparency;
@@ -217,19 +218,17 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         //Create Terrain out of the received data
         if( !this.progressiveLoading)
         {
-            this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
+            this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index);
             this.terrain.createTerrain();
         }
         else
         {
-            //Check if terrain is already created
+            //Check if terrain is already created. Create it in the first function call.
             if( this.terrain === undefined )
-            {
-                this.terrain = new EarthServerGenericClient.ProgressiveLODTerrain(transform,this.index,3);
-            }
+            {   this.terrain = new EarthServerGenericClient.ProgressiveTerrain(this.index); }
 
-            //Add new data to the terrain
-            this.terrain.insertLevel(data);
+            //Add new data (with higher resolution) to the terrain
+            this.terrain.insertLevel(this.transformNode,data);
         }
     }
 };
