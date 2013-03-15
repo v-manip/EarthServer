@@ -13,7 +13,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha = function()
     /**
      * Determines if progressive or complete loading of the model is used.
      * @default false
-     * @type {bool}
+     * @type {Boolean}
      */
     this.progressiveLoading = false;
     /**
@@ -128,6 +128,10 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     this.root = root;
     this.index = index;
 
+    //Create Placeholder
+    this.placeHolder = this.createPlaceHolder();
+    this.root.appendChild( this.placeHolder );
+
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.url === undefined
         || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
@@ -208,8 +212,15 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         if(this.transformNode !== undefined )
         {   this.root.removeChild(this.transformNode); }
 
+        //In the first receiveData call remove the placeholder.
+        if( this.placeHolder !== null && this.placeHolder !== undefined )
+        {
+            this.root.removeChild( this.placeHolder);
+            this.placeHolder = null;
+        }
+
         var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-        this.transformNode = this.createTransform(this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ,data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minMSAT));
         this.root.appendChild(this.transformNode);
 
         //Set transparency

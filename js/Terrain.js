@@ -1,13 +1,22 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
-
+/**
+ * @class Abstract base class for terrains.
+ * @constructor
+ */
 EarthServerGenericClient.AbstractTerrain = function()
 {
     var AppearanceDefined = [];
     this.materialNodes = [];
 
-    this.createCanvas =  function(texture,index)
+    /**
+     * Creates a html canvas element out of the texture and removes the alpha values.
+     * @param texture - Texture to draw. Can be everything which can be rendered into a canvas.
+     * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
+     * @returns {HTMLElement} - The canvas element.
+     */
+    this.createCanvas = function(texture,index)
     {
         var canvasTexture	= document.createElement('canvas');
         canvasTexture.style.display = "none";
@@ -28,6 +37,13 @@ EarthServerGenericClient.AbstractTerrain = function()
         return canvasTexture;
     };
 
+    /**
+     * Calc the needed numbers of chunks for the terrain for a specific chunksize.
+     * @param width - Width of the entire terrain
+     * @param height - Height if the entrire terrain
+     * @param chunkSize - The size of one chunk
+     * @returns {{}} - Returns a object with: numChunksX,numChunksY and numChunksX
+     */
     this.calcNumberOfChunks = function(width,height,chunkSize)
     {
         var chunksInfo = {};
@@ -45,6 +61,12 @@ EarthServerGenericClient.AbstractTerrain = function()
         return chunksInfo;
     };
 
+    /**
+     * Returns a height map part from the given height map specified in the info parameter.
+     * @param info - Which part of the heightmap should be returned.
+     * @param hm - The heightmap from which the parts is extracted.
+     * @returns {*}
+     */
     this.getHeightMap = function(info,hm)
     {
         try
@@ -67,6 +89,10 @@ EarthServerGenericClient.AbstractTerrain = function()
         }
     };
 
+    /**
+     * Sets the transparency in all materials of this terrain.
+     * @param value - Transparency value.
+     */
     this.setTransparency = function(value)
     {
         // materialNode.setAttribute("transparency",value);
@@ -76,7 +102,16 @@ EarthServerGenericClient.AbstractTerrain = function()
         }
     };
 
-
+    /**
+     * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
+     * It returns the amount of appearances specified. For every name only one appearance exits, every other uses it.
+     * @param AppearanceName - Name of the appearance. If this name is not registered it is created, else the new appearance use the one with this name.
+     * @param AppearanceCount - Number of appearance to be created. Use 3 for LODs for example.
+     * @param modelIndex - Index of the model using this appearance.
+     * @param canvasTexture - CanvasTexture to be used in the appearance.
+     * @param transparency - Transparency of the appearance.
+     * @returns {*} - Array of appearances.
+     */
     this.getAppearances = function(AppearanceName,AppearanceCount,modelIndex,canvasTexture,transparency)
     {
         try
@@ -132,6 +167,14 @@ EarthServerGenericClient.AbstractTerrain = function()
 
 };
 
+/**
+ * @class This terrain should receive multiple insertLevel calls. It removes the old version
+ * and replace it with the new data. It can be used for progressive loading.
+ * Example: WCPSDemAlpha with progressive loading using the progressiveWCPSLoader.
+ * @augments EarthServerGenericClient.AbstractTerrain
+ * @param index - Index of the model using this terrain.
+ * @constructor
+ */
 EarthServerGenericClient.ProgressiveTerrain = function(index)
 {
     var chunkInfo;
@@ -139,6 +182,12 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     var canvasTexture;
     var currentData = 0;
 
+    /**
+     * Insert one data level into the scene. The old elevation grids will be removed and new ones build.
+     * @param root - Dom Element to append the terrain to.
+     * @param data - Received Data of the Server request.
+     * @returns {null}
+     */
     this.insertLevel = function(root,data)
     {
         canvasTexture = this.createCanvas(data.texture,index);
@@ -200,21 +249,28 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
 EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
 
 
-
-
+/**
+ * @class This terrain build up a LOD with 3 levels of the received data.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @augments EarthServerGenericClient.AbstractTerrain
+ * @constructor
+ */
 EarthServerGenericClient.LODTerrain = function(root, data,index)
 {
-    var lodRange1       = 10000;
-    var lodRange2       = 200000;
+    var lodRange1       = 2000;
+    var lodRange2       = 10000;
 
     var canvasTexture   = this.createCanvas( data.texture,index);
     var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,252);
 
     var chunkArray      = [chunkInfo.numChunks];
 
-    //==================================================================================================================
-    // This function build all chunks.
-    //==================================================================================================================
+    /**
+     * Builds the terrain and append into the scene.
+     * @returns {null}
+     */
     this.createTerrain= function()
     {
         console.time("terrain_"+index+"_"+(chunkInfo.numChunks-1));
@@ -268,34 +324,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
         }
     };
 
-    //==================================================================================================================
-    // Get terrain sizes (x/z).
-    //==================================================================================================================
-    this.getTerrainSize = function()
-    {
-        var size = {
-            x:data.width,
-            y:data.height
-        };
-        return size;
-    };
-
-    //==================================================================================================================
-    //Returns the Minimum,Maximum and Average value of the heightfield. [min,max,avg]
-    //==================================================================================================================
-    this.getDEMInfo = function()
-    {
-        var info = {
-            min:data.minMSAT,
-            max:data.maxMSAT,
-            avg:data.averageMSAT
-        };
-        return info;
-    };
-
-    //==================================================================================================================
-    // DESTRUCTOR
-    //==================================================================================================================
     this.destructor = function()
     {
         for(var i=0; i<numChunks; i++)

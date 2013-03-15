@@ -79,10 +79,10 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCSVersion = function(ver
 /**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
- * @param index - Index of this model in the SceneManager list.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ * @param index - Index of this model in the SceneManager list.
  */
 EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, index, cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
@@ -94,6 +94,10 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
 
     this.root = root;
     this.index = index;
+
+    //Create Placeholder
+    this.placeHolder = this.createPlaceHolder();
+    this.root.appendChild( this.placeHolder );
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.URLDEM === undefined
@@ -152,8 +156,15 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
     { console.log("Model_WCPSDemWCS" + this.name +": Request not successful.");}
     else
     {
+        //Remove the placeHolder
+        if( this.placeHolder !== null && this.placeHolder !== undefined )
+        {
+            this.root.removeChild( this.placeHolder);
+            this.placeHolder = null;
+        }
+
         var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-        var transform = this.createTransform(this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ,data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minMSAT));
         this.root.appendChild( transform);
 
         //Set transparency

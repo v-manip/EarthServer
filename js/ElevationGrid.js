@@ -8,10 +8,10 @@
  Description:
 
  ======================================================================================================================*/
-function Chunk(parentNode,chunkInfo, hf,appearances)
+function Chunk(parentNode,info, hf,appearances)
 {
     "use strict";
-    var info = chunkInfo;
+
 
     //==================================================================================================================
     //Creates and inserts X3D inline node (terrain chunk) into DOM.
@@ -33,14 +33,14 @@ function Chunk(parentNode,chunkInfo, hf,appearances)
 
                 //Set up: Shape-> Apperance -> ImageTexture +  Texturtransform
                 shape = document.createElement('Shape');
-                shape.setAttribute("id",chunkInfo.modelIndex+"_shape_"+chunkInfo.ID+"_"+i);
+                shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
 
                 //Build the ElavationsGrid
                 //shrink the heightfield to the correct size for this detail level
                 shf = shrinkHeightMap(hf, info.width, info.height,Math.pow(2,i));
 
                 elevationGrid = document.createElement('ElevationGrid');
-                elevationGrid.setAttribute("id", chunkInfo.modelIndex+"hm"+ info.ID+"_"+i);
+                elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
                 elevationGrid.setAttribute("xSpacing", String(Math.pow(2,i)));//To keep the same size with fewer elements increase the space of one element
                 elevationGrid.setAttribute("zSpacing", String(Math.pow(2,i)));
@@ -66,7 +66,7 @@ function Chunk(parentNode,chunkInfo, hf,appearances)
             alert('Chunk::setupChunk(): ' + error);
         }
 
-        console.timeEnd("terrain_"+chunkInfo.modelIndex+"_"+chunkInfo.ID);
+        console.timeEnd("terrain_"+info.modelIndex+"_"+info.ID);
     }
 
     //public:

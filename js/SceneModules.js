@@ -122,7 +122,6 @@ EarthServerGenericClient.SceneManager = function()
         this.cubeSizeY = cubeSizeY;
         this.cubeSizeZ = cubeSizeZ;
 
-        var x3d   = document.getElementById(x3dID);
         var scene = document.getElementById(sceneID);
         if( !scene)
         {
@@ -486,33 +485,75 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * This creates a placeholder Element for the model. It consists of an simple quad.
+     * Models that use this placeholder should remove it of course.
+     * @returns {HTMLElement}
+     */
+    this.createPlaceHolder = function()
+    {
+        var appearance = document.createElement('Appearance');
+        var material = document.createElement('Material');
+        material.setAttribute("emissiveColor","0.4 0.4 0.4");
+
+        var trans = document.createElement('Transform');
+        var yoff = (this.cubeSizeY * this.yOffset);
+        trans.setAttribute("translation", "0 "+ yoff  + " 0");
+
+        var shape = document.createElement('shape');
+        var triangleset = document.createElement('IndexedFaceSet');
+        triangleset.setAttribute("colorPerVertex", "false");
+        triangleset.setAttribute("coordindex","0 1 2 3 -1");
+
+        var coords = document.createElement('Coordinate');
+
+        var cubeX = this.cubeSizeX/2.0;
+        var cubeZ = this.cubeSizeZ/2.0;
+        var cubeXNeg = -this.cubeSizeX/2.0;
+        var cubeYNeg = -this.cubeSizeY/2.0;
+        var cubeZNeg = -this.cubeSizeZ/2.0;
+
+        var p = {};
+        p[0] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZNeg + " ";
+        p[1] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZ + " ";
+        p[2] = ""+ cubeX    + " " + cubeYNeg + " " + cubeZ    + " ";
+        p[3] = ""+ cubeX    + " " + cubeYNeg + " " + cubeZNeg;
+
+        var points="";
+        for(var i=0; i<4;i++)
+        {   points = points+p[i];   }
+        coords.setAttribute("point", points);
+
+        triangleset.appendChild(coords);
+        appearance.appendChild(material);
+        shape.appendChild(appearance);
+        shape.appendChild(triangleset);
+        trans.appendChild(shape);
+
+        return trans;
+    };
+    /**
      * Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically by
      * the scene model.
-     * @param cubeSizeX - Size of the fishtank/cube on the x-axis
-     * @param cubeSizeY - Size of the fishtank/cube on the y-axis
-     * @param cubeSizeZ - Size of the fishtank/cube on the z-axis
      * @param XRes - Size of the received data on the x-axis (e.g. the requested DEM )
      * @param YRes - Size of the received data on the y-axis
      * @param ZRes - Size of the received data on the z-axis
-     * @param minvalue - Minumum Value of the along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minvalue - Minimum Value of the along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
      * @return {Element}
      */
-    this.createTransform = function(cubeSizeX,cubeSizeY,cubeSizeZ,XRes,YRes,ZRes,minvalue){
+    this.createTransform = function(XRes,YRes,ZRes,minvalue){
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.modelID);
-        var scaleX,scaleY,scaleZ;
 
         this.YResolution = YRes;
 
-        scaleX = (cubeSizeX*this.xScale)/(parseInt(XRes)-1);
-        scaleY = (cubeSizeY*this.yScale)/this.YResolution;
-        scaleZ = (cubeSizeZ*this.zScale)/(ZRes-1);
-
+        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(XRes)-1);
+        var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(parseInt(ZRes)-1);
         trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
-        var xoff = (cubeSizeX * this.xOffset) - (cubeSizeX/2.0);
-        var yoff = (cubeSizeY * this.yOffset) - (minvalue*scaleY) - (cubeSizeY/2.0);
-        var zoff = (cubeSizeZ * this.zOffset) - (cubeSizeZ/2.0);
+        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
+        var yoff = (this.cubeSizeY * this.yOffset) - (minvalue*scaleY) - (this.cubeSizeY/2.0);
+        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
         trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
 
         return trans;
