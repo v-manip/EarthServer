@@ -4,6 +4,11 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
+*	@deprecated For test only! Delete me please.
+*/
+var useess = undefined;
+
+/**
  * @ignore Just Inheritance Helper
  */
 Function.prototype.inheritsFrom = function( parentClassOrObject )
