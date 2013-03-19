@@ -1,21 +1,19 @@
-/*======================================================================================================================
- EarthServer Project
- 2012 Fraunhofer IGD
-
- File:           Chunk.js
- Last change:    06.08.2012
-
- Description:
-
- ======================================================================================================================*/
-function Chunk(parentNode,info, hf,appearances)
+/**
+ * Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
+ * For every appearance in the appearances parameter one level is built with 25% size of the last level.
+ * @param parentNode - Dom element to append the elevation grids to.
+ * @param info - Information about the ID,position of the chunk, the heightmap's size and the modelIndex.
+ * @param hf - The heightmap to be used for the elevation grid.
+ * @param appearances - Array of appearances. For every appearance one level for LOD is built. 1 Level = no LOD.
+ * @constructor
+ */
+function ElevationGrid(parentNode,info, hf,appearances)
 {
     "use strict";
 
-
-    //==================================================================================================================
-    //Creates and inserts X3D inline node (terrain chunk) into DOM.
-    //==================================================================================================================
+    /**
+     * Creates and inserts elevation grid (terrain chunk) into DOM.
+     */
     function setupChunk()
     {
 
@@ -23,7 +21,7 @@ function Chunk(parentNode,info, hf,appearances)
         {
             var elevationGrid, shape, shf;
 
-            //We build a LOD with 3 children. [Full Resolution, 1/2 Resolution, 1/4 Resolution]
+            //We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
             for(var i=0; i<appearances.length; i++)
             {
                 //All none full resolutions needs to be one element bigger to keep the desired length
@@ -35,19 +33,18 @@ function Chunk(parentNode,info, hf,appearances)
                 shape = document.createElement('Shape');
                 shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
 
-                //Build the ElavationsGrid
+                //Build the Elevation Grids
                 //shrink the heightfield to the correct size for this detail level
-                shf = shrinkHeightMap(hf, info.width, info.height,Math.pow(2,i));
-
+                shf = shrinkHeightMap(hf, info.chunkWidth, info.chunkHeight,Math.pow(2,i));
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
                 elevationGrid.setAttribute("xSpacing", String(Math.pow(2,i)));//To keep the same size with fewer elements increase the space of one element
                 elevationGrid.setAttribute("zSpacing", String(Math.pow(2,i)));
-                elevationGrid.setAttribute("xDimension", parseInt(info.width/Math.pow(2,i))+add);//fewer elements in every step
-                elevationGrid.setAttribute("zDimension", parseInt(info.height/Math.pow(2,i))+add);
+                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));//fewer elements in every step
+                elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
                 elevationGrid.setAttribute("height", shf );
-                elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.width, info.height, info.hmWidth, info.hmHeight,Math.pow(2,i)));
+                elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,i)));
 
                 shape.appendChild(appearances[i]);
                 shape.appendChild(elevationGrid);
@@ -63,29 +60,21 @@ function Chunk(parentNode,info, hf,appearances)
         }
         catch(error)
         {
-            alert('Chunk::setupChunk(): ' + error);
+            alert('ElevationGrid::setupChunk(): ' + error);
         }
-
-        console.timeEnd("terrain_"+info.modelIndex+"_"+info.ID);
     }
 
-    //public:
-    //==================================================================================================================
-    // Returns a array with some information about this chunk.
-    //==================================================================================================================
-    this.getInfo = function()
-    {
-        return info;
-    };
-
-    //==================================================================================================================
-    //Shrinks the heightfield with the given factor
-    //==================================================================================================================
+    /**
+     * Shrinks the heightfield with the given factor
+     * @param heightfield - The used heihgfield.
+     * @param sizex - Width of the heightfield.
+     * @param sizey - Height of the heightfield.
+     * @param shrinkfactor - Factor to shrink the heightmap. 1:Full heightmap 2: 25% (scaled 50% on each side)
+     * @returns {string}
+     */
     function shrinkHeightMap(heightfield, sizex, sizey, shrinkfactor)
     {
         var smallGrid, smallx, smally, val,i,k,l,o,div;
-
-        x3dom.debug.logInfo('ShrinkHeightMap: ' +sizex+'/'+sizey+'/'+shrinkfactor);
 
         smallGrid = [];
         smallx = parseInt(sizex/shrinkfactor);
@@ -138,17 +127,25 @@ function Chunk(parentNode,info, hf,appearances)
         return smallGrid.join(" ");
     }
 
-    //==================================================================================================================
-    //Calcs the TextureCoordinats for the given part of the heightmap
-    //==================================================================================================================
-    function calcTexCoords(xpos,ypos,sizex,sizey,hmWidth, hmHeight, shrinkfactor)
+    /**
+     * Calcs the TextureCoordinates for the elevation grid(s).
+     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
+     * @param xpos - Start position of the elevation grid within the terrain.
+     * @param ypos - Start position of the elevation grid within the terrain.
+     * @param sizex - Size of the elevation grid on the x-Axis.
+     * @param sizey - Size of the elevation grid on the x-Axis.
+     * @param terrainWidth - Size of the whole terrain on the x-Axis.
+     * @param terrainHeight - Size of the whole terrain on the y-Axis.
+     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
+     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
+     */
+    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
     {
-        x3dom.debug.logInfo('pos: ' + xpos + ',' + ypos + ' size: ' + sizex + ',' + sizey + ' hm: ' + hmWidth + ',' +hmHeight + ' shrinkfactor: ' + shrinkfactor);
         var tc, tcnode,i,k, offsetx, offsety, partx, party, tmpx, tmpy,smallx,smally;
-        offsetx = xpos/hmWidth;
-        offsety = ypos/hmHeight;
-        partx   = parseFloat( (sizex/hmWidth)*(1/sizex)*shrinkfactor );
-        party   = parseFloat( (sizey/hmHeight)*(1/sizey)*shrinkfactor );
+        offsetx = xpos/terrainWidth;
+        offsety = ypos/terrainHeight;
+        partx   = parseFloat( (sizex/terrainWidth)*(1/sizex)*shrinkfactor );
+        party   = parseFloat( (sizey/terrainHeight)*(1/sizey)*shrinkfactor );
         smallx = parseInt(sizex/shrinkfactor);
         smally = parseInt(sizey/shrinkfactor);
 
@@ -180,15 +177,6 @@ function Chunk(parentNode,info, hf,appearances)
 
         return tcnode;
     }
-
-    //==================================================================================================================
-    //
-    //==================================================================================================================
-    this.destructor = function()
-    {
-        //delete info
-        //delete geometry
-    };
 
     setupChunk();
 }

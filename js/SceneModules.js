@@ -57,9 +57,15 @@ EarthServerGenericClient.getEventTarget = function(e)
 EarthServerGenericClient.SceneManager = function()
 {
     //Array of scene models
-    this.models = new Array();
-    this.baseElevation = new Array();
+    this.models = [];
+    this.baseElevation = [];
     this.currentUIElement = 0;
+    /**
+     * Enables/Disables the logging of Serverrequests,building of terrain etc.
+     * @default false
+     * @type {boolean}
+     */
+    this.TimeLog = false;
 
     /**
      * @default 1000 / 200 on a mobile platform
@@ -70,9 +76,34 @@ EarthServerGenericClient.SceneManager = function()
         maxResolution = 200;
 
     /**
+     * Enables or disables the logging.
+     * @param value - Boolean
+     */
+    this.setTimeLog = function(value)
+    {   this.TimeLog = value; };
+    /**
+     * Starts the timer for a logging event with the given name.
+     * @param eventName
+     */
+    this.timeLogStart = function(eventName)
+    {
+        if( this.TimeLog)
+        {   console.time(eventName); }
+    };
+    /**
+     * Ends the timer for a logging event with the given name and prints the result.
+     * @param eventName
+     */
+    this.timeLogEnd = function(eventName)
+    {
+        if( this.TimeLog)
+        {   console.timeEnd(eventName); }
+    };
+
+    /**
      * Returns the maximum resolution per dimension of a scene model.
      * This number depends on power templates (e.g. mobile device).
-     * @return maximum Resolution
+     * @return {Number} maximum Resolution
      */
     this.getMaxResolution = function()
     {   return maxResolution;   };
@@ -125,7 +156,7 @@ EarthServerGenericClient.SceneManager = function()
         var scene = document.getElementById(sceneID);
         if( !scene)
         {
-            alert("No X3D Scene found with id " + domElementID);
+            alert("No X3D Scene found with id " + sceneID);
             return;
         }
 

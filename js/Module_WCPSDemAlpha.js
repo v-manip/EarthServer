@@ -10,6 +10,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha = function()
 {
     this.setDefaults();
     this.name = "WCPS Image with DEM in alpha channel.";
+    this.receivdData = 0;
     /**
      * Determines if progressive or complete loading of the model is used.
      * @default false
@@ -121,6 +122,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     if( root === undefined)
         alert("root is not defined");
 
+    EarthServerGenericClient_MainScene.timeLogStart("Create Model " + this.name);
+
     this.cubeSizeX = cubeSizeX;
     this.cubeSizeY = cubeSizeY;
     this.cubeSizeZ = cubeSizeZ;
@@ -143,14 +146,14 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     }
 
     //2: create wcps query/queries
-    //Either user set if query strings are set for all wcps channels or standard wcps query if wcps channels are not set
+    //Either the user set query if all query strings are set. Or standard wcps query if wcps channels are not set.
     //Build one query for complete loading and multiple queries for progressive loading
-    var queryCnt = 1;
-    if( this.progressiveLoading){ queryCnt = 3; }
+    this.queryCnt = 1;
+    if( this.progressiveLoading){ this.queryCnt = 3; }
     //IF something is not defined use standard query.
     if( this.WCPSString[0] === undefined || this.WCPSString[1] === undefined || this.WCPSString[2] === undefined || this.WCPSString[3] === undefined)
     {
-        for(var i=0; i<queryCnt; i++)
+        for(var i=0; i<this.queryCnt; i++)
         {
             var currentXRes = parseInt(this.XResolution / Math.pow(2,i) );
             var currentZRes = parseInt(this.ZResolution / Math.pow(2,i) );
@@ -164,20 +167,20 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     }
     else //ALL set so use custom query
     {
-        for(var j=0; j<queryCnt; j++)
+        for(var j=0; j<this.queryCnt; j++)
         {
             //Replace $ symbols with the actual values
             var tmpString = [];
             for(i=0; i<4; i++)
             {
                 tmpString[i] = this.WCPSString[i].replace("$CI","image");
-                tmpString[i] = this.WCPSString[i].replace("$CD","dtm");
-                tmpString[i] = this.WCPSString[i].replace("$MINX",this.minx);
-                tmpString[i] = this.WCPSString[i].replace("$MINY",this.miny);
-                tmpString[i] = this.WCPSString[i].replace("$MAXX",this.maxx);
-                tmpString[i] = this.WCPSString[i].replace("$MAXY",this.maxy);
-                tmpString[i] = this.WCPSString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,i) ) );
-                tmpString[i] = this.WCPSString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,i) ) );
+                tmpString[i] = tmpString[i].replace("$CD","dtm");
+                tmpString[i] = tmpString[i].replace("$MINX",this.minx);
+                tmpString[i] = tmpString[i].replace("$MINY",this.miny);
+                tmpString[i] = tmpString[i].replace("$MAXX",this.maxx);
+                tmpString[i] = tmpString[i].replace("$MAXY",this.maxy);
+                tmpString[i] = tmpString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
+                tmpString[i] = tmpString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
             }
             this.wcpsQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
             this.wcpsQuery[j] += "red: " + tmpString[0] + " ";
@@ -201,7 +204,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( data)
 {
-    console.timeEnd(this.name+"_request");
     if( data === null)
     { console.log("WCPSDemAlpha "+ this.name +": Request not successful.");}
     else
@@ -229,8 +231,11 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         //Create Terrain out of the received data
         if( !this.progressiveLoading)
         {
+            EarthServerGenericClient_MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index);
             this.terrain.createTerrain();
+            EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
+            EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);
         }
         else
         {
@@ -239,7 +244,12 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             {   this.terrain = new EarthServerGenericClient.ProgressiveTerrain(this.index); }
 
             //Add new data (with higher resolution) to the terrain
+            EarthServerGenericClient_MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain.insertLevel(this.transformNode,data);
+            EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
+            this.receivdData++;
+            if( this.receivdData === this.queryCnt)
+            {   EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);   }
         }
     }
 };

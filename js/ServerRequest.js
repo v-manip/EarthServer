@@ -39,26 +39,48 @@ EarthServerGenericClient.ajaxRequest = function(url, type, dataType, data, callb
 EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
 {
     var counter = 0;
+    this.name = "Combined Callback: " + callback.name;
 
     this.receiveData = function(data)
     {
         counter++;
         if( counter ==  numberToCombine)
         {
+            EarthServerGenericClient_MainScene.timeLogEnd("Combine: " + callback.name);
             callback.receiveData(data);
         }
     }
 
 };
 
+EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSVersion,width,height)
+{
+    responseData.textureUrl = WMSurl + "?service=WMS&version=" + WMSVersion +"&request=Getmap&layers=" + WMScoverID;
+    responseData.textureUrl += "&" + WMSCRS + "&format=image/" + WMSImageFormat;
+    responseData.textureUrl += "&bbox=" + BoundingBox.minLatitude + "," + BoundingBox.minLongitude + ","+ BoundingBox.maxLatitude + "," + BoundingBox.maxLongitude;
+    responseData.textureUrl += "&width="+width+"&height="+height;
+
+    responseData.texture.onload = function()
+    {
+        callback.receiveData(responseData);
+    };
+    responseData.texture.onerror = function()
+    {
+        x3dom.debug.logInfo("Could not load Image.");
+    };
+    responseData.texture.src = responseData.textureUrl;
+
+};
 
 EarthServerGenericClient.getCoverageWCPS = function(callback,responseData,url, query, DemInAlpha)
 {
+    EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
     try
     {
 
         responseData.texture.onload = function()
         {
+            EarthServerGenericClient_MainScene.timeLogEnd("WCPS: " + callback.name);
             if(DemInAlpha)
             {
                 responseData.heightmapUrl = responseData.texture.src;
@@ -197,16 +219,23 @@ EarthServerGenericClient.progressiveWCPSLoader = function(callback,WCPSurl,WCPSq
     var which = WCPSqueries.length -1;
     //We need one responseData for every query in WCPSqueries
     var responseData = [];
+    //For time logging.
+    this.name = "Progressive WCPS Loader: " + callback.name;
+
     for(var i=0;i<WCPSqueries.length;i++)
     {   responseData[i] = new EarthServerGenericClient.ServerResponseData();    }
 
     this.makeRequest =  function(which)
     {
         if(which >= 0)
-        {   EarthServerGenericClient.getCoverageWCPS(this,responseData[which],WCPSurl,WCPSqueries[which],true);  }
+        {
+            EarthServerGenericClient_MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
+            EarthServerGenericClient.getCoverageWCPS(this,responseData[which],WCPSurl,WCPSqueries[which],true);
+        }
     };
     this.receiveData = function(data)
     {
+        EarthServerGenericClient_MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
         which--;
         this.makeRequest(which);
         callback.receiveData(data);
@@ -219,6 +248,18 @@ EarthServerGenericClient.requestWCPSDemWCS = function(callback,WCPSurl,WCPSquery
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
+    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
     EarthServerGenericClient.getCoverageWCPS(combine,responseData,WCPSurl,WCPSquery,false);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
+};
+
+EarthServerGenericClient.requestWMSDemWCS = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
+
 };
