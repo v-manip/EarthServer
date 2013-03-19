@@ -195,11 +195,21 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html">EarthServerGenericClient.Model_WMSDemWCS</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html">EarthServerGenericClient.ProgressiveTerrain</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
+	
+	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
 	<li><a href="../symbols/Function.html">Function</a></li>
 	
@@ -218,13 +228,14 @@ ul.inheritsList
 <!-- ============================== class summary ========================== -->			
 			<p class="description">
 				
+				<br />Extends
+					<a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>.<br />
 				
 			
-				Scene Model: WCPS Image with DEM in Alpha Channel
-1 URL for the service, 2 Coverage names for the image and dem.
+				Scene Model: WCPS Image with DEM in Alpha Channel1 URL for the service, 2 Coverage names for the image and dem.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_WCPSModules.js.html">Module_WCPSDemAlpha.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_Module_WCPSDemAlpha.js.html">Module_WCPSDemAlpha.js</a>.
 				
 			</p>
 
@@ -290,9 +301,29 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#progressiveLoading">progressiveLoading</a></b>
+								</div>
+								<div class="description">Determines if progressive or complete loading of the model is used.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
 								<b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#url">url</a></b>
 								</div>
 								<div class="description">URL for the WCPS service.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#wcpsQuery">wcpsQuery</a></b>
+								</div>
+								<div class="description">The custom or default WCPS Queries.</div>
 							</td>
 						</tr>
 					
@@ -310,6 +341,10 @@ ul.inheritsList
 				</table>
 				
 				
+				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#imageFormat">imageFormat</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#name">name</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#transparency">transparency</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xLabel">xLabel</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xOffset">xOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#XResolution">XResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xScale">xScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yLabel">yLabel</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yOffset">yOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yScale">yScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zLabel">zLabel</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zOffset">zOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#ZResolution">ZResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zScale">zScale</a></dd>
+				</dl>
 				
 			
 
@@ -350,7 +385,16 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#setCoverages">setCoverages</a></b>(coverageImage, coverageDem)
 								</div>
-								<div class="description">Sets both coveragenames</div>
+								<div class="description">Sets both coverage names.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#setProgressiveLoading">setProgressiveLoading</a></b>(value)
+								</div>
+								<div class="description">Enables/Disables the progressive loading of the model.</div>
 							</td>
 						</tr>
 					
@@ -413,7 +457,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html#updateTransparency">updateTransparency</a></b>(transparency)
 								</div>
-								<div class="description">Updatess the transparency of the scene model.</div>
+								<div class="description">Updates the transparency of the scene model.</div>
 							</td>
 						</tr>
 					
@@ -421,6 +465,10 @@ ul.inheritsList
 				</table>
 				
 				
+				
+				<dl class="inheritsList">
+				<dt>Methods borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createPlaceHolder">createPlaceHolder</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createTransform">createTransform</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAreaOfInterest">setAreaOfInterest</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAxisLabels">setAxisLabels</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setDefaults">setDefaults</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setImageFormat">setImageFormat</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setName">setName</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setOffset">setOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setResolution">setResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setScale">setScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setTransparency">setTransparency</a></dd>
+				</dl>
 				
 			
 <!-- ============================== events summary ======================== -->
@@ -506,6 +554,35 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="progressiveLoading"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>progressiveLoading</b>
+					
+					</div>
+					<div class="description">
+						Determines if progressive or complete loading of the model is used.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								false
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
 					<a name="url"> </a>
 					<div class="fixedFont">
 					
@@ -515,6 +592,28 @@ ul.inheritsList
 					</div>
 					<div class="description">
 						URL for the WCPS service.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="wcpsQuery"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>wcpsQuery</b>
+					
+					</div>
+					<div class="description">
+						The custom or default WCPS Queries. The array contains either one element for complete loadingor multiple (3) queries for progressive loading of the model.
 						
 						
 					</div>
@@ -626,8 +725,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						This is a callback method as soon as the ServerRequest in createModel() has received it's data.
-This is done automatically.
+						This is a callback method as soon as the ServerRequest in createModel() has received it's data.This is done automatically.
 						
 						
 					</div>
@@ -663,7 +761,7 @@ This is done automatically.
 					
 					</div>
 					<div class="description">
-						Sets both coveragenames
+						Sets both coverage names.
 						
 						
 					</div>
@@ -685,6 +783,42 @@ This is done automatically.
 									
 								</dt>
 								<dd>- Coverage name for the dem dataset.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setProgressiveLoading"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setProgressiveLoading</b>(value)
+					
+					</div>
+					<div class="description">
+						Enables/Disables the progressive loading of the model.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- True or False</dd>
 							
 							</dl>
 						
@@ -783,8 +917,7 @@ This is done automatically.
 					
 					</div>
 					<div class="description">
-						Sets a specific querystring for the ALPHA channel of the WCPS query.
-All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+						Sets a specific querystring for the ALPHA channel of the WCPS query.All red,blue,green and alpha has to be set, otherwise the standard query will be used.
 						
 						
 					</div>
@@ -799,9 +932,7 @@ All red,blue,green and alpha has to be set, otherwise the standard query will be
 									<b>querystring</b>
 									
 								</dt>
-								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),
-$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
-Examples: $CI.red , x($MINX:$MINY)</dd>
+								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.Examples: $CI.red , x($MINX:$MINY)</dd>
 							
 							</dl>
 						
@@ -822,8 +953,7 @@ Examples: $CI.red , x($MINX:$MINY)</dd>
 					
 					</div>
 					<div class="description">
-						Sets a specific querystring for the BLUE channel of the WCPS query.
-All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+						Sets a specific querystring for the BLUE channel of the WCPS query.All red,blue,green and alpha has to be set, otherwise the standard query will be used.
 						
 						
 					</div>
@@ -838,9 +968,7 @@ All red,blue,green and alpha has to be set, otherwise the standard query will be
 									<b>querystring</b>
 									
 								</dt>
-								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),
-$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
-Examples: $CI.red , x($MINX:$MINY)</dd>
+								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.Examples: $CI.red , x($MINX:$MINY)</dd>
 							
 							</dl>
 						
@@ -861,8 +989,7 @@ Examples: $CI.red , x($MINX:$MINY)</dd>
 					
 					</div>
 					<div class="description">
-						Sets a specific querystring for the GREEN channel of the WCPS query.
-All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+						Sets a specific querystring for the GREEN channel of the WCPS query.All red,blue,green and alpha has to be set, otherwise the standard query will be used.
 						
 						
 					</div>
@@ -877,9 +1004,7 @@ All red,blue,green and alpha has to be set, otherwise the standard query will be
 									<b>querystring</b>
 									
 								</dt>
-								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),
-$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
-Examples: $CI.red , x($MINX:$MINY)</dd>
+								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.Examples: $CI.red , x($MINX:$MINY)</dd>
 							
 							</dl>
 						
@@ -900,8 +1025,7 @@ Examples: $CI.red , x($MINX:$MINY)</dd>
 					
 					</div>
 					<div class="description">
-						Sets a specific querystring for the RED channel of the WCPS query.
-All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+						Sets a specific querystring for the RED channel of the WCPS query.All red,blue,green and alpha has to be set, otherwise the standard query will be used.
 						
 						
 					</div>
@@ -916,9 +1040,7 @@ All red,blue,green and alpha has to be set, otherwise the standard query will be
 									<b>querystring</b>
 									
 								</dt>
-								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),
-$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
-Examples: $CI.red , x($MINX:$MINY)</dd>
+								<dd>- the querystring. Use $CI (coverageImage), $CD (coverageDEM),$MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.Examples: $CI.red , x($MINX:$MINY)</dd>
 							
 							</dl>
 						
@@ -939,7 +1061,7 @@ Examples: $CI.red , x($MINX:$MINY)</dd>
 					
 					</div>
 					<div class="description">
-						Updatess the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+						Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
 						
 						
 					</div>
@@ -979,7 +1101,7 @@ Examples: $CI.red , x($MINX:$MINY)</dd>
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Feb 26 2013 17:55:26 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Mar 19 2013 17:01:14 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>

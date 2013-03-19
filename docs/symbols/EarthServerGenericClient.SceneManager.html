@@ -195,11 +195,21 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html">EarthServerGenericClient.Model_WMSDemWCS</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html">EarthServerGenericClient.ProgressiveTerrain</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
+	
+	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
 	<li><a href="../symbols/Function.html">Function</a></li>
 	
@@ -275,6 +285,16 @@ ul.inheritsList
 							</td>
 						</tr>
 					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#TimeLog">TimeLog</a></b>
+								</div>
+								<div class="description">Enables/Disables the logging of Serverrequests,building of terrain etc.</div>
+							</td>
+						</tr>
+					
 					</tbody>
 				</table>
 				
@@ -344,9 +364,36 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setTimeLog">setTimeLog</a></b>(value)
+								</div>
+								<div class="description">Enables or disables the logging.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setView">setView</a></b>(camID)
 								</div>
 								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#timeLogEnd">timeLogEnd</a></b>(eventName)
+								</div>
+								<div class="description">Ends the timer for a logging event with the given name and prints the result.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#timeLogStart">timeLogStart</a></b>(eventName)
+								</div>
+								<div class="description">Starts the timer for a logging event with the given name.</div>
 							</td>
 						</tr>
 					
@@ -445,6 +492,35 @@ ul.inheritsList
 							<dt class="heading">Default Value:</dt>
 							<dd>
 								1000 / 200 on a mobile platform
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="TimeLog"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>TimeLog</b>
+					
+					</div>
+					<div class="description">
+						Enables/Disables the logging of Serverrequests,building of terrain etc.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								false
 							</dd>
 							</dl>
 						
@@ -619,7 +695,7 @@ ul.inheritsList
 					<a name="getMaxResolution"> </a>
 					<div class="fixedFont">
 					
-					
+					<span class="light">{Number}</span>
 					<b>getMaxResolution</b>()
 					
 					</div>
@@ -639,9 +715,45 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd>maximum Resolution</dd>
+								<dd><span class="light fixedFont">{Number}</span> maximum Resolution</dd>
 							
 							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="setTimeLog"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setTimeLog</b>(value)
+					
+					</div>
+					<div class="description">
+						Enables or disables the logging.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- Boolean</dd>
+							
+							</dl>
+						
+						
+						
+						
 						
 						
 						
@@ -669,6 +781,78 @@ ul.inheritsList
 							
 								<dt>
 									<b>camID</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="timeLogEnd"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>timeLogEnd</b>(eventName)
+					
+					</div>
+					<div class="description">
+						Ends the timer for a logging event with the given name and prints the result.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>eventName</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="timeLogStart"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>timeLogStart</b>(eventName)
+					
+					</div>
+					<div class="description">
+						Starts the timer for a logging event with the given name.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>eventName</b>
 									
 								</dt>
 								<dd></dd>
@@ -810,7 +994,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Feb 26 2013 17:55:26 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Mar 19 2013 17:01:14 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>
