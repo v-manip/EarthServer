@@ -66,6 +66,8 @@ EarthServerGenericClient.SceneManager = function()
     this.baseElevation = new Array();
     this.currentUIElement = 0;
 
+    var labelManager = null;
+
     /**
      * @default 1000 / 200 on a mobile platform
      * @type {Number}
@@ -215,6 +217,18 @@ EarthServerGenericClient.SceneManager = function()
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
 
+    };
+
+    //Todo: Insert Labels here!
+    //...
+    this.createLabels = function()
+    {
+        var cubeX = this.cubeSizeX/2.0;
+        var cubeY = this.cubeSizeY/2.0;
+        var cubeZ = this.cubeSizeZ/2.0;
+        var cubeXNeg = -this.cubeSizeX/2.0;
+        var cubeYNeg = -this.cubeSizeY/2.0;
+        var cubeZNeg = -this.cubeSizeZ/2.0;
     };
 
     /**

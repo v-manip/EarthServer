@@ -10,6 +10,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
     XSlider.addListener("hSliderListener", "valuechanged", function(value){
         EarthServerGenericClient_MainScene.updateOffset(0,value);
     });
+
     var startValue = EarthServerGenericClient_MainScene.models[moduleNumber].xOffset * EarthServerGenericClient_MainScene.cubeSizeX;
     XSlider.$value = startValue;
     XSlider.$instantChange = true;
@@ -23,6 +24,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
     YSlider.addListener("hSliderListener", "valuechanged", function(value){
         EarthServerGenericClient_MainScene.updateOffset(1,value);
     });
+
     startValue = EarthServerGenericClient_MainScene.models[moduleNumber].yOffset * EarthServerGenericClient_MainScene.cubeSizeY;
     YSlider.$value = startValue;
     YSlider.$instantChange = true;
@@ -36,6 +38,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
     ZSlider.addListener("hSliderListener", "valuechanged", function(value){
         EarthServerGenericClient_MainScene.updateOffset(2,value);
     });
+
     startValue = EarthServerGenericClient_MainScene.models[moduleNumber].zOffset * EarthServerGenericClient_MainScene.cubeSizeZ;
     ZSlider.$value = startValue;
     ZSlider.$instantChange = true;
@@ -50,6 +53,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
         value = parseFloat(value/100);
         EarthServerGenericClient_MainScene.updateTransparency(value);
     });
+
     startValue = EarthServerGenericClient_MainScene.models[moduleNumber].transparency*100;
     ASlider.$value = startValue;
     ASlider.$instantChange = true;
@@ -69,3 +73,4 @@ EarthServerGenericClient.appendElevationSlider = function(element,moduleNumber){
     ElavationSlider.$instantChange = true;
 
 };
+
