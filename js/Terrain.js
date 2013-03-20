@@ -175,7 +175,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 /**
  * @class This terrain should receive multiple insertLevel calls. It removes the old version
  * and replace it with the new data. It can be used for progressive loading.
- * Example: WCPSDemAlpha with progressive loading using the progressiveWCPSLoader.
+ * Example: WCPSDemAlpha with progressive loading using the progressiveWCPSImageLoader.
  * @augments EarthServerGenericClient.AbstractTerrain
  * @param index - Index of the model using this terrain.
  * @constructor

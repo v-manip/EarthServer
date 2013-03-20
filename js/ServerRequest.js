@@ -1,45 +1,38 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
+/**
+ * Generic Server Response Data object. All requests store the response in an instance of this object.
+ * One instance can be given as parameter for different requests if all requests writes different fields.
+ * Example: One WMS request for the texture and one WCS request for the heightmap.
+ * @constructor
+ */
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          //Heightmap
     this.heightmapUrl = "";         //If available, you can use the link as alternative.
     this.texture = new Image();     //Texture as image object
-    this.texture.crossOrigin = '';
+    this.texture.crossOrigin = '';  //Enable Texture to be edited (for alpha values for example)
     this.textureUrl = "";           //If available, you can use the link as alternative.
-    this.width = 0;                 //Hm width
-    this.height = 0;                //Hm height
-    this.minMSAT = 1000000;
-    this.maxMSAT = -1000000;
-    this.averageMSAT = 0;
-
-    this.texture.crossOrigin = '';
+    this.width = 0;                 //Heightmap width
+    this.height = 0;                //Heightmap height
+    //The information about the heightmap are used to position a module correctly in the fishtank.
+    //The minimum value as offset and the difference between minimum and maximum for scaling.
+    this.minHMvalue =  Number.MAX_VALUE;//Lowest value in the heightmap
+    this.maxHMvalue = -Number.MAX_VALUE;//Highest value in the heigtmap
+    this.averageHMvalue = 0;        //Average value of the heightmap
 };
 
-EarthServerGenericClient.ajaxRequest = function(url, type, dataType, data, callback)
-{
-    $.ajax(
-        {
-            url: url,
-            type: type,
-            dataType: dataType,
-            data: data,
-            success: function(receivedData)
-            {
-                callback(receivedData);
-            },
-            error: function(xhr, ajaxOptions, thrownError)
-            {
-                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
-            }
-        }
-    );
-};
-
+/**
+ * Small helper to synchronise multiple request callbacks. After all callbacks to this helper
+ * are received the the ResponseData object with all response data send to the module.
+ * @param callback - Module which requests the data.
+ * @param numberToCombine - Number of callbacks that shall be received.
+ */
 EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
 {
     var counter = 0;
     this.name = "Combined Callback: " + callback.name;
+    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
 
     this.receiveData = function(data)
     {
@@ -53,6 +46,19 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
 
 };
 
+/**
+ * Requests a WMS image, stores it in the responseData and make the callback once it is loaded.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Coverage/Layer ID.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - The image format that should be returned.
+ * @param BoundingBox - The bounding box of the image.
+ * @param WMSVersion - WMS Version that should be used.
+ * @param width - Width of the response image.
+ * @param height - Height of the response image.
+ */
 EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSVersion,width,height)
 {
     responseData.textureUrl = WMSurl + "?service=WMS&version=" + WMSVersion +"&request=Getmap&layers=" + WMScoverID;
@@ -67,12 +73,22 @@ EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,
     responseData.texture.onerror = function()
     {
         x3dom.debug.logInfo("Could not load Image.");
+        callback.receiveData(responseData);
     };
     responseData.texture.src = responseData.textureUrl;
 
 };
 
-EarthServerGenericClient.getCoverageWCPS = function(callback,responseData,url, query, DemInAlpha)
+/**
+ * Starts a WCPS query and stores the received image in the responseData.
+ * If a dem is encoded in the alpha channel it will be extracted and also stored. Set DemInAlpha Flag in this case.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param url - URL of the WCPS service.
+ * @param query - The WCPS query.
+ * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
+ */
+EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, query, DemInAlpha)
 {
     EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
     try
@@ -107,14 +123,14 @@ EarthServerGenericClient.getCoverageWCPS = function(callback,responseData,url, q
                     var index = i/4;
                     hm[parseInt(index%hm.length)][parseInt(index/hm.length)] = imageData.data[i];
 
-                    if( responseData.minMSAT > imageData.data[i] )
-                    { responseData.minMSAT = imageData.data[i]  }
-                    if( responseData.maxMSAT < imageData.data[i] )
-                    { responseData.maxMSAT = imageData.data[i]  }
+                    if( responseData.minHMvalue > imageData.data[i] )
+                    { responseData.minHMvalue = imageData.data[i]  }
+                    if( responseData.maxHMvalue < imageData.data[i] )
+                    { responseData.maxHMvalue = imageData.data[i]  }
                     total = total + parseFloat(imageData.data[i]);
 
                 }
-                responseData.averageMSAT = parseFloat(total / imageData.data.length);
+                responseData.averageHMvalue = parseFloat(total / imageData.data.length);
                 responseData.heightmap = hm;
             }
 
@@ -126,7 +142,7 @@ EarthServerGenericClient.getCoverageWCPS = function(callback,responseData,url, q
         responseData.texture.onerror = function()
         {
             x3dom.debug.logInfo("ServerRequest::wcpsRequest(): Could not load Image from url " + url + "! Aborted!");
-            callback.receiveData(null);
+            callback.receiveData(responseData);
         };
 
         responseData.textureUrl = url + "?query=" + encodeURI(query);
@@ -134,10 +150,20 @@ EarthServerGenericClient.getCoverageWCPS = function(callback,responseData,url, q
     }
     catch(error)
     {
-        x3dom.debug.logInfo('ServerRequest::getCoverageWCPS(): ' + error);
+        x3dom.debug.logInfo('ServerRequest::getWCPSImage(): ' + error);
+        callback.receiveData(responseData);
     }
 };
 
+/**
+ * Requests a WCS coverage and stores is the heightmap field of the responseData.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WCSurl - URl of the WCS service.
+ * @param WCScoverID - ID of the coverage.
+ * @param WCSBoundingBox - Bounding Box of the area.
+ * @param WCSVersion - Version of used WCS service.
+ */
 EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
 {
     var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
@@ -179,19 +205,19 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
 
                             hm[parseInt(k/(sizeX))][parseInt(k%(sizeX))] = tmp;
 
-                            if (responseData.maxMSAT < tmp)
+                            if (responseData.maxHMvalue < tmp)
                             {
-                                responseData.maxMSAT = parseInt(tmp);
+                                responseData.maxHMvalue = parseInt(tmp);
                             }
-                            if (responseData.minMSAT > tmp)
+                            if (responseData.minHMvalue > tmp)
                             {
-                                responseData.minMSAT = parseInt(tmp);
+                                responseData.minHMvalue = parseInt(tmp);
                             }
                         }
                     }
-                    if(responseData.minMSAT!=0 && responseData.maxMSAT!=0)
+                    if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
                     {
-                        responseData.averageMSAT = (responseData.minMSAT+responseData.maxMSAT)/2;
+                        responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
                     }
                     tuples = null;
                 });
@@ -207,14 +233,29 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
     );
 };
 
-
+/**
+ * Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
+ * If not the terrain is flat.
+ * @param callback - Module that requests the image.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - The WCPS query.
+ */
 EarthServerGenericClient.requestWCPSDemAlpha = function(callback,WCPSurl,WCPSquery)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
-    EarthServerGenericClient.getCoverageWCPS(callback,responseData,WCPSurl,WCPSquery,true);
+    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
 };
 
-EarthServerGenericClient.progressiveWCPSLoader = function(callback,WCPSurl,WCPSqueries)
+/**
+ * The progressive WCPS loader initiate multiple queries consecutively. As soon as one response is received the
+ * next query is executed. Every response is given to the given callback.
+ * Note: The WCPS loader starts with the last query in the array (LIFO).
+ * @param callback - Module that requests the WCPS images.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSqueries - Array of WCPS queries. (LIFO)
+ * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
+ */
+EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,WCPSqueries,DemInAlpha)
 {
     var which = WCPSqueries.length -1;
     //We need one responseData for every query in WCPSqueries
@@ -230,7 +271,7 @@ EarthServerGenericClient.progressiveWCPSLoader = function(callback,WCPSurl,WCPSq
         if(which >= 0)
         {
             EarthServerGenericClient_MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
-            EarthServerGenericClient.getCoverageWCPS(this,responseData[which],WCPSurl,WCPSqueries[which],true);
+            EarthServerGenericClient.getWCPSImage(this,responseData[which],WCPSurl,WCPSqueries[which],DemInAlpha);
         }
     };
     this.receiveData = function(data)
@@ -248,8 +289,7 @@ EarthServerGenericClient.requestWCPSDemWCS = function(callback,WCPSurl,WCPSquery
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
-    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
-    EarthServerGenericClient.getCoverageWCPS(combine,responseData,WCPSurl,WCPSquery,false);
+    EarthServerGenericClient.getWCPSImage(combine,responseData,WCPSurl,WCPSquery,false);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
 };
 
@@ -258,7 +298,6 @@ EarthServerGenericClient.requestWMSDemWCS = function(callback,BoundingBox,ResX,R
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
-    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
 

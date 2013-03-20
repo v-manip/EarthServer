@@ -195,7 +195,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     if( !this.progressiveLoading)
     {   EarthServerGenericClient.requestWCPSDemAlpha(this,this.url,this.wcpsQuery[0]);  }
     else
-    {   EarthServerGenericClient.progressiveWCPSLoader(this,this.url,this.wcpsQuery);   }
+    {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.url,this.wcpsQuery,true);   }
 };
 /**
  * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
@@ -221,8 +221,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             this.placeHolder = null;
         }
 
-        var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild(this.transformNode);
 
         //Set transparency

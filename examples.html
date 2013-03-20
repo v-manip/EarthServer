@@ -34,12 +34,12 @@
             q.setName("BGS High Resolution");
             q.setURL("http://earthserver.bgs.ac.uk/petascope");
             q.setCoverages("bgs_rs", "os_dtm");
-            q.setAreaOfInterest(400000-50000,500000-50000,450000+50000,550000+50000);
+            q.setAreaOfInterest(400000,500000,450000,550000);
             q.setScale(1.0,0.3,1.0);
             q.setResolution(600,600);
             //q.setProgressiveLoading(true);
 
-            var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
+            /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
             WMS.setName("WMS_WCS");
             WMS.setURLs("http://planetserver.jacobs-university.de:8080/petascope/wms","http://planetserver.jacobs-university.de:8080/petascope");
             WMS.setCoverages("galehrsc_wms","galehrscdtm");
@@ -47,7 +47,7 @@
             WMS.setCoordinateReferenceSystem("SRS","EPSG:4326");
             WMS.setAreaOfInterest(137,-6,138,-5);
             WMS.setResolution(1000,1000);
-            WMS.setOffset(0,0.4,0);
+            WMS.setOffset(0,0.4,0);*/
 
             /*var w = new EarthServerGenericClient.Model_WCPSDemAlpha();
              w.setName("BGS Low Resolution");

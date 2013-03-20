@@ -149,8 +149,8 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
             this.placeHolder = null;
         }
 
-        var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
         //Set transparency
