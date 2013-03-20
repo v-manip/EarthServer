@@ -72,7 +72,7 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.TimeLog = false;
 
-    var labelManager = null;
+    var axisLabels = null;
 
     /**
      * @default 1000 / 200 on a mobile platform
@@ -250,16 +250,18 @@ EarthServerGenericClient.SceneManager = function()
 
     };
 
-    //Todo: Insert Labels here!
-    //...
-    this.createLabels = function()
+    /**
+     *
+     */
+    //TODO: Create axis labels
+    this.createAxisLabels = function()
     {
-        var cubeX = this.cubeSizeX/2.0;
-        var cubeY = this.cubeSizeY/2.0;
-        var cubeZ = this.cubeSizeZ/2.0;
-        var cubeXNeg = -this.cubeSizeX/2.0;
-        var cubeYNeg = -this.cubeSizeY/2.0;
-        var cubeZNeg = -this.cubeSizeZ/2.0;
+        var xLabelPos = 0 + " " + (-this.cubeSizeY/2+10) + " " + this.cubeSizeZ/2;
+        var yLabelPos = (this.cubeSizeX/2)-10 + " " + 0 + " " + this.cubeSizeZ/2;
+        var zLabelPos = (this.cubeSizeX/2) + " " + (-this.cubeSizeY/2+10) +  " " + 0;
+
+        axisLabels = new EarthServerGenericClient.AxisLabels(xLabelPos, yLabelPos, zLabelPos);
+        axisLabels.create();
     };
 
     /**
@@ -710,4 +712,67 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          */
         this.transparency = 0;
     };
+};
+
+
+EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+/**
+ * @class AxisLabels
+ * @param xLabelPos
+ * @param yLabelPos
+ * @param zLabelPos
+ */
+EarthServerGenericClient.AxisLabels = function(xLabelPos, yLabelPos, zLabelPos)
+{
+
+    var fontColor = "1 1 0";
+    var fontSize = 50.0;
+
+    this.create = function()
+    {
+        //Front
+        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
+        createLabel(this.yLabel, yLabelPos, "0 0 1 1.57");
+        createLabel(this.zLabel, zLabelPos, "0 1 0 1.57");
+
+/*        //Side
+        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
+        createLabel(this.xLabel, yLabelPos, "0 0 0 0");
+        createLabel(this.xLabel, zLabelPos, "0 0 0 0");
+
+        //Top
+        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
+        createLabel(this.xLabel, zLabelPos, "0 0 0 0");         */
+    };
+
+    function createLabel(label, position, rotation)
+    {
+        var transform = document.createElement('transform');
+        transform.setAttribute('rotation', rotation);
+        transform.setAttribute('translation', position);
+        transform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
+
+        var shape = document.createElement('shape');
+        var appearance = document.createElement('appearance');
+        var material = document.createElement('material');
+        material.setAttribute('emissiveColor', fontColor);
+        var text = document.createElement('text');
+        text.setAttribute('string', label);
+
+        var fontStyle = document.createElement('fontStyle');
+        fontStyle.setAttribute('family', 'calibri');
+        fontStyle.setAttribute('style', 'bold');
+
+        text.appendChild(fontStyle);
+        appearance.appendChild(material);
+        shape.appendChild(appearance);
+        shape.appendChild(text);
+        transform.appendChild(shape);
+
+        var home = document.getElementById('x3dScene');
+        home.appendChild(transform);
+    }
+
+
 };
