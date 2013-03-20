@@ -20,7 +20,7 @@ td
 {
     display: block;
     border: none;
-    position:absolute;
+    position:relative;
     margin: 0px 0px 0px 0px;
     padding:0px;
 }

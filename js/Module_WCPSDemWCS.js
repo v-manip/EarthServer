@@ -88,6 +88,8 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
     if( root === undefined)
         alert("root is not defined");
 
+    EarthServerGenericClient_MainScene.timeLogStart("Create Model " + this.name);
+
     this.cubeSizeX = cubeSizeX;
     this.cubeSizeY = cubeSizeY;
     this.cubeSizeZ = cubeSizeZ;
@@ -150,8 +152,6 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
  */
 EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
 {
-    console.timeEnd(this.name+"_request");
-
     if( data === null)
     { console.log("Model_WCPSDemWCS" + this.name +": Request not successful.");}
     else
@@ -163,15 +163,18 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
             this.placeHolder = null;
         }
 
-        var YResolution = (parseFloat(data.maxMSAT) - parseFloat(data.minMSAT) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minMSAT));
+        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
         //Set transparency
         data.transparency = this.transparency;
         //Create Terrain out of the received data
+        EarthServerGenericClient_MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
         this.terrain.createTerrain();
+        EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
+        EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);
     }
 };
 
