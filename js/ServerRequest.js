@@ -24,7 +24,7 @@ EarthServerGenericClient.ServerResponseData = function () {
 
 /**
  * Small helper to synchronise multiple request callbacks. After all callbacks to this helper
- * are received the the ResponseData object with all response data send to the module.
+ * are received the ResponseData object with all response data is send to the module.
  * @param callback - Module which requests the data.
  * @param numberToCombine - Number of callbacks that shall be received.
  */
@@ -240,7 +240,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
  * @param WCPSurl - URL of the WCPS service.
  * @param WCPSquery - The WCPS query.
  */
-EarthServerGenericClient.requestWCPSDemAlpha = function(callback,WCPSurl,WCPSquery)
+EarthServerGenericClient.requestWCPSImageAlphaDem = function(callback,WCPSurl,WCPSquery)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
@@ -284,7 +284,17 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
     this.makeRequest(which);
 };
 
-EarthServerGenericClient.requestWCPSDemWCS = function(callback,WCPSurl,WCPSquery,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
+/**
+ * Requets an image via WCPS and a dem via WCS.
+ * @param callback - Module requesting this data.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - WCPS Query for the image.
+ * @param WCSurl - URL of the WCS service.
+ * @param WCScoverID - Coverage ID for the WCS height data.
+ * @param WCSBoundingBox - Bounding box of the area used in WCS.
+ * @param WCSVersion - Version of the used WCS.
+ */
+EarthServerGenericClient.requestWCPSImageWCSDem = function(callback,WCPSurl,WCPSquery,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
@@ -293,12 +303,26 @@ EarthServerGenericClient.requestWCPSDemWCS = function(callback,WCPSurl,WCPSquery
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
 };
 
-EarthServerGenericClient.requestWMSDemWCS = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion)
+/**
+ * Requests an image via WMS and a dem via WCS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - Image format for the WMS response.
+ * @param WCSurl - URL of the WCS service.
+ * @param WCScoverID - Coverage ID used in WCS.
+ * @param WCSVersion - Version of the WCS service.
+ */
+EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
-
 };

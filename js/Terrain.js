@@ -7,7 +7,7 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  */
 EarthServerGenericClient.AbstractTerrain = function()
 {
-    var AppearanceDefined = [];
+    var AppearanceDefined = [];//Stores all the already created appearances' names.
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
@@ -37,7 +37,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     };
 
     /**
-     * Calc the needed numbers of chunks for the terrain for a specific chunksize.
+     * Calcs the needed numbers of chunks for the terrain for a specific chunk size.
      * @param width - Width of the entire terrain
      * @param height - Height if the entire terrain
      * @param chunkSize - The size of one chunk
@@ -58,6 +58,42 @@ EarthServerGenericClient.AbstractTerrain = function()
         chunksInfo.numChunks = parseInt(chunksInfo.numChunksY*chunksInfo.numChunksX);
 
         return chunksInfo;
+    };
+
+    /**
+     * This function calcs the needed information to build and place a chunk of a terrain.
+     * @param index - Index of the model using the terrain. Used for creating IDs.
+     * @param chunkSize - The desired size (count of values) of one chunk per axis.
+     * @param chunkInfo - The return of calcNumberOfChunks(). Info about number of chunks on each axis.
+     * @param currentChunk - The index of the current chunk to be build.
+     * @param terrainWidth - Width of the whole terrain. Used to calc texture coordinates.
+     * @param terrainHeight - Height of the whole terrain. Used to calc texture coordinates.
+     * @returns {{xpos: number, ypos: number, chunkWidth: number, chunkHeight: number, terrainWidth: number, terrainHeight: number, ID: number, modelIndex: number}}
+     */
+    this.createChunkInfo = function(index,chunkSize,chunkInfo,currentChunk,terrainWidth,terrainHeight)
+    {
+        var info = {
+            xpos:parseInt(currentChunk%chunkInfo.numChunksX)*(chunkSize-1),
+            ypos:parseInt(currentChunk/chunkInfo.numChunksX)*(chunkSize-1),
+            chunkWidth:0,
+            chunkHeight:0,
+            terrainWidth: terrainWidth,
+            terrainHeight: terrainHeight,
+            ID: currentChunk,
+            modelIndex: index
+        };
+
+        if( currentChunk%chunkInfo.numChunksX === (chunkInfo.numChunksX-1) )
+        {   info.chunkWidth = terrainWidth - parseInt((chunkInfo.numChunksX-1)*chunkSize);   }
+        else
+        {   info.chunkWidth = chunkSize;   }
+
+        if( currentChunk >= chunkInfo.numChunks - chunkInfo.numChunksX)
+        {   info.chunkHeight = terrainHeight - parseInt((chunkInfo.numChunksY-1)*chunkSize); }
+        else
+        {   info.chunkHeight = chunkSize  }
+
+        return info;
     };
 
     /**
@@ -90,7 +126,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * Sets the transparency in all materials of this terrain.
-     * @param value - Transparency value.
+     * @param value - Transparency value between 0 and 1.
      */
     this.setTransparency = function(value)
     {
@@ -117,30 +153,27 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param transparency - Transparency of the appearance.
      * @returns {*} - Array of appearances.
      */
-    this.getAppearances = function(AppearanceName,AppearanceCount,modelIndex,canvasTexture,transparency)
-    {
-        try
-        {
+    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency) {
+        try {
             var appearances = [AppearanceCount];
-            for(var i=0; i<AppearanceCount;i++)
-            {
+            for (var i = 0; i < AppearanceCount; i++) {
                 var appearance = document.createElement('Appearance');
                 appearance.setAttribute('sortType', 'transparent');
 
-                if( AppearanceDefined[AppearanceName] != undefined )//use the already defined appearance
+                if (AppearanceDefined[AppearanceName] != undefined)//use the already defined appearance
                 {
                     appearance.setAttribute("use", AppearanceDefined[AppearanceName]);
                 }
                 else    //create a new appearance with the given parameter
                 {
                     AppearanceDefined[AppearanceName] = AppearanceName;
-                    appearance.setAttribute("id",AppearanceDefined[AppearanceName]);
-                    appearance.setAttribute("def",AppearanceDefined[AppearanceName]);
+                    appearance.setAttribute("id", AppearanceDefined[AppearanceName]);
+                    appearance.setAttribute("def", AppearanceDefined[AppearanceName]);
                     //Set texture
                     var texture = document.createElement('Texture');
                     texture.setAttribute('hideChildren', 'true');
-                    texture.setAttribute("repeatS",'true');
-                    texture.setAttribute("repeatT",'true');
+                    texture.setAttribute("repeatS", 'true');
+                    texture.setAttribute("repeatT", 'true');
 
                     texture.appendChild(canvasTexture);
 
@@ -148,28 +181,25 @@ EarthServerGenericClient.AbstractTerrain = function()
                     imageTransform.setAttribute("scale", "1,-1");
 
                     var material = document.createElement('material');
-                    //material.setAttribute('specularColor', '0.0 0.0 0.0');
-                    //material.setAttribute('diffuseColor', '0.8 0.8 0.8');
                     material.setAttribute("specularColor", "0.1,0.1,0.1");
                     material.setAttribute("diffuseColor", "0.4,0.4,0.4");
                     material.setAttribute('transparency', transparency);
-                    this.materialNodes.push( material);
+                    //Save this material to change transparency during runtime
+                    this.materialNodes.push(material);
 
                     appearance.appendChild(material);
                     appearance.appendChild(imageTransform);
                     appearance.appendChild(texture);
                 }
-                appearances[i]=appearance;
+                appearances[i] = appearance;
             }
             return appearances;
         }
-        catch(error)
-        {
+        catch (error) {
             alert('AbstractTerrain::getAppearances(): ' + error);
             return null;
         }
-    }
-
+    };
 };
 
 /**
@@ -182,24 +212,23 @@ EarthServerGenericClient.AbstractTerrain = function()
  */
 EarthServerGenericClient.ProgressiveTerrain = function(index)
 {
-    var chunkInfo;
-    var chunkSize = 256;
-    var canvasTexture;
-    var currentData = 0;
-    this.materialNodes = [];
+    var chunkInfo;          //General information about the amount of chunks needed to build the terrain
+    var chunkSize = 256;    //Size of one chunk. Chunks at the borders can be smaller. 256*256=2^16 is the max size because of only 16 bit indices.
+    var canvasTexture;      //The canvas that holds the received image.
+    var currentData = 0;    //Counter of the inserted levels.
+    this.materialNodes = [];//Pointers to all created materials in getAppearances() are stored here. Used to change the transparency.
 
     /**
-     * Insert one data level into the scene. The old elevation grids will be removed and new ones build.
+     * Insert one data level into the scene. The old elevation grid will be removed and one new build.
      * @param root - Dom Element to append the terrain to.
      * @param data - Received Data of the Server request.
-     * @returns {null}
      */
     this.insertLevel = function(root,data)
     {
         canvasTexture = this.createCanvas(data.texture,index);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
-        //Remove all childs
+        //Remove older levels and replace it later with the new data
         while (root.firstChild)
         {
             root.removeChild(root.firstChild);
@@ -209,34 +238,14 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
         {
             try
             {
-                var info = {
-                    xpos:parseInt(currentChunk%chunkInfo.numChunksX)*(chunkSize-1),
-                    ypos:parseInt(currentChunk/chunkInfo.numChunksX)*(chunkSize-1),
-                    chunkWidth:0,
-                    chunkHeight:0,
-                    terrainWidth: data.width,
-                    terrainHeight: data.height,
-                    ID: currentChunk,
-                    modelIndex: index
-                };
-
-                if( currentChunk%chunkInfo.numChunksX === (chunkInfo.numChunksX-1) )
-                {   info.chunkWidth = data.width - parseInt((chunkInfo.numChunksX-1)*chunkSize);   }
-                else
-                {   info.chunkWidth = chunkSize;   }
-
-                if( currentChunk >= chunkInfo.numChunks - chunkInfo.numChunksX)
-                {   info.chunkHeight = data.height - parseInt((chunkInfo.numChunksY-1)*chunkSize); }
-                else
-                {   info.chunkHeight = chunkSize  }
-
+                //Build all necessary information and values to create a chunk
+                var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
+                var hm = this.getHeightMap(info,data.heightmap);
+                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
                 transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
                 transform.setAttribute("scale", "1.0 1.0 1.0");
-
-                var hm = this.getHeightMap(info,data.heightmap);           //create height map
-                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,canvasTexture,data.transparency);
 
                 new ElevationGrid(transform,info, hm, appearance);
 
@@ -264,47 +273,36 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  */
 EarthServerGenericClient.LODTerrain = function(root, data,index)
 {
-    var lodRange1       = 2000;
-    var lodRange2       = 10000;
+    var lodRange1       = 2000; //Distance to change between Full and 1/2 resolution.
+    var lodRange2       = 10000;//Distance to change between 1/2 and 1/4 resolution.
 
+    //The canvas that holds the received image.
     var canvasTexture   = this.createCanvas( data.texture,index);
-    var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,252);
+    /* Size of one chunk. Chunks at the borders can be smaller.
+     * We want to build 3 chunks for the LOD with different resolution but the same size on the screen.
+     * With 253 values the length of the most detailed chunk is 252.
+     * The second chunk has 127 values and the length of 126. With a scale of 2 it's back to the size of 252.
+     * The third chunk has 64 values and the length if 63. With a scale of 4 it's also back to the size 252.
+     */
+    var chunkSize = 253;
+    //General information about the amount of chunks needed to build the terrain
+    var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
-    var chunkArray      = [chunkInfo.numChunks];
-    this.materialNodes = [];
+    this.materialNodes = [];//Pointers to all created materials in getAppearances() are stored here. Used to change the transparency.
 
     /**
      * Builds the terrain and appends into the scene.
-     * @returns {null}
      */
     this.createTerrain= function()
     {
-
         for(var currentChunk=0; currentChunk< chunkInfo.numChunks;currentChunk++)
         {
             try
             {
-                var info = {
-                    xpos:parseInt(currentChunk%chunkInfo.numChunksX)*252,
-                    ypos:parseInt(currentChunk/chunkInfo.numChunksX)*252,
-                    chunkWidth:0,
-                    chunkHeight:0,
-                    terrainWidth: data.width,
-                    terrainHeight: data.height,
-                    ID:currentChunk,
-                    modelIndex: index
-                };
-
-
-                if( currentChunk%chunkInfo.numChunksX === (chunkInfo.numChunksX-1) )
-                {   info.chunkWidth = data.width - parseInt((chunkInfo.numChunksX-1)*252);   }
-                else
-                {   info.chunkWidth = 253;   }
-
-                if( currentChunk >= chunkInfo.numChunks - chunkInfo.numChunksX)
-                {   info.chunkHeight = data.height - parseInt((chunkInfo.numChunksY-1)*252); }
-                else
-                {   info.chunkHeight = 253;  }
+                //Build all necessary information and values to create a chunk
+                var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
+                var hm = this.getHeightMap(info,data.heightmap);
+                var appearance = this.getAppearances("TerrainApp_"+index,3,index,canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
                 transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -314,10 +312,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
                 lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
                 lodNode.setAttribute("id", 'lod' + info.ID);
 
-                var hm = this.getHeightMap(info,data.heightmap);           //create height map
-                var appearance = this.getAppearances("TerrainApp_"+index,3,index,canvasTexture,data.transparency);      //create chunk appearance
-
-                chunkArray[currentChunk] = new ElevationGrid(lodNode,info, hm, appearance);
+                new ElevationGrid(lodNode,info, hm, appearance);
                 transform.appendChild(lodNode);
                 root.appendChild(transform);
             }
@@ -326,15 +321,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
                 alert('Terrain::CreateNewChunk(): ' + error);
             }
         }
-    };
-
-    this.destructor = function()
-    {
-        for(var i=0; i<chunkInfo.numChunks; i++)
-        {
-            chunkArray[i].destructor();
-        }
-        chunkArray = {};
     };
 };
 EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);

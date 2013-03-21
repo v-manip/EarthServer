@@ -142,7 +142,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
         minLatitude:  this.minx,
         maxLatitude:  this.maxx
     };
-    EarthServerGenericClient.requestWCPSDemWCS(this,this.URLWCPS,this.wcpsQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
+    EarthServerGenericClient.requestWCPSImageWCSDem(this,this.URLWCPS,this.wcpsQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
 };
 
 /**

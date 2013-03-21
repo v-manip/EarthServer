@@ -126,7 +126,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, in
         maxLatitude:  this.maxx
     };
 
-    EarthServerGenericClient.requestWMSDemWCS(this,bb,this.XResolution,this.ZResolution,
+    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
                                                 this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
                                                 this.URLDEM,this.coverageDEM,this.WCSVersion);
 };

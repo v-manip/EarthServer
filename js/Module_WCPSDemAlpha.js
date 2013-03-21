@@ -193,7 +193,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
 
     //3: Make ServerRequest and receive data.
     if( !this.progressiveLoading)
-    {   EarthServerGenericClient.requestWCPSDemAlpha(this,this.url,this.wcpsQuery[0]);  }
+    {   EarthServerGenericClient.requestWCPSImageAlphaDem(this,this.url,this.wcpsQuery[0]);  }
     else
     {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.url,this.wcpsQuery,true);   }
 };
