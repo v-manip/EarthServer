@@ -197,6 +197,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
@@ -209,9 +211,9 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
 	
-	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
-	<li><a href="../symbols/Function.html">Function</a></li>
+	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
 </ul>
 <hr />
@@ -233,7 +235,7 @@ ul.inheritsList
 				SceneManager is the main class of the unified client.All scene models are registered in this class with the add() function.The createScene() function creates a x3dom scene with all scene models.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneModules.js.html">SceneModules.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
 				
 			</p>
 
@@ -295,6 +297,36 @@ ul.inheritsList
 							</td>
 						</tr>
 					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#xLabel">xLabel</a></b>
+								</div>
+								<div class="description">Name of the X-Axis to be displayed.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#yLabel">yLabel</a></b>
+								</div>
+								<div class="description">Name of the Y-Axis to be displayed.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#zLabel">zLabel</a></b>
+								</div>
+								<div class="description">Name of the Z-Axis to be displayed.</div>
+							</td>
+						</tr>
+					
 					</tbody>
 				</table>
 				
@@ -322,6 +354,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addModel">addModel</a></b>(model)
 								</div>
 								<div class="description">Adds any scene model to the scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createAxisLabels">createAxisLabels</a></b>()
+								</div>
+								<div class="description"></div>
 							</td>
 						</tr>
 					
@@ -364,18 +405,18 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setTimeLog">setTimeLog</a></b>(value)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setAxisLabels">setAxisLabels</a></b>(xLabel, yLabel, zLabel)
 								</div>
-								<div class="description">Enables or disables the logging.</div>
+								<div class="description">Sets the names of the axes to be displayed.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setView">setView</a></b>(camID)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setTimeLog">setTimeLog</a></b>(value)
 								</div>
-								<div class="description"></div>
+								<div class="description">Enables or disables the logging.</div>
 							</td>
 						</tr>
 					
@@ -525,6 +566,93 @@ ul.inheritsList
 							</dl>
 						
 
+					<hr />
+				
+					<a name="xLabel"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>xLabel</b>
+					
+					</div>
+					<div class="description">
+						Name of the X-Axis to be displayed.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								"x"
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="yLabel"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>yLabel</b>
+					
+					</div>
+					<div class="description">
+						Name of the Y-Axis to be displayed.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								"y"
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="zLabel"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>zLabel</b>
+					
+					</div>
+					<div class="description">
+						Name of the Z-Axis to be displayed.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								"z"
+							</dd>
+							</dl>
+						
+
 					
 				
 			
@@ -561,6 +689,31 @@ ul.inheritsList
 								<dd>- any scene model.</dd>
 							
 							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="createAxisLabels"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>createAxisLabels</b>()
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+					
 						
 						
 						
@@ -724,6 +877,54 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="setAxisLabels"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setAxisLabels</b>(xLabel, yLabel, zLabel)
+					
+					</div>
+					<div class="description">
+						Sets the names of the axes to be displayed.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>xLabel</b>
+									
+								</dt>
+								<dd>- width</dd>
+							
+								<dt>
+									<b>yLabel</b>
+									
+								</dt>
+								<dd>- height</dd>
+							
+								<dt>
+									<b>zLabel</b>
+									
+								</dt>
+								<dd>- depth</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="setTimeLog"> </a>
 					<div class="fixedFont">
 					
@@ -748,42 +949,6 @@ ul.inheritsList
 									
 								</dt>
 								<dd>- Boolean</dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="setView"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>setView</b>(camID)
-					
-					</div>
-					<div class="description">
-						
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>camID</b>
-									
-								</dt>
-								<dd></dd>
 							
 							</dl>
 						
@@ -994,7 +1159,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Mar 19 2013 17:01:14 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Mar 25 2013 15:42:06 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>
