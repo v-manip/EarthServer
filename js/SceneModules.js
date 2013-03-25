@@ -4,11 +4,6 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
-*	@deprecated For test only! Delete me please.
-*/
-var useess = undefined;
-
-/**
  * @ignore Just Inheritance Helper
  */
 Function.prototype.inheritsFrom = function( parentClassOrObject )
@@ -175,6 +170,10 @@ EarthServerGenericClient.SceneManager = function()
         this.modelLoadingProgress[model.modelID] = 0;
     };
 
+    /**
+     * Sets the view of the X3Dom window to the predefined camera.
+     * @param camID - ID of the Camera dom object.
+     */
     this.setView =function(camID)
     {
         var cam = document.getElementById(camID);
@@ -304,7 +303,7 @@ EarthServerGenericClient.SceneManager = function()
     /**
      *
      */
-    //TODO: Create axis labels
+    //TODO: Create axis labels ? Move to createScene?
     this.createAxisLabels = function()
     {
         axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
@@ -490,7 +489,7 @@ EarthServerGenericClient.SceneManager = function()
         div1 = document.getElementById("EarthServerGenericClient_SPECIFICDiv_0");
         div1.setAttribute("class", "active");
         div1.style.display = "block";
-    }
+    };
 
     /**
      * Sets the names of the axes to be displayed.
@@ -774,8 +773,6 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 };
 
 
-//EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-
 /**
  * @class AxisLabels
  * @param xSize
@@ -827,7 +824,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         textTransform.appendChild(shape);
 
         var home = document.getElementById('x3dScene');
-        var rotTransform = document.createElement('transform');
+        var rootTransform = document.createElement('transform');
 
         if(axis=="x")
         {
@@ -836,13 +833,13 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 0 1 3.14');
             if(side=="back")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
                 textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
         }
         else if(axis=="y")
@@ -854,15 +851,15 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             {
                 textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
-                rotTransform.setAttribute('rotation', '1 0 0 3.14');
+                rootTransform.setAttribute('rotation', '1 0 0 3.14');
             }
             else if(side=="left")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 -1.57');
+                rootTransform.setAttribute('rotation', '0 1 0 -1.57');
             }
             else if(side=="right")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 1.57');
+                rootTransform.setAttribute('rotation', '0 1 0 1.57');
             }
         }
         else if(axis=="z")
@@ -871,19 +868,19 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '0 1 0 1.57');
                 textTransform.setAttribute('translation', "0 0 0");
 
-                rotTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rotTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+                rootTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rootTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
             }
         }
 
-        rotTransform.appendChild(textTransform);
-        home.appendChild(rotTransform);
+        rootTransform.appendChild(textTransform);
+        home.appendChild(rootTransform);
     }
 };
