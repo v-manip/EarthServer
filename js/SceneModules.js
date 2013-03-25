@@ -72,6 +72,29 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.TimeLog = false;
 
+    var axisLabels = null;
+
+    /**
+     * Name of the X-Axis to be displayed.
+     * @default "x"
+     * @type {String}
+     */
+    this.xLabel = "X";
+
+    /**
+     * Name of the Y-Axis to be displayed.
+     * @default "y"
+     * @type {String}
+     */
+    this.yLabel = "Y";
+
+    /**
+     * Name of the Z-Axis to be displayed.
+     * @default "z"
+     * @type {String}
+     */
+    this.zLabel = "Z";
+
     /**
      * @default 1000 / 200 on a mobile platform
      * @type {Number}
@@ -171,7 +194,7 @@ EarthServerGenericClient.SceneManager = function()
         cam1.setAttribute("position", "0 0 " + this.cubeSizeZ*2);
         var cam2 = document.createElement('Viewpoint');
         cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
-        cam2.setAttribute("position", "0 " + this.cubeSizeY*2 + " 0");
+        cam2.setAttribute("position", "0 " + this.cubeSizeY*2.5 + " 0");
         cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
         var cam3 = document.createElement('Viewpoint');
         cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
@@ -246,6 +269,17 @@ EarthServerGenericClient.SceneManager = function()
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
 
+
+    };
+
+    /**
+     *
+     */
+    //TODO: Create axis labels
+    this.createAxisLabels = function()
+    {
+        axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
+        axisLabels.create();
     };
 
     /**
@@ -428,6 +462,20 @@ EarthServerGenericClient.SceneManager = function()
         div1.setAttribute("class", "active");
         div1.style.display = "block";
     }
+
+    /**
+     * Sets the names of the axes to be displayed.
+     * @param xLabel - width
+     * @param yLabel - height
+     * @param zLabel - depth
+     */
+    this.setAxisLabels = function( xLabel, yLabel, zLabel){
+        this.xLabel = String(xLabel);
+        this.yLabel = String(yLabel);
+        this.zLabel = String(zLabel);
+    };
+
+
 };
 
 /**
@@ -470,17 +518,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         {   this.ZResolution = maxResolution;   }
 
     };
-    /**
-     * Sets the names of the axes to be displayed [Not used yet]
-     * @param xLabel - width
-     * @param yLabel - height
-     * @param zLabel - depth
-     */
-    this.setAxisLabels = function( xLabel, yLabel, zLabel){
-        this.xLabel = String(xLabel);
-        this.yLabel = String(yLabel);
-        this.zLabel = String(zLabel);
-    };
+
     /**
      * Sets the position of the scene model within the fishtank/cube. Values between [0-1]
      * @param xOffset - Offset on the x-axis/width  Default:0
@@ -619,26 +657,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          */
         this.ZResolution = 500;
 
-        /**
-         * Name of the X-Axis to be displayed.
-         * @default "x"
-         * @type {String}
-         */
-        this.xLabel = "x";
 
-        /**
-         * Name of the Y-Axis to be displayed.
-         * @default "y"
-         * @type {String}
-         */
-        this.yLabel = "y";
-
-        /**
-         * Name of the Z-Axis to be displayed.
-         * @default "z"
-         * @type {String}
-         */
-        this.zLabel = "z";
 
         /**
          * Offset on the X-Axis for the model.
@@ -696,4 +715,119 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          */
         this.transparency = 0;
     };
+};
+
+
+//EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+/**
+ * @class AxisLabels
+ * @param xSize
+ * @param ySize
+ * @param zSize
+ *
+ */
+EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
+{
+    var fontColor = "1 1 0";
+    var fontSize = 50.0;
+    //var transforms = new Array()
+
+    //TODO: CREATE
+    this.create = function()
+    {
+        createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
+        createLabel("x", "back",  EarthServerGenericClient_MainScene.xLabel);
+        createLabel("x", "top",   EarthServerGenericClient_MainScene.xLabel);
+
+        createLabel("y", "front", EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "back",  EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "left",  EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "right", EarthServerGenericClient_MainScene.yLabel);
+
+        createLabel("z", "front", EarthServerGenericClient_MainScene.zLabel);
+        createLabel("z", "back",  EarthServerGenericClient_MainScene.zLabel);
+        createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
+    };
+
+    function createLabel(axis, side, label)
+    {
+        //Setup text
+        var textTransform = document.createElement('transform');
+        textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
+        var shape = document.createElement('shape');
+        var appearance = document.createElement('appearance');
+        var material = document.createElement('material');
+        material.setAttribute('emissiveColor', fontColor);
+        var text = document.createElement('text');
+        text.setAttribute('string', label);
+        var fontStyle = document.createElement('fontStyle');
+        fontStyle.setAttribute('family', 'calibri');
+        fontStyle.setAttribute('style', 'bold');
+        text.appendChild(fontStyle);
+        appearance.appendChild(material);
+        shape.appendChild(appearance);
+        shape.appendChild(text);
+        textTransform.appendChild(shape);
+
+        var home = document.getElementById('x3dScene');
+        var rotTransform = document.createElement('transform');
+
+        if(axis=="x")
+        {
+            textTransform.setAttribute('translation', "0 " + -(ySize+fontSize) + " " + zSize);
+            textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
+            textTransform.setAttribute('rotation', '0 0 1 3.14');
+            if(side=="back")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '1 0 0 -1.57');
+                textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+        }
+        else if(axis=="y")
+        {
+            textTransform.setAttribute('translation', -(xSize+fontSize/2) + " 0 " + zSize);
+            textTransform.setAttribute('rotation', '0 0 1 1.57');
+
+            if(side=="back")
+            {
+                textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
+                textTransform.setAttribute('rotation', '0 0 1 4.74');
+                rotTransform.setAttribute('rotation', '1 0 0 3.14');
+            }
+            else if(side=="left")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 -1.57');
+            }
+            else if(side=="right")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 1.57');
+            }
+        }
+        else if(axis=="z")
+        {
+            textTransform.setAttribute('translation', xSize + " " + -(ySize+fontSize) + " 0");
+            textTransform.setAttribute('rotation', '0 1 0 1.57');
+            if(side=="back")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '0 1 0 1.57');
+                textTransform.setAttribute('translation', "0 0 0");
+
+                rotTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+            }
+        }
+
+        rotTransform.appendChild(textTransform);
+        home.appendChild(rotTransform);
+    }
 };
