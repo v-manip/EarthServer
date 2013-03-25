@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - EarthServerGenericClient.AbstractSceneModel</title>
+		<title>JsDoc Reference - EarthServerGenericClient.Model_WMSDemWCS</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -224,24 +224,26 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Class EarthServerGenericClient.AbstractSceneModel
+				Class EarthServerGenericClient.Model_WMSDemWCS
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
 			<p class="description">
 				
+				<br />Extends
+					<a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>.<br />
 				
 			
-				Abstract base class for scene models.
+				Scene Model: WMS Image with DEM from WCS Query2 URLs for the service, 2 Coverage names for the image and dem.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__Module_WMSDemWCS.js.html">Module_WMSDemWCS.js</a>.
 				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
 			
-			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class EarthServerGenericClient.AbstractSceneModel.">
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class EarthServerGenericClient.Model_WMSDemWCS.">
 				<caption>Class Summary</caption>
 				<thead>
 					<tr>
@@ -254,7 +256,7 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#constructor">EarthServerGenericClient.AbstractSceneModel</a></b>()
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#constructor">EarthServerGenericClient.Model_WMSDemWCS</a></b>()
 							</div>
 							<div class="description"></div>
 						</td>
@@ -267,7 +269,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.AbstractSceneModel.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.Model_WMSDemWCS.">
 					<caption>Field Summary</caption>
 					<thead>
 						<tr>
@@ -281,9 +283,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#imageFormat">imageFormat</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#coverageDEM">coverageDEM</a></b>
 								</div>
-								<div class="description">The used Image format (if one is used)</div>
+								<div class="description">Name if the dem coverage.</div>
 							</td>
 						</tr>
 					
@@ -291,9 +293,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#name">name</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#coverageImage">coverageImage</a></b>
 								</div>
-								<div class="description">Name of the model.</div>
+								<div class="description">Name of the image coverage.</div>
 							</td>
 						</tr>
 					
@@ -301,9 +303,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#transparency">transparency</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#URLDEM">URLDEM</a></b>
 								</div>
-								<div class="description">The Transparency of the model.</div>
+								<div class="description">URL for the WCS service.</div>
 							</td>
 						</tr>
 					
@@ -311,9 +313,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xOffset">xOffset</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#URLWMS">URLWMS</a></b>
 								</div>
-								<div class="description">Offset on the X-Axis for the model.</div>
+								<div class="description">URL for the WMS service.</div>
 							</td>
 						</tr>
 					
@@ -321,9 +323,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#XResolution">XResolution</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#WCSVersion">WCSVersion</a></b>
 								</div>
-								<div class="description">Resolution for the latitude.</div>
+								<div class="description">WCS version for the query.</div>
 							</td>
 						</tr>
 					
@@ -331,59 +333,9 @@ ul.inheritsList
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xScale">xScale</a></b>
+								<b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#WMSVersion">WMSVersion</a></b>
 								</div>
-								<div class="description">The models dimension compared to the whole cube on the X-Axis.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yOffset">yOffset</a></b>
-								</div>
-								<div class="description">Offset on the Y-Axis for the model.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yScale">yScale</a></b>
-								</div>
-								<div class="description">The models dimension compared to the whole cube on the Y-Axis.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zOffset">zOffset</a></b>
-								</div>
-								<div class="description">Offset on the Z-Axis for the model.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#ZResolution">ZResolution</a></b>
-								</div>
-								<div class="description">Resolution for the longitude</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zScale">zScale</a></b>
-								</div>
-								<div class="description">The models dimension compared to the whole cube on the Z-Axis.</div>
+								<div class="description">WMS version for the query.</div>
 							</td>
 						</tr>
 					
@@ -392,13 +344,17 @@ ul.inheritsList
 				
 				
 				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#imageFormat">imageFormat</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#name">name</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#transparency">transparency</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xOffset">xOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#XResolution">XResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#xScale">xScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yOffset">yOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#yScale">yScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zOffset">zOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#ZResolution">ZResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#zScale">zScale</a></dd>
+				</dl>
+				
 			
 
 <!-- ============================== methods summary ======================== -->
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class EarthServerGenericClient.AbstractSceneModel.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class EarthServerGenericClient.Model_WMSDemWCS.">
 					<caption>Method Summary</caption>
 					<thead>
 						<tr>
@@ -411,90 +367,81 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createPlaceHolder">createPlaceHolder</a></b>()
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#createModel">createModel</a></b>(root, cubeSizeX, cubeSizeY, cubeSizeZ, index)
 								</div>
-								<div class="description">This creates a placeholder Element for the model.</div>
+								<div class="description">Creates the x3d geometry and appends it to the given root node.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createTransform">createTransform</a></b>(XRes, YRes, ZRes, minvalue)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#receiveData">receiveData</a></b>(data)
 								</div>
-								<div class="description">Creates the transform for the scene model to fit into the fishtank/cube.</div>
+								<div class="description">This is a callback method as soon as the ServerRequest in createModel() has received it's data.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAreaOfInterest">setAreaOfInterest</a></b>(minx, miny, maxx, maxy)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setCoordinateReferenceSystem">setCoordinateReferenceSystem</a></b>(System, value)
 								</div>
-								<div class="description">Sets the area of interest for the model.</div>
+								<div class="description">Sets the Coordinate Reference System.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setDefaults">setDefaults</a></b>()
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setCoverages">setCoverages</a></b>(coverageImage, coverageDem)
 								</div>
-								<div class="description">Sets the default values.</div>
+								<div class="description">Sets both coveragenames</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setImageFormat">setImageFormat</a></b>(imageFormat)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setSpecificElement">setSpecificElement</a></b>(element, modelNumber)
 								</div>
-								<div class="description">Sets the image format for the server request.</div>
+								<div class="description">Every Scene Model creates it's own specific UI elements.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setName">setName</a></b>(modelName)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setURLs">setURLs</a></b>(WMSurl, demurl)
 								</div>
-								<div class="description">Sets the name of the scene model to be displayed.</div>
+								<div class="description">Sets the url for both the WMS and WCS Queries.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setOffset">setOffset</a></b>(xOffset, yOffset, zOffset)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setWCSVersion">setWCSVersion</a></b>(version)
 								</div>
-								<div class="description">Sets the position of the scene model within the fishtank/cube.</div>
+								<div class="description">Sets the WCS Version for the WCS Query String.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setResolution">setResolution</a></b>(xRes, zRes)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#setWMSVersion">setWMSVersion</a></b>(version)
 								</div>
-								<div class="description">Sets the resolution of the scene model (if possible).</div>
+								<div class="description">Sets the WMS Version for the WMS Query String.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setScale">setScale</a></b>(xScale, yScale, zScale)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html#updateTransparency">updateTransparency</a></b>(transparency)
 								</div>
-								<div class="description">Sets the size of the scene model compared to the fishtank/cube.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setTransparency">setTransparency</a></b>(transparency)
-								</div>
-								<div class="description">Sets the transparency of the scene model.</div>
+								<div class="description">Updates the transparency of the scene model.</div>
 							</td>
 						</tr>
 					
@@ -502,6 +449,10 @@ ul.inheritsList
 				</table>
 				
 				
+				
+				<dl class="inheritsList">
+				<dt>Methods borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createPlaceHolder">createPlaceHolder</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createTransform">createTransform</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAreaOfInterest">setAreaOfInterest</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setDefaults">setDefaults</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setImageFormat">setImageFormat</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setName">setName</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setOffset">setOffset</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setResolution">setResolution</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setScale">setScale</a>, <a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setTransparency">setTransparency</a></dd>
+				</dl>
 				
 			
 <!-- ============================== events summary ======================== -->
@@ -515,7 +466,7 @@ ul.inheritsList
 				</div>
 				
 				<div class="fixedFont">
-						<b>EarthServerGenericClient.AbstractSceneModel</b>()
+						<b>EarthServerGenericClient.Model_WMSDemWCS</b>()
 				</div>
 				
 				<div class="description">
@@ -543,15 +494,103 @@ ul.inheritsList
 					Field Detail
 				</div>
 				
-					<a name="imageFormat"> </a>
+					<a name="coverageDEM"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>imageFormat</b>
+					<b>coverageDEM</b>
 					
 					</div>
 					<div class="description">
-						The used Image format (if one is used)
+						Name if the dem coverage.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="coverageImage"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>coverageImage</b>
+					
+					</div>
+					<div class="description">
+						Name of the image coverage.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="URLDEM"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>URLDEM</b>
+					
+					</div>
+					<div class="description">
+						URL for the WCS service.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="URLWMS"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>URLWMS</b>
+					
+					</div>
+					<div class="description">
+						URL for the WMS service.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="WCSVersion"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>WCSVersion</b>
+					
+					</div>
+					<div class="description">
+						WCS version for the query.
 						
 						
 					</div>
@@ -565,22 +604,22 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Default Value:</dt>
 							<dd>
-								"png"
+								"2.0.0"
 							</dd>
 							</dl>
 						
 
 					<hr />
 				
-					<a name="name"> </a>
+					<a name="WMSVersion"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>name</b>
+					<b>WMSVersion</b>
 					
 					</div>
 					<div class="description">
-						Name of the model. This will be display in the UI.
+						WMS version for the query.
 						
 						
 					</div>
@@ -594,268 +633,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Default Value:</dt>
 							<dd>
-								Name is given by the module
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="transparency"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>transparency</b>
-					
-					</div>
-					<div class="description">
-						The Transparency of the model.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="xOffset"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>xOffset</b>
-					
-					</div>
-					<div class="description">
-						Offset on the X-Axis for the model.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="XResolution"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>XResolution</b>
-					
-					</div>
-					<div class="description">
-						Resolution for the latitude.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								500
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="xScale"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>xScale</b>
-					
-					</div>
-					<div class="description">
-						The models dimension compared to the whole cube on the X-Axis.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								1
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="yOffset"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>yOffset</b>
-					
-					</div>
-					<div class="description">
-						Offset on the Y-Axis for the model.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="yScale"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>yScale</b>
-					
-					</div>
-					<div class="description">
-						The models dimension compared to the whole cube on the Y-Axis.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0.3
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="zOffset"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>zOffset</b>
-					
-					</div>
-					<div class="description">
-						Offset on the Z-Axis for the model.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="ZResolution"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>ZResolution</b>
-					
-					</div>
-					<div class="description">
-						Resolution for the longitude
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								500
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="zScale"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>zScale</b>
-					
-					</div>
-					<div class="description">
-						The models dimension compared to the whole cube on the Z-Axis.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								1
+								"1.3"
 							</dd>
 							</dl>
 						
@@ -870,47 +648,15 @@ ul.inheritsList
 					Method Detail
 				</div>
 				
-					<a name="createPlaceHolder"> </a>
+					<a name="createModel"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{HTMLElement}</span>
-					<b>createPlaceHolder</b>()
+					
+					<b>createModel</b>(root, cubeSizeX, cubeSizeY, cubeSizeZ, index)
 					
 					</div>
 					<div class="description">
-						This creates a placeholder Element for the model. It consists of an simple quad.Models that use this placeholder should remove it of course.
-						
-						
-					</div>
-					
-					
-					
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd><span class="light fixedFont">{HTMLElement}</span> </dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name="createTransform"> </a>
-					<div class="fixedFont">
-					
-					<span class="light">{Element}</span>
-					<b>createTransform</b>(XRes, YRes, ZRes, minvalue)
-					
-					</div>
-					<div class="description">
-						Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically bythe scene model.
+						Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
 						
 						
 					</div>
@@ -922,89 +668,34 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>XRes</b>
+									<b>root</b>
 									
 								</dt>
-								<dd>- Size of the received data on the x-axis (e.g. the requested DEM )</dd>
+								<dd>- X3D node to append the model.</dd>
 							
 								<dt>
-									<b>YRes</b>
+									<b>cubeSizeX</b>
 									
 								</dt>
-								<dd>- Size of the received data on the y-axis</dd>
+								<dd>- Size of the fishtank/cube on the x-axis.</dd>
 							
 								<dt>
-									<b>ZRes</b>
+									<b>cubeSizeY</b>
 									
 								</dt>
-								<dd>- Size of the received data on the z-axis</dd>
+								<dd>- Size of the fishtank/cube on the y-axis.</dd>
 							
 								<dt>
-									<b>minvalue</b>
+									<b>cubeSizeZ</b>
 									
 								</dt>
-								<dd>- Minimum Value of the along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)</dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd><span class="light fixedFont">{Element}</span> </dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name="setAreaOfInterest"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>setAreaOfInterest</b>(minx, miny, maxx, maxy)
-					
-					</div>
-					<div class="description">
-						Sets the area of interest for the model. (Lower Corner, Upper Corner)
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
+								<dd>- Size of the fishtank/cube on the z-axis.</dd>
 							
 								<dt>
-									<b>minx</b>
+									<b>index</b>
 									
 								</dt>
-								<dd>- Minimum/Lower Latitude</dd>
-							
-								<dt>
-									<b>miny</b>
-									
-								</dt>
-								<dd>- Minimum/Lower Longitude</dd>
-							
-								<dt>
-									<b>maxx</b>
-									
-								</dt>
-								<dd>- Maximum/Upper Latitude</dd>
-							
-								<dt>
-									<b>maxy</b>
-									
-								</dt>
-								<dd>- Maximum/Upper Longitude</dd>
+								<dd>- Index of this model in the SceneManager list.</dd>
 							
 							</dl>
 						
@@ -1017,40 +708,15 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setDefaults"> </a>
+					<a name="receiveData"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setDefaults</b>()
+					<b>receiveData</b>(data)
 					
 					</div>
 					<div class="description">
-						Sets the default values. This is done automatically by the scene model.
-						
-						
-					</div>
-					
-					
-					
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="setImageFormat"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>setImageFormat</b>(imageFormat)
-					
-					</div>
-					<div class="description">
-						Sets the image format for the server request.
+						This is a callback method as soon as the ServerRequest in createModel() has received it's data.This is done automatically.
 						
 						
 					</div>
@@ -1062,10 +728,10 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>imageFormat</b>
+									<b>data</b>
 									
 								</dt>
-								<dd>- Default "png"</dd>
+								<dd>- Received data from the ServerRequest.</dd>
 							
 							</dl>
 						
@@ -1078,15 +744,15 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setName"> </a>
+					<a name="setCoordinateReferenceSystem"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setName</b>(modelName)
+					<b>setCoordinateReferenceSystem</b>(System, value)
 					
 					</div>
 					<div class="description">
-						Sets the name of the scene model to be displayed.
+						Sets the Coordinate Reference System.
 						
 						
 					</div>
@@ -1098,10 +764,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>modelName</b>
+									<b>System</b>
 									
 								</dt>
-								<dd>- Name of the model</dd>
+								<dd>- eg. CRS,SRS</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- eg. EPSG:4326</dd>
 							
 							</dl>
 						
@@ -1114,15 +786,15 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setOffset"> </a>
+					<a name="setCoverages"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setOffset</b>(xOffset, yOffset, zOffset)
+					<b>setCoverages</b>(coverageImage, coverageDem)
 					
 					</div>
 					<div class="description">
-						Sets the position of the scene model within the fishtank/cube. Values between [0-1]
+						Sets both coveragenames
 						
 						
 					</div>
@@ -1134,22 +806,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>xOffset</b>
+									<b>coverageImage</b>
 									
 								</dt>
-								<dd>- Offset on the x-axis/width  Default:0</dd>
+								<dd>- Coverage name for the image dataset.</dd>
 							
 								<dt>
-									<b>yOffset</b>
+									<b>coverageDem</b>
 									
 								</dt>
-								<dd>- Offset on the y-axis/height Default:0</dd>
-							
-								<dt>
-									<b>zOffset</b>
-									
-								</dt>
-								<dd>- Offset on the z-axis/depth  Default:0</dd>
+								<dd>- Coverage name for the dem dataset.</dd>
 							
 							</dl>
 						
@@ -1162,15 +828,15 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setResolution"> </a>
+					<a name="setSpecificElement"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setResolution</b>(xRes, zRes)
+					<b>setSpecificElement</b>(element, modelNumber)
 					
 					</div>
 					<div class="description">
-						Sets the resolution of the scene model (if possible).
+						Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
 						
 						
 					</div>
@@ -1182,16 +848,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>xRes</b>
+									<b>element</b>
 									
 								</dt>
-								<dd>- Resolution on the x-axis/Latitude</dd>
+								<dd>- The element where to append the specific UI elements for this model.</dd>
 							
 								<dt>
-									<b>zRes</b>
+									<b>modelNumber</b>
 									
 								</dt>
-								<dd>- Resolution on the z-axis/Longitude</dd>
+								<dd>- Number of this model in the SceneManager.</dd>
 							
 							</dl>
 						
@@ -1204,15 +870,15 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setScale"> </a>
+					<a name="setURLs"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setScale</b>(xScale, yScale, zScale)
+					<b>setURLs</b>(WMSurl, demurl)
 					
 					</div>
 					<div class="description">
-						Sets the size of the scene model compared to the fishtank/cube. Values between 0 - 1.
+						Sets the url for both the WMS and WCS Queries.
 						
 						
 					</div>
@@ -1224,22 +890,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>xScale</b>
+									<b>WMSurl</b>
 									
 								</dt>
-								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
+								<dd>- Service URL for the WMS Request</dd>
 							
 								<dt>
-									<b>yScale</b>
+									<b>demurl</b>
 									
 								</dt>
-								<dd>- Size of the model on the y-axis/height Default:0.3 (30% of the cube)</dd>
-							
-								<dt>
-									<b>zScale</b>
-									
-								</dt>
-								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
+								<dd>- Service URL for the WCS Request</dd>
 							
 							</dl>
 						
@@ -1252,15 +912,87 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="setTransparency"> </a>
+					<a name="setWCSVersion"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setTransparency</b>(transparency)
+					<b>setWCSVersion</b>(version)
 					
 					</div>
 					<div class="description">
-						Sets the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+						Sets the WCS Version for the WCS Query String. Default: "2.0.0"
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>version</b>
+									
+								</dt>
+								<dd>- String with WCS version number.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setWMSVersion"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setWMSVersion</b>(version)
+					
+					</div>
+					<div class="description">
+						Sets the WMS Version for the WMS Query String. Default: "1.3"
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>version</b>
+									
+								</dt>
+								<dd>- String with WMS version number.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateTransparency"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateTransparency</b>(transparency)
+					
+					</div>
+					<div class="description">
+						Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
 						
 						
 					</div>

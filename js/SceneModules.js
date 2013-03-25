@@ -75,6 +75,27 @@ EarthServerGenericClient.SceneManager = function()
     var axisLabels = null;
 
     /**
+     * Name of the X-Axis to be displayed.
+     * @default "x"
+     * @type {String}
+     */
+    this.xLabel = "X";
+
+    /**
+     * Name of the Y-Axis to be displayed.
+     * @default "y"
+     * @type {String}
+     */
+    this.yLabel = "Y";
+
+    /**
+     * Name of the Z-Axis to be displayed.
+     * @default "z"
+     * @type {String}
+     */
+    this.zLabel = "Z";
+
+    /**
      * @default 1000 / 200 on a mobile platform
      * @type {Number}
      */
@@ -247,6 +268,7 @@ EarthServerGenericClient.SceneManager = function()
 
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
+
 
     };
 
@@ -440,6 +462,20 @@ EarthServerGenericClient.SceneManager = function()
         div1.setAttribute("class", "active");
         div1.style.display = "block";
     }
+
+    /**
+     * Sets the names of the axes to be displayed.
+     * @param xLabel - width
+     * @param yLabel - height
+     * @param zLabel - depth
+     */
+    this.setAxisLabels = function( xLabel, yLabel, zLabel){
+        this.xLabel = String(xLabel);
+        this.yLabel = String(yLabel);
+        this.zLabel = String(zLabel);
+    };
+
+
 };
 
 /**
@@ -482,17 +518,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         {   this.ZResolution = maxResolution;   }
 
     };
-    /**
-     * Sets the names of the axes to be displayed [Not used yet]
-     * @param xLabel - width
-     * @param yLabel - height
-     * @param zLabel - depth
-     */
-    this.setAxisLabels = function( xLabel, yLabel, zLabel){
-        this.xLabel = String(xLabel);
-        this.yLabel = String(yLabel);
-        this.zLabel = String(zLabel);
-    };
+
     /**
      * Sets the position of the scene model within the fishtank/cube. Values between [0-1]
      * @param xOffset - Offset on the x-axis/width  Default:0
@@ -631,26 +657,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          */
         this.ZResolution = 500;
 
-        /**
-         * Name of the X-Axis to be displayed.
-         * @default "x"
-         * @type {String}
-         */
-        this.xLabel = "x";
 
-        /**
-         * Name of the Y-Axis to be displayed.
-         * @default "y"
-         * @type {String}
-         */
-        this.yLabel = "y";
-
-        /**
-         * Name of the Z-Axis to be displayed.
-         * @default "z"
-         * @type {String}
-         */
-        this.zLabel = "z";
 
         /**
          * Offset on the X-Axis for the model.
@@ -729,18 +736,18 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     //TODO: CREATE
     this.create = function()
     {
-        createLabel("x", "front", "LABEL 1");
-        createLabel("x", "back",  "LABEL 1");
-        createLabel("x", "top",   "LABEL 1");
+        createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
+        createLabel("x", "back",  EarthServerGenericClient_MainScene.xLabel);
+        createLabel("x", "top",   EarthServerGenericClient_MainScene.xLabel);
 
-        createLabel("y", "front", "LABEL 2");
-        createLabel("y", "back",  "LABEL 2");
-        createLabel("y", "left",  "LABEL 2");
-        createLabel("y", "right", "LABEL 2");
+        createLabel("y", "front", EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "back",  EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "left",  EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "right", EarthServerGenericClient_MainScene.yLabel);
 
-        createLabel("z", "front", "LABEL 3");
-        createLabel("z", "back",  "LABEL 3");
-        createLabel("z", "top",   "LABEL 3");
+        createLabel("z", "front", EarthServerGenericClient_MainScene.zLabel);
+        createLabel("z", "back",  EarthServerGenericClient_MainScene.zLabel);
+        createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
     };
 
     function createLabel(axis, side, label)
