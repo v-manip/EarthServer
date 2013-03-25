@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - _global_</title>
+		<title>JsDoc Reference - EarthServerGenericClient.LODTerrain</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -224,32 +224,60 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Built-In Namespace _global_
+				Class EarthServerGenericClient.LODTerrain
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
 			<p class="description">
 				
+				<br />Extends
+					<a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a>.<br />
 				
 			
+				This terrain build up a LOD with 3 levels of the received data.
 				
 				
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__Terrain.js.html">Terrain.js</a>.
 				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
 			
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class EarthServerGenericClient.LODTerrain.">
+				<caption>Class Summary</caption>
+				<thead>
+					<tr>
+						<th scope="col">Constructor Attributes</th>
+						<th scope="col">Constructor Name and Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="attributes">&nbsp;</td>
+						<td class="nameDescription" >
+							<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#constructor">EarthServerGenericClient.LODTerrain</a></b>(root, data, index)
+							</div>
+							<div class="description"></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			
 
 <!-- ============================== properties summary ===================== -->
 			
+
+<!-- ============================== methods summary ======================== -->
+			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class _global_.">
-					<caption>Field Summary</caption>
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class EarthServerGenericClient.LODTerrain.">
+					<caption>Method Summary</caption>
 					<thead>
 						<tr>
-							<th scope="col">Field Attributes</th>
-							<th scope="col">Field Name and Description</th>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -257,10 +285,9 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/_global_.html#useess">useess</a></b>
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#createTerrain">createTerrain</a></b>()
 								</div>
-								<div class="description"></div>
+								<div class="description">Builds the terrain and appends into the scene.</div>
 							</td>
 						</tr>
 					
@@ -269,57 +296,108 @@ ul.inheritsList
 				
 				
 				
-			
-
-<!-- ============================== methods summary ======================== -->
+				<dl class="inheritsList">
+				<dt>Methods borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#calcNumberOfChunks">calcNumberOfChunks</a>, <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#createCanvas">createCanvas</a>, <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getAppearances">getAppearances</a>, <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getHeightMap">getHeightMap</a>, <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#setTransparency">setTransparency</a></dd>
+				</dl>
+				
 			
 <!-- ============================== events summary ======================== -->
 			
 
 <!-- ============================== constructor details ==================== -->		
 			
+			<div class="details"><a name="constructor"> </a>
+				<div class="sectionTitle">
+					Class Detail
+				</div>
+				
+				<div class="fixedFont">
+						<b>EarthServerGenericClient.LODTerrain</b>(root, data, index)
+				</div>
+				
+				<div class="description">
+					
+					
+				</div>
+				
+				
+				
+				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								 <b>root</b>
+								
+							</dt>
+								<dd>- Dom Element to append the terrain to.</dd>
+						
+							<dt>
+								 <b>data</b>
+								
+							</dt>
+								<dd>- Received Data of the Server request.</dd>
+						
+							<dt>
+								 <b>index</b>
+								
+							</dt>
+								<dd>- Index of the model that uses this terrain.</dd>
+						
+						</dl>
+					
+					
+					
+					
+					
+					
+					
+
+			</div>
+			
 
 <!-- ============================== field details ========================== -->		
 			
+
+<!-- ============================== method details ========================= -->		
+			
 				<div class="sectionTitle">
-					Field Detail
+					Method Detail
 				</div>
 				
-					<a name="useess"> </a>
+					<a name="createTerrain"> </a>
 					<div class="fixedFont">
 					
-					
-					<b>useess</b>
+					<span class="light">{null}</span>
+					<b>createTerrain</b>()
 					
 					</div>
 					<div class="description">
-						
-						
-							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
+						Builds the terrain and appends into the scene.
 						
 						
 					</div>
 					
 					
-
+					
+						
+						
+						
+						
 						
 							<dl class="detailList">
-							<dt class="heading">Deprecated:</dt>
-							<dt>
-								For test only! Delete me please.
-							</dt>
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{null}</span> </dd>
+							
 							</dl>
 						
 						
 						
-						
 
 					
 				
-			
-
-<!-- ============================== method details ========================= -->		
 			
 			
 <!-- ============================== event details ========================= -->		
