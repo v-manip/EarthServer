@@ -173,7 +173,7 @@ EarthServerGenericClient.SceneManager = function()
         cam1.setAttribute("position", "0 0 " + this.cubeSizeZ*2);
         var cam2 = document.createElement('Viewpoint');
         cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
-        cam2.setAttribute("position", "0 " + this.cubeSizeY*2 + " 0");
+        cam2.setAttribute("position", "0 " + this.cubeSizeY*2.5 + " 0");
         cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
         var cam3 = document.createElement('Viewpoint');
         cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
@@ -256,11 +256,7 @@ EarthServerGenericClient.SceneManager = function()
     //TODO: Create axis labels
     this.createAxisLabels = function()
     {
-        var xLabelPos = 0 + " " + (-this.cubeSizeY/2+10) + " " + this.cubeSizeZ/2;
-        var yLabelPos = (this.cubeSizeX/2)-10 + " " + 0 + " " + this.cubeSizeZ/2;
-        var zLabelPos = (this.cubeSizeX/2) + " " + (-this.cubeSizeY/2+10) +  " " + 0;
-
-        axisLabels = new EarthServerGenericClient.AxisLabels(xLabelPos, yLabelPos, zLabelPos);
+        axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
         axisLabels.create();
     };
 
@@ -715,64 +711,116 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 };
 
 
-EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+//EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 
 /**
  * @class AxisLabels
- * @param xLabelPos
- * @param yLabelPos
- * @param zLabelPos
+ * @param xSize
+ * @param ySize
+ * @param zSize
+ *
  */
-EarthServerGenericClient.AxisLabels = function(xLabelPos, yLabelPos, zLabelPos)
+EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {
-
     var fontColor = "1 1 0";
     var fontSize = 50.0;
+    //var transforms = new Array()
 
+    //TODO: CREATE
     this.create = function()
     {
-        //Front
-        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
-        createLabel(this.yLabel, yLabelPos, "0 0 1 1.57");
-        createLabel(this.zLabel, zLabelPos, "0 1 0 1.57");
+        createLabel("x", "front", "LABEL 1");
+        createLabel("x", "back",  "LABEL 1");
+        createLabel("x", "top",   "LABEL 1");
 
-/*        //Side
-        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
-        createLabel(this.xLabel, yLabelPos, "0 0 0 0");
-        createLabel(this.xLabel, zLabelPos, "0 0 0 0");
+        createLabel("y", "front", "LABEL 2");
+        createLabel("y", "back",  "LABEL 2");
+        createLabel("y", "left",  "LABEL 2");
+        createLabel("y", "right", "LABEL 2");
 
-        //Top
-        createLabel(this.xLabel, xLabelPos, "0 0 0 0");
-        createLabel(this.xLabel, zLabelPos, "0 0 0 0");         */
+        createLabel("z", "front", "LABEL 3");
+        createLabel("z", "back",  "LABEL 3");
+        createLabel("z", "top",   "LABEL 3");
     };
 
-    function createLabel(label, position, rotation)
+    function createLabel(axis, side, label)
     {
-        var transform = document.createElement('transform');
-        transform.setAttribute('rotation', rotation);
-        transform.setAttribute('translation', position);
-        transform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
-
+        //Setup text
+        var textTransform = document.createElement('transform');
+        textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
         var shape = document.createElement('shape');
         var appearance = document.createElement('appearance');
         var material = document.createElement('material');
         material.setAttribute('emissiveColor', fontColor);
         var text = document.createElement('text');
         text.setAttribute('string', label);
-
         var fontStyle = document.createElement('fontStyle');
         fontStyle.setAttribute('family', 'calibri');
         fontStyle.setAttribute('style', 'bold');
-
         text.appendChild(fontStyle);
         appearance.appendChild(material);
         shape.appendChild(appearance);
         shape.appendChild(text);
-        transform.appendChild(shape);
+        textTransform.appendChild(shape);
 
         var home = document.getElementById('x3dScene');
-        home.appendChild(transform);
+        var rotTransform = document.createElement('transform');
+
+        if(axis=="x")
+        {
+            textTransform.setAttribute('translation', "0 " + -(ySize+fontSize) + " " + zSize);
+            textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
+            textTransform.setAttribute('rotation', '0 0 1 3.14');
+            if(side=="back")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '1 0 0 -1.57');
+                textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+        }
+        else if(axis=="y")
+        {
+            textTransform.setAttribute('translation', -(xSize+fontSize/2) + " 0 " + zSize);
+            textTransform.setAttribute('rotation', '0 0 1 1.57');
+
+            if(side=="back")
+            {
+                textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
+                textTransform.setAttribute('rotation', '0 0 1 4.74');
+                rotTransform.setAttribute('rotation', '1 0 0 3.14');
+            }
+            else if(side=="left")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 -1.57');
+            }
+            else if(side=="right")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 1.57');
+            }
+        }
+        else if(axis=="z")
+        {
+            textTransform.setAttribute('translation', xSize + " " + -(ySize+fontSize) + " 0");
+            textTransform.setAttribute('rotation', '0 1 0 1.57');
+            if(side=="back")
+            {
+                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '0 1 0 1.57');
+                textTransform.setAttribute('translation', "0 0 0");
+
+                rotTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+            }
+        }
+
+        rotTransform.appendChild(textTransform);
+        home.appendChild(rotTransform);
     }
-
-
 };
