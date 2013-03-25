@@ -24,12 +24,10 @@
 
     <script type="text/javascript">
         var EarthServerGenericClient_MainScene = new EarthServerGenericClient.SceneManager();
-        EarthServerGenericClient_MainScene.setTimeLog(true);
+        EarthServerGenericClient_MainScene.setTimeLog(false);
 
         $(document).ready(function()
         {
-            EarthServerGenericClient_MainScene.timeLogStart("Start Up");
-
             var q = new EarthServerGenericClient.Model_WCPSDemAlpha();
             q.setName("BGS High Resolution");
             q.setURL("http://earthserver.bgs.ac.uk/petascope");
@@ -37,7 +35,7 @@
             q.setAreaOfInterest(400000,500000,450000,550000);
             q.setScale(1.0,0.3,1.0);
             q.setResolution(600,600);
-            //q.setProgressiveLoading(true);
+            q.setProgressiveLoading(true);
 
             /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
             WMS.setName("WMS_WCS");
@@ -82,15 +80,11 @@
 
             EarthServerGenericClient_MainScene.createScene('x3d','x3dScene',1,0.8,1 );
             EarthServerGenericClient_MainScene.createUI('x3domUI');
-
-            EarthServerGenericClient_MainScene.timeLogEnd("Start Up");
         });
 
         document.onload = function()
         {
-            EarthServerGenericClient_MainScene.timeLogStart("Create Models");
             EarthServerGenericClient_MainScene.createModels();
-            EarthServerGenericClient_MainScene.timeLogEnd("Create Models");
         };
 
     </script>

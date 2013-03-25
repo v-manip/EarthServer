@@ -25,6 +25,7 @@ EarthServerGenericClient.ServerResponseData = function () {
 /**
  * Small helper to synchronise multiple request callbacks. After all callbacks to this helper
  * are received the ResponseData object with all response data is send to the module.
+ * After each request is received a progress update is send to the module.
  * @param callback - Module which requests the data.
  * @param numberToCombine - Number of callbacks that shall be received.
  */
@@ -93,7 +94,6 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
     EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
     try
     {
-
         responseData.texture.onload = function()
         {
             EarthServerGenericClient_MainScene.timeLogEnd("WCPS: " + callback.name);
@@ -184,6 +184,9 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 var sizeX = high[0] - low[0] + 1;
                 var sizeY = high[1] - low[1] + 1;
 
+                if( sizeX <=0 || sizeY <=0)
+                {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
+
                 responseData.height = sizeX;
                 responseData.width  = sizeY;
 
@@ -273,6 +276,8 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
             EarthServerGenericClient_MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
             EarthServerGenericClient.getWCPSImage(this,responseData[which],WCPSurl,WCPSqueries[which],DemInAlpha);
         }
+        else
+        {   responseData = null;  }
     };
     this.receiveData = function(data)
     {

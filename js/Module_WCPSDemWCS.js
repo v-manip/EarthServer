@@ -64,7 +64,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCPSQuery = function(quer
      * The custom query.
      * @type {String}
      */
-    this.customQuery = String(querystring);
+    this.WCPSQuery = String(querystring);
 };
 
 /**
@@ -111,28 +111,25 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
     }
 
     //2: create wcps query
-    //Either user set if query strings are set for all wcps channels or standard wcps query if wcps channels are not set
-    //IF something is not defined use standard query.
-    if( this.customQuery === undefined)
+    //If no query was defined use standard query.
+    if( this.WCPSQuery === undefined)
     {
-        this.wcpsQuery =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-        this.wcpsQuery += "red: scale(trim(i.red, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.wcpsQuery += "green: scale(trim(i.green, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.wcpsQuery += "blue: scale(trim(i.blue, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
-        this.wcpsQuery += '}, "' + this.imageFormat +'" )';
+        this.WCPSQuery =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
+        this.WCPSQuery += "red: scale(trim(i.red, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += "green: scale(trim(i.green, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += "blue: scale(trim(i.blue, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
+        this.WCPSQuery += '}, "' + this.imageFormat +'" )';
     }
-    else //ALL set so use custom query
+    else //A custom query was defined so use it
     {
         //Replace $ symbols with the actual values
-        this.customQuery = this.customQuery.replace("$CI",this.coverageImage);
-        this.customQuery = this.customQuery.replace("$MINX",this.minx);
-        this.customQuery = this.customQuery.replace("$MINY",this.miny);
-        this.customQuery = this.customQuery.replace("$MAXX",this.maxx);
-        this.customQuery = this.customQuery.replace("$MAXY",this.maxy);
-        this.customQuery = this.customQuery.replace("$RESX",this.XResolution);
-        this.customQuery = this.customQuery.replace("$RESZ",this.ZResolution);
-
-        this.wcpsQuery = this.customQuery;
+        this.WCPSQuery = this.WCPSQuery.replace("$CI",this.coverageImage);
+        this.WCPSQuery = this.WCPSQuery.replace("$MINX",this.minx);
+        this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
+        this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
+        this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
+        this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
+        this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
     }
 
     //3: Make ServerRequest and receive data.
@@ -142,7 +139,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
         minLatitude:  this.minx,
         maxLatitude:  this.maxx
     };
-    EarthServerGenericClient.requestWCPSImageWCSDem(this,this.URLWCPS,this.wcpsQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
+    EarthServerGenericClient.requestWCPSImageWCSDem(this,this.URLWCPS,this.WCPSQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
 };
 
 /**
@@ -152,6 +149,8 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
  */
 EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
 {
+    this.receivedDataCount++;
+    this.reportProgress();
     if( data === null)
     { console.log("Model_WCPSDemWCS" + this.name +": Request not successful.");}
     else

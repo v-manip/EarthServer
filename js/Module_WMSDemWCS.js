@@ -138,6 +138,8 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, in
  */
 EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
 {
+    this.receivedDataCount++;
+    this.reportProgress();
     if( data === null)
     { console.log("Model_WMSDemWCS" + this.name +": Request not successful.");}
     else

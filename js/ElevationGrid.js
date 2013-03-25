@@ -29,7 +29,7 @@ function ElevationGrid(parentNode,info, hf,appearances)
                 if(i !== 0)
                 { add = 1;  }
 
-                //Set up: Shape-> Apperance -> ImageTexture +  Texturtransform
+                //Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
                 shape = document.createElement('Shape');
                 shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
 
@@ -51,12 +51,15 @@ function ElevationGrid(parentNode,info, hf,appearances)
 
                 parentNode.appendChild(shape);
 
-                //set null stuff
+                //set vars null
                 shf = null;
                 shape = null;
                 elevationGrid = null;
             }
             hf = null;
+            parentNode = null;
+            info = null;
+            appearances = null;
         }
         catch(error)
         {
@@ -79,7 +82,7 @@ function ElevationGrid(parentNode,info, hf,appearances)
         smallGrid = [];
         smallx = parseInt(sizex/shrinkfactor);
         smally = parseInt(sizey/shrinkfactor);
-        //IF shrinked the heightfield needs one more element than the desired length (63 elements for a length of 62)
+        //IF shrunk, the heightfield needs one more element than the desired length (63 elements for a length of 62)
         if( shrinkfactor !== 1)
         {
             smallx++;
@@ -107,7 +110,6 @@ function ElevationGrid(parentNode,info, hf,appearances)
                         }
                     }
                     val = val/div;
-                    //smallGrid = smallGrid + val+ " ";
                     smallGrid.push(val+ " ");
                 }
             }
@@ -119,7 +121,6 @@ function ElevationGrid(parentNode,info, hf,appearances)
                 for(k=0; k<smallx; k++)
                 {
                     val = parseFloat( heightfield[i][k]);
-                    //smallGrid = smallGrid + val+ " ";
                     smallGrid.push(val+" ");
                 }
             }

@@ -10,24 +10,19 @@ EarthServerGenericClient.Model_WCPSDemAlpha = function()
 {
     this.setDefaults();
     this.name = "WCPS Image with DEM in alpha channel.";
-    this.receivdData = 0;
     /**
      * Determines if progressive or complete loading of the model is used.
      * @default false
      * @type {Boolean}
      */
     this.progressiveLoading = false;
-    /**
-     * The custom WCPS query for the rgba channels.
-     * @type {Array}
-     */
-    this.WCPSString = [];
+
     /**
      * The custom or default WCPS Queries. The array contains either one element for complete loading
      * or multiple (3) queries for progressive loading of the model.
      * @type {Array}
      */
-    this.wcpsQuery  = [];
+    this.WCPSQuery  = [];
 };
 EarthServerGenericClient.Model_WCPSDemAlpha.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 /**
@@ -36,6 +31,10 @@ EarthServerGenericClient.Model_WCPSDemAlpha.inheritsFrom( EarthServerGenericClie
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setProgressiveLoading=function(value){
     this.progressiveLoading = value;
+
+    //Progressive Loading creates 3 requests while normal loading 1
+    if( this.progressiveLoading){ this.requests = 3; }
+    else{   this.requests = 1;  }
 };
 /**
  * Sets the URL for the service.
@@ -46,7 +45,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setURL=function(url){
      * URL for the WCPS service.
      * @type {String}
      */
-    this.url = String(url);
+    this.URLWCPS = String(url);
 };
 /**
  * Sets both coverage names.
@@ -74,7 +73,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoverages = function (c
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelRED = function(querystring)
 {
-    this.WCPSString[0] = querystring;
+    this.WCPSQuery[0] = querystring;
 };
 /**
  * Sets a specific querystring for the GREEN channel of the WCPS query.
@@ -85,7 +84,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelRED = fun
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelGREEN = function(querystring)
 {
-    this.WCPSString[1] = querystring;
+    this.WCPSQuery[1] = querystring;
 };
 /**
  * Sets a specific querystring for the BLUE channel of the WCPS query.
@@ -96,7 +95,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelGREEN = f
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelBLUE = function(querystring)
 {
-    this.WCPSString[2] = querystring;
+    this.WCPSQuery[2] = querystring;
 };
 /**
  * Sets a specific querystring for the ALPHA channel of the WCPS query.
@@ -107,7 +106,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelBLUE = fu
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelALPHA = function(querystring)
 {
-    this.WCPSString[3] = querystring;
+    this.WCPSQuery[3] = querystring;
 };
 
 /**
@@ -136,11 +135,11 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     this.root.appendChild( this.placeHolder );
 
     //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.url === undefined
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined
         || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
     {
         alert("Not all mandatory values are set. WCPSDemAlpha: " + this.name );
-        alert(this.coverageImage + this.coverageDEM + this.url + this.minx === undefined + this.miny+ this.maxx + this.maxy );
+        alert(this.coverageImage + this.coverageDEM + this.URLWCPS + this.minx + this.miny+ this.maxx + this.maxy );
         console.log(this);
         return;
     }
@@ -148,32 +147,32 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     //2: create wcps query/queries
     //Either the user set query if all query strings are set. Or standard wcps query if wcps channels are not set.
     //Build one query for complete loading and multiple queries for progressive loading
-    this.queryCnt = 1;
-    if( this.progressiveLoading){ this.queryCnt = 3; }
+
     //IF something is not defined use standard query.
-    if( this.WCPSString[0] === undefined || this.WCPSString[1] === undefined || this.WCPSString[2] === undefined || this.WCPSString[3] === undefined)
+    if( this.WCPSQuery[0] === undefined || this.WCPSQuery[1] === undefined || this.WCPSQuery[2] === undefined || this.WCPSQuery[3] === undefined)
     {
-        for(var i=0; i<this.queryCnt; i++)
+        for(var i=0; i<this.requests; i++)
         {
             var currentXRes = parseInt(this.XResolution / Math.pow(2,i) );
             var currentZRes = parseInt(this.ZResolution / Math.pow(2,i) );
-            this.wcpsQuery[i] =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-            this.wcpsQuery[i] += "red: scale(trim(i.red, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
-            this.wcpsQuery[i] += "green: scale(trim(i.green, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
-            this.wcpsQuery[i] += "blue: scale(trim(i.blue, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {});";
-            this.wcpsQuery[i] += "alpha: (char) (((scale(trim(dtm , {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})) / 1349) * 255)";
-            this.wcpsQuery[i] += '}, "' + this.imageFormat +'" )';
+            this.WCPSQuery[i] =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
+            this.WCPSQuery[i] += "red: scale(trim(i.red, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
+            this.WCPSQuery[i] += "green: scale(trim(i.green, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
+            this.WCPSQuery[i] += "blue: scale(trim(i.blue, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {});";
+            this.WCPSQuery[i] += "alpha: (char) (((scale(trim(dtm , {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})) / 1349) * 255)";
+            this.WCPSQuery[i] += '}, "' + this.imageFormat +'" )';
         }
     }
     else //ALL set so use custom query
     {
-        for(var j=0; j<this.queryCnt; j++)
+        //Create multiple queries if progressive loading is set or one if not.
+        for(var j=0; j<this.requests; j++)
         {
             //Replace $ symbols with the actual values
             var tmpString = [];
             for(i=0; i<4; i++)
             {
-                tmpString[i] = this.WCPSString[i].replace("$CI","image");
+                tmpString[i] = this.WCPSQuery[i].replace("$CI","image");
                 tmpString[i] = tmpString[i].replace("$CD","dtm");
                 tmpString[i] = tmpString[i].replace("$MINX",this.minx);
                 tmpString[i] = tmpString[i].replace("$MINY",this.miny);
@@ -182,20 +181,20 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
                 tmpString[i] = tmpString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
                 tmpString[i] = tmpString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
             }
-            this.wcpsQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-            this.wcpsQuery[j] += "red: " + tmpString[0] + " ";
-            this.wcpsQuery[j] += "green: " + tmpString[1]+ " ";
-            this.wcpsQuery[j] += "blue: " + tmpString[2] + " ";
-            this.wcpsQuery[j] += "alpha: " + tmpString[3];
-            this.wcpsQuery[j] += '}, "' + this.imageFormat +'" )';
+            this.WCPSQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
+            this.WCPSQuery[j] += "red: " + tmpString[0] + " ";
+            this.WCPSQuery[j] += "green: " + tmpString[1]+ " ";
+            this.WCPSQuery[j] += "blue: " + tmpString[2] + " ";
+            this.WCPSQuery[j] += "alpha: " + tmpString[3];
+            this.WCPSQuery[j] += '}, "' + this.imageFormat +'" )';
         }
     }
 
     //3: Make ServerRequest and receive data.
     if( !this.progressiveLoading)
-    {   EarthServerGenericClient.requestWCPSImageAlphaDem(this,this.url,this.wcpsQuery[0]);  }
+    {   EarthServerGenericClient.requestWCPSImageAlphaDem(this,this.URLWCPS,this.WCPSQuery[0]);  }
     else
-    {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.url,this.wcpsQuery,true);   }
+    {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.URLWCPS,this.WCPSQuery,true);   }
 };
 /**
  * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
@@ -204,6 +203,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( data)
 {
+    this.receivedDataCount++;
+    this.reportProgress();
     if( data === null)
     { console.log("WCPSDemAlpha "+ this.name +": Request not successful.");}
     else
@@ -247,8 +248,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             EarthServerGenericClient_MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain.insertLevel(this.transformNode,data);
             EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
-            this.receivdData++;
-            if( this.receivdData === this.queryCnt)
+
+            if( this.receivedDataCount === this.requests)
             {   EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);   }
         }
     }
