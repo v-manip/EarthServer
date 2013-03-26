@@ -74,3 +74,23 @@ EarthServerGenericClient.appendElevationSlider = function(element,moduleNumber){
 
 };
 
+EarthServerGenericClient.createProgressBar =  function(DivID)
+{
+
+    $(function() {
+        $( DivID ).progressbar({
+            value: 0
+        });
+    });
+
+    this.updateValue = function(value)
+    {
+        $( DivID ).progressbar( "option", "value", value );
+
+        if(value === 100)
+        {
+            $( DivID ).toggle( "blind" );
+        }
+    };
+};
+

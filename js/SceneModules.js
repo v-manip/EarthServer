@@ -61,6 +61,7 @@ EarthServerGenericClient.SceneManager = function()
     this.totalLoadingProgress = 0;  //Value for the loading progress bar (all model loading combined)
     this.baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
     this.currentUIElement = 0;      //The current chosen UI element, which is a Model. Change everything for the model with that ID.
+    this.progressCallback = undefined;//Callback function for the progress update.
 
     /**
      * Enables/Disables the logging of Serverrequests,building of terrain etc.
@@ -126,26 +127,46 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Sets the callback function for the progress update. The progress function gives a parameter between 0-100.
+     * You can set callback = null for no progress update at all. If no callback is given at all the progress is
+     * printed to the console.
+     * @param callback
+     */
+    this.setProgressCallback=function(callback)
+    {
+        this.progressCallback = callback;
+    };
+    /**
      * All Modules and Terrain shall report their loading progress.
      * Modules when they receive data and terrains if they are done building the terrain.
      * Every time this function is called 1 is added to the total progress. It is assumed that for every
      * request a terrain is build thus 100% = model.requests*2
+     * If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
      * @param modelIndex - Index of the model.
      */
     this.reportProgress = function(modelIndex)
     {
-        this.modelLoadingProgress[modelIndex] += 1;
-
-        //Reset total loading progres to 0 and calc it with the new value
-        this.totalLoadingProgress = 0;
-        for(var i=0; i<this.modelLoadingProgress.length; i++)
+        //If null no progress update is wished
+        if( this.progressCallback !== null)
         {
-            var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
-            if( tmp > 1.0) tmp = 1;
-            this.totalLoadingProgress += tmp;
+            this.modelLoadingProgress[modelIndex] += 1;
+
+            //Reset total loading progress to 0 and calc it with the new value
+            this.totalLoadingProgress = 0;
+            for(var i=0; i<this.modelLoadingProgress.length; i++)
+            {
+                var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
+                if( tmp > 1.0) tmp = 1;
+                this.totalLoadingProgress += tmp;
+            }
+            this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
+
+            //Callback function or console?
+            if( this.progressCallback !== undefined)
+            {   this.progressCallback(this.totalLoadingProgress);    }
+            else
+            {   console.log(this.totalLoadingProgress); }
         }
-        this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
-        console.log(this.totalLoadingProgress);
     };
 
     /**
@@ -652,7 +673,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param XRes - Size of the received data on the x-axis (e.g. the requested DEM )
      * @param YRes - Size of the received data on the y-axis
      * @param ZRes - Size of the received data on the z-axis
-     * @param minvalue - Minimum Value of the along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
      * @return {Element}
      */
     this.createTransform = function(XRes,YRes,ZRes,minvalue){
@@ -697,8 +718,6 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {Number}
          */
         this.ZResolution = 500;
-
-
 
         /**
          * Offset on the X-Axis for the model.
