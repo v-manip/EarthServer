@@ -145,7 +145,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     }
 
     //2: create wcps query/queries
-    //Either the user set query if all query strings are set. Or standard wcps query if wcps channels are not set.
+    //Either the user query if all query strings are set. Or standard wcps query if wcps channels are not set.
     //Build one query for complete loading and multiple queries for progressive loading
 
     //IF something is not defined use standard query.
@@ -253,14 +253,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             {   EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);   }
         }
     }
-};
-
-/**
- * Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
- * @param transparency
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.updateTransparency = function( transparency ){
-    this.terrain.setTransparency(transparency);
 };
 
 /**

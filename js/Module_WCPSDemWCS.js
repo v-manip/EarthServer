@@ -177,13 +177,6 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
     }
 };
 
-/**
- * Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
- * @param transparency
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.updateTransparency = function( transparency ){
-    this.terrain.setTransparency(transparency);
-};
 
 /**
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.

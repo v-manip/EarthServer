@@ -208,10 +208,10 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * Creates and returns the whole X3DOM Scene in the fishtank/cube with all added scene models.
-     * The Sizes of the cube are aspected as aspect ratios with values between 0 and 1.
+     * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
      * @param x3dID - ID of the x3d dom element
-     * @param sceneID - ID of the scene elemenet
+     * @param sceneID - ID of the scene element
      * @param cubeSizeX - width of the cube
      * @param cubeSizeY - height of the cube
      * @param cubeSizeZ - depth of the cube
@@ -317,8 +317,6 @@ EarthServerGenericClient.SceneManager = function()
 
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
-
-
     };
 
     /**
@@ -363,7 +361,6 @@ EarthServerGenericClient.SceneManager = function()
             var oldTrans = trans.getAttribute("translation");
             oldTrans = oldTrans.split(" ");
             oldTrans[which] = value - offset;
-            //alert(oldTrans);
             trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
         }
     };
@@ -600,11 +597,19 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Sets the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * Sets the initial transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
      * @param transparency
      */
     this.setTransparency = function( transparency ){
         this.transparency = parseFloat(transparency);
+    };
+
+    /**
+     * Updates the transparency during runtime of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * @param transparency
+     */
+    this.updateTransparency = function( transparency ){
+        this.terrain.setTransparency(transparency);
     };
 
     /**
@@ -664,6 +669,13 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         shape.appendChild(appearance);
         shape.appendChild(triangleset);
         trans.appendChild(shape);
+
+        appearance = null;
+        material = null;
+        shape = null;
+        triangleset = null;
+        coords = null;
+        points = null;
 
         return trans;
     };
