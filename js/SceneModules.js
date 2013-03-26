@@ -303,7 +303,6 @@ EarthServerGenericClient.SceneManager = function()
     /**
      *
      */
-    //TODO: Create axis labels ? Move to createScene?
     this.createAxisLabels = function()
     {
         axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
@@ -784,9 +783,99 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {
     var fontColor = "1 1 0";
     var fontSize = 50.0;
-    //var transforms = new Array()
+    var transforms = new Array()
+    var textNodeX = new Array();
+    var textNodeY = new Array();
+    var textNodeZ = new Array();
 
-    //TODO: CREATE
+    /**
+     *
+     * @param name
+     */
+    this.changeLabelNameX = function(name)
+    {
+        for(var i=0; i<textNodeX.length; i++)
+        {
+            textNodeX[i].setAttribute('string', name);
+        }
+    };
+
+    /**
+     *
+     * @param name
+     */
+    this.changeLabelNameY = function(name)
+    {
+        for(var i=0; i<textNodeY.length; i++)
+        {
+            textNodeY[i].setAttribute('string', name);
+        }
+    };
+
+    /**
+     *
+     * @param name
+     */
+    this.changeLabelNameZ = function(name)
+    {
+        for(var i=0; i<textNodeZ.length; i++)
+        {
+            textNodeZ[i].setAttribute('string', name);
+        }
+    };
+
+    /**
+     *
+     * @param size
+     */
+    this.changeFontSize = function(size)
+    {
+        size = Math.abs(size);
+
+        for(var i=0; i<transforms.length; i++)
+        {
+            var scale = x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
+
+            if(scale.x < 0) scale.x = "-" + size; else scale.x = size;
+            if(scale.y < 0) scale.y = "-" + size; else scale.y = size;
+            if(scale.z < 0) scale.z = "-" + size; else scale.z = size;
+
+            transforms[i].setAttribute('scale', scale.x + " " + scale.y + " " + scale.z);
+        }
+    };
+
+    /**
+     *
+     * @param color
+     * @param mode
+     */
+    this.changeColor = function(color, mode)
+    {
+        for(var i=0; i<transforms.length; i++)
+        {
+            var material = transforms[i].getElementsByTagName('material');
+            for(var j=0; j<material.length; j++)
+            {
+                if(mode == 'diffuseColor')
+                {
+                    material[j].setAttribute('diffuseColor', color);
+                }
+                else if(mode == "both")
+                {
+                    material[j].setAttribute('emissiveColor', color);
+                    material[j].setAttribute('diffuseColor', color);
+                }
+                else
+                {
+                    material[j].setAttribute('emissiveColor', color);
+                }
+            }
+        }
+    };
+
+    /**
+     *
+     */
     this.create = function()
     {
         createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
@@ -803,6 +892,12 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
     };
 
+    /**
+     *
+     * @param axis
+     * @param side
+     * @param label
+     */
     function createLabel(axis, side, label)
     {
         //Setup text
@@ -824,7 +919,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         textTransform.appendChild(shape);
 
         var home = document.getElementById('x3dScene');
-        var rootTransform = document.createElement('transform');
+        var rotationTransform = document.createElement('transform');
 
         if(axis=="x")
         {
@@ -833,14 +928,15 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 0 1 3.14');
             if(side=="back")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
                 textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
+            textNodeX[textNodeX.length] = text;
         }
         else if(axis=="y")
         {
@@ -851,16 +947,17 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             {
                 textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
-                rootTransform.setAttribute('rotation', '1 0 0 3.14');
+                rotationTransform.setAttribute('rotation', '1 0 0 3.14');
             }
             else if(side=="left")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 -1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 -1.57');
             }
             else if(side=="right")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 1.57');
             }
+            textNodeY[textNodeY.length] = text;
         }
         else if(axis=="z")
         {
@@ -868,19 +965,20 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '0 1 0 1.57');
                 textTransform.setAttribute('translation', "0 0 0");
 
-                rootTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rootTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+                rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
             }
+            textNodeZ[textNodeZ.length] = text;
         }
-
-        rootTransform.appendChild(textTransform);
-        home.appendChild(rootTransform);
+        rotationTransform.appendChild(textTransform);
+        home.appendChild(rotationTransform);
+        transforms[transforms.length] = textTransform;
     }
 };
