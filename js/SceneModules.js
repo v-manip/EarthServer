@@ -790,6 +790,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
+    /**
+     *
+     * @param string
+     */
     this.changeLabelNameZ = function(string)
     {
         for(var i=0; i<textNodesZ.length; i++)
@@ -798,7 +802,9 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
-    //TODO: CREATE
+    /**
+     *
+     */
     this.create = function()
     {
         createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
@@ -815,6 +821,12 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
     };
 
+    /**
+     *
+     * @param axis
+     * @param side
+     * @param label
+     */
     function createLabel(axis, side, label)
     {
         //Setup text
