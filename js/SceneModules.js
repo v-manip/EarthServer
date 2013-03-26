@@ -4,11 +4,6 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
-*	@deprecated For test only! Delete me please.
-*/
-var useess = undefined;
-
-/**
  * @ignore Just Inheritance Helper
  */
 Function.prototype.inheritsFrom = function( parentClassOrObject )
@@ -61,10 +56,12 @@ EarthServerGenericClient.getEventTarget = function(e)
  */
 EarthServerGenericClient.SceneManager = function()
 {
-    //Array of scene models
-    this.models = [];
-    this.baseElevation = [];
-    this.currentUIElement = 0;
+    this.models = [];               //Array of scene models
+    this.modelLoadingProgress = []; //Array to store the models loading progress
+    this.totalLoadingProgress = 0;  //Value for the loading progress bar (all model loading combined)
+    this.baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
+    this.currentUIElement = 0;      //The current chosen UI element, which is a Model. Change everything for the model with that ID.
+
     /**
      * Enables/Disables the logging of Serverrequests,building of terrain etc.
      * @default false
@@ -129,6 +126,29 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * All Modules and Terrain shall report their loading progress.
+     * Modules when they receive data and terrains if they are done building the terrain.
+     * Every time this function is called 1 is added to the total progress. It is assumed that for every
+     * request a terrain is build thus 100% = model.requests*2
+     * @param modelIndex - Index of the model.
+     */
+    this.reportProgress = function(modelIndex)
+    {
+        this.modelLoadingProgress[modelIndex] += 1;
+
+        //Reset total loading progres to 0 and calc it with the new value
+        this.totalLoadingProgress = 0;
+        for(var i=0; i<this.modelLoadingProgress.length; i++)
+        {
+            var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
+            if( tmp > 1.0) tmp = 1;
+            this.totalLoadingProgress += tmp;
+        }
+        this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
+        console.log(this.totalLoadingProgress);
+    };
+
+    /**
      * Returns the maximum resolution per dimension of a scene model.
      * This number depends on power templates (e.g. mobile device).
      * @return {Number} maximum Resolution
@@ -142,10 +162,18 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.addModel = function( model )
     {
+        //Model ID is the current length of the models array. That means to IDs start at 0 and increase by 1.
         model.modelID = this.models.length;
+        //Store model in the array
         this.models.push(model);
+        //Initialize it's loading progress to 0
+        this.modelLoadingProgress[model.modelID] = 0;
     };
 
+    /**
+     * Sets the view of the X3Dom window to the predefined camera.
+     * @param camID - ID of the Camera dom object.
+     */
     this.setView =function(camID)
     {
         var cam = document.getElementById(camID);
@@ -460,7 +488,7 @@ EarthServerGenericClient.SceneManager = function()
         div1 = document.getElementById("EarthServerGenericClient_SPECIFICDiv_0");
         div1.setAttribute("class", "active");
         div1.style.display = "block";
-    }
+    };
 
     /**
      * Sets the names of the axes to be displayed.
@@ -555,6 +583,19 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.setTransparency = function( transparency ){
         this.transparency = parseFloat(transparency);
+    };
+
+    /**
+     * Modules report their loading progress to this function which reports to the main scene.
+     */
+    this.reportProgress = function()
+    {
+        //The total progress of this module depens on the number of requests it does.
+        //The progress parameter is the progress of ONE request.
+        //ReceivedDataCount is the number of already received responses.
+        //it is doubled because for each request one terrain will be build.
+        var totalProgress = ((this.receivedDataCount) / (this.requests * 2))*100;
+        EarthServerGenericClient_MainScene.reportProgress(this.modelID,totalProgress);
     };
 
     /**
@@ -708,6 +749,20 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.imageFormat = "png";
 
         /**
+         * The amount of requests the model do. It is needed to keep track of the loading progress.
+         * @default 1
+         * @type {number}
+         */
+        this.requests = 1;
+
+        /**
+         * The amount of already received responses. Along with requests this is used to keep track of the loading progress.
+         * @default 0
+         * @type {number}
+         */
+        this.receivedDataCount = 0;
+
+        /**
          * The Transparency of the model.
          * @default 0
          * @type {Number}
@@ -716,8 +771,6 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 };
 
-
-//EarthServerGenericClient.AxisLabels.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 
 /**
  * @class AxisLabels
@@ -730,13 +783,19 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {
     var fontColor = "1 1 0";
     var fontSize = 50.0;
+
     var transforms = new Array();
     var textNodesX = new Array();
     var textNodesY = new Array();
     var textNodesZ = new Array();
 
+    /**
+     *
+     * @param size
+     */
     this.changeFontSize = function(size)
     {
+        size = Math.abs(size);
         for(var i=0; i<transforms.length; i++)
         {
             var scale =x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
@@ -749,6 +808,11 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
+    /**
+     *
+     * @param color
+     * @param mode
+     */
     this.changeColor = function(color, mode)
     {
         for(var i=0; i<transforms.length; i++)
@@ -774,6 +838,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
+    /**
+     *
+     * @param string
+     */
     this.changeLabelNameX = function(string)
     {
         for(var i=0; i<textNodesX.length; i++)
@@ -782,6 +850,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
+    /**
+     *
+     * @param string
+     */
     this.changeLabelNameY = function(string)
     {
         for(var i=0; i<textNodesY.length; i++)
@@ -790,6 +862,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
+    /**
+     *
+     * @param string
+     */
     this.changeLabelNameZ = function(string)
     {
         for(var i=0; i<textNodesZ.length; i++)
@@ -798,7 +874,9 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
     };
 
-    //TODO: CREATE
+    /**
+     *
+     */
     this.create = function()
     {
         createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
@@ -815,6 +893,12 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
     };
 
+    /**
+     *
+     * @param axis
+     * @param side
+     * @param label
+     */
     function createLabel(axis, side, label)
     {
         //Setup text
@@ -836,7 +920,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         textTransform.appendChild(shape);
 
         var home = document.getElementById('x3dScene');
-        var rotTransform = document.createElement('transform');
+        var rotationTransform = document.createElement('transform');
 
         if(axis=="x")
         {
@@ -845,13 +929,13 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 0 1 3.14');
             if(side=="back")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
                 textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             textNodesX[textNodesX.length] = text;
         }
@@ -864,15 +948,15 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             {
                 textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
-                rotTransform.setAttribute('rotation', '1 0 0 3.14');
+                rotationTransform.setAttribute('rotation', '1 0 0 3.14');
             }
             else if(side=="left")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 -1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 -1.57');
             }
             else if(side=="right")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 1.57');
             }
             textNodesY[textNodesY.length] = text;
         }
@@ -882,21 +966,21 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
-                rotTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '0 1 0 1.57');
                 textTransform.setAttribute('translation', "0 0 0");
 
-                rotTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rotTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+                rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
             }
             textNodesZ[textNodesZ.length] = text;
         }
 
         transforms[transforms.length]=textTransform;
-        rotTransform.appendChild(textTransform);
-        home.appendChild(rotTransform);
+        rotationTransform.appendChild(textTransform);
+        home.appendChild(rotationTransform);
     }
 };

@@ -346,9 +346,27 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSDemAlpha">requestWCPSDemAlpha</a></b>(callback, WCPSurl, WCPSquery)
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImageAlphaDem">requestWCPSImageAlphaDem</a></b>(callback, WCPSurl, WCPSquery)
 								</div>
 								<div class="description">Requests one image via WCSPS.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImageWCSDem">requestWCPSImageWCSDem</a></b>(callback, WCPSurl, WCPSquery, WCSurl, WCScoverID, WCSBoundingBox, WCSVersion)
+								</div>
+								<div class="description">Requets an image via WCPS and a dem via WCS.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWMSImageWCSDem">requestWMSImageWCSDem</a></b>(callback, BoundingBox, ResX, ResY, WMSurl, WMScoverID, WMSversion, WMSCRS, WMSImageFormat, WCSurl, WCScoverID, WCSVersion)
+								</div>
+								<div class="description">Requests an image via WMS and a dem via WCS.</div>
 							</td>
 						</tr>
 					
@@ -408,7 +426,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Small helper to synchronise multiple request callbacks. After all callbacks to this helperare received the the ResponseData object with all response data send to the module.
+						Small helper to synchronise multiple request callbacks. After all callbacks to this helperare received the ResponseData object with all response data is send to the module.After each request is received a progress update is send to the module.
 						
 							<br />
 							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
@@ -798,11 +816,11 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name=".requestWCPSDemAlpha"> </a>
+					<a name=".requestWCPSImageAlphaDem"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">EarthServerGenericClient.</span><b>requestWCPSDemAlpha</b>(callback, WCPSurl, WCPSquery)
+					<span class="light">EarthServerGenericClient.</span><b>requestWCPSImageAlphaDem</b>(callback, WCPSurl, WCPSquery)
 					
 					</div>
 					<div class="description">
@@ -847,6 +865,186 @@ ul.inheritsList
 						
 						
 
+					<hr />
+				
+					<a name=".requestWCPSImageWCSDem"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>requestWCPSImageWCSDem</b>(callback, WCPSurl, WCPSquery, WCSurl, WCScoverID, WCSBoundingBox, WCSVersion)
+					
+					</div>
+					<div class="description">
+						Requets an image via WCPS and a dem via WCS.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Module requesting this data.</dd>
+							
+								<dt>
+									<b>WCPSurl</b>
+									
+								</dt>
+								<dd>- URL of the WCPS service.</dd>
+							
+								<dt>
+									<b>WCPSquery</b>
+									
+								</dt>
+								<dd>- WCPS Query for the image.</dd>
+							
+								<dt>
+									<b>WCSurl</b>
+									
+								</dt>
+								<dd>- URL of the WCS service.</dd>
+							
+								<dt>
+									<b>WCScoverID</b>
+									
+								</dt>
+								<dd>- Coverage ID for the WCS height data.</dd>
+							
+								<dt>
+									<b>WCSBoundingBox</b>
+									
+								</dt>
+								<dd>- Bounding box of the area used in WCS.</dd>
+							
+								<dt>
+									<b>WCSVersion</b>
+									
+								</dt>
+								<dd>- Version of the used WCS.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name=".requestWMSImageWCSDem"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>requestWMSImageWCSDem</b>(callback, BoundingBox, ResX, ResY, WMSurl, WMScoverID, WMSversion, WMSCRS, WMSImageFormat, WCSurl, WCScoverID, WCSVersion)
+					
+					</div>
+					<div class="description">
+						Requests an image via WMS and a dem via WCS.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Module requesting this data.</dd>
+							
+								<dt>
+									<b>BoundingBox</b>
+									
+								</dt>
+								<dd>- Bounding box of the area, used in both WMS and WCS requests.</dd>
+							
+								<dt>
+									<b>ResX</b>
+									
+								</dt>
+								<dd>- Width of the response image via WMS.</dd>
+							
+								<dt>
+									<b>ResY</b>
+									
+								</dt>
+								<dd>- Height of the response image via WMS.</dd>
+							
+								<dt>
+									<b>WMSurl</b>
+									
+								</dt>
+								<dd>- URL of the WMS service.</dd>
+							
+								<dt>
+									<b>WMScoverID</b>
+									
+								</dt>
+								<dd>- Layer ID used in WMS.</dd>
+							
+								<dt>
+									<b>WMSversion</b>
+									
+								</dt>
+								<dd>- Version of the WMS service.</dd>
+							
+								<dt>
+									<b>WMSCRS</b>
+									
+								</dt>
+								<dd>- The Coordinate Reference System. (Should be like: "crs=1")</dd>
+							
+								<dt>
+									<b>WMSImageFormat</b>
+									
+								</dt>
+								<dd>- Image format for the WMS response.</dd>
+							
+								<dt>
+									<b>WCSurl</b>
+									
+								</dt>
+								<dd>- URL of the WCS service.</dd>
+							
+								<dt>
+									<b>WCScoverID</b>
+									
+								</dt>
+								<dd>- Coverage ID used in WCS.</dd>
+							
+								<dt>
+									<b>WCSVersion</b>
+									
+								</dt>
+								<dd>- Version of the WCS service.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
 					
 				
 			
@@ -861,7 +1059,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Mar 25 2013 15:42:06 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Mar 26 2013 12:20:27 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>
