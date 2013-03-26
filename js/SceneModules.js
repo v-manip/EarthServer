@@ -783,46 +783,11 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {
     var fontColor = "1 1 0";
     var fontSize = 50.0;
-    var transforms = new Array()
-    var textNodeX = new Array();
-    var textNodeY = new Array();
-    var textNodeZ = new Array();
 
-    /**
-     *
-     * @param name
-     */
-    this.changeLabelNameX = function(name)
-    {
-        for(var i=0; i<textNodeX.length; i++)
-        {
-            textNodeX[i].setAttribute('string', name);
-        }
-    };
-
-    /**
-     *
-     * @param name
-     */
-    this.changeLabelNameY = function(name)
-    {
-        for(var i=0; i<textNodeY.length; i++)
-        {
-            textNodeY[i].setAttribute('string', name);
-        }
-    };
-
-    /**
-     *
-     * @param name
-     */
-    this.changeLabelNameZ = function(name)
-    {
-        for(var i=0; i<textNodeZ.length; i++)
-        {
-            textNodeZ[i].setAttribute('string', name);
-        }
-    };
+    var transforms = new Array();
+    var textNodesX = new Array();
+    var textNodesY = new Array();
+    var textNodesZ = new Array();
 
     /**
      *
@@ -831,14 +796,13 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     this.changeFontSize = function(size)
     {
         size = Math.abs(size);
-
         for(var i=0; i<transforms.length; i++)
         {
-            var scale = x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
+            var scale =x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
 
-            if(scale.x < 0) scale.x = "-" + size; else scale.x = size;
-            if(scale.y < 0) scale.y = "-" + size; else scale.y = size;
-            if(scale.z < 0) scale.z = "-" + size; else scale.z = size;
+            if(scale.x>=0) scale.x = size; else scale.x = -1 * size;
+            if(scale.y>=0) scale.y = size; else scale.y = -1 * size;
+            if(scale.z>=0) scale.z = size; else scale.z = -1 * size;
 
             transforms[i].setAttribute('scale', scale.x + " " + scale.y + " " + scale.z);
         }
@@ -854,15 +818,16 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         for(var i=0; i<transforms.length; i++)
         {
             var material = transforms[i].getElementsByTagName('material');
+
             for(var j=0; j<material.length; j++)
             {
-                if(mode == 'diffuseColor')
-                {
-                    material[j].setAttribute('diffuseColor', color);
-                }
-                else if(mode == "both")
+                if(mode=="both")
                 {
                     material[j].setAttribute('emissiveColor', color);
+                    material[j].setAttribute('diffuseColor', color);
+                }
+                else if(mode=="diffuse")
+                {
                     material[j].setAttribute('diffuseColor', color);
                 }
                 else
@@ -870,6 +835,42 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
                     material[j].setAttribute('emissiveColor', color);
                 }
             }
+        }
+    };
+
+    /**
+     *
+     * @param string
+     */
+    this.changeLabelNameX = function(string)
+    {
+        for(var i=0; i<textNodesX.length; i++)
+        {
+            textNodesX.setAttribute('string', string);
+        }
+    };
+
+    /**
+     *
+     * @param string
+     */
+    this.changeLabelNameY = function(string)
+    {
+        for(var i=0; i<textNodesY.length; i++)
+        {
+            textNodesY.setAttribute('string', string);
+        }
+    };
+
+    /**
+     *
+     * @param string
+     */
+    this.changeLabelNameZ = function(string)
+    {
+        for(var i=0; i<textNodesZ.length; i++)
+        {
+            textNodesZ.setAttribute('string', string);
         }
     };
 
@@ -936,7 +937,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
                 textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
                 rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
-            textNodeX[textNodeX.length] = text;
+            textNodesX[textNodesX.length] = text;
         }
         else if(axis=="y")
         {
@@ -957,7 +958,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             {
                 rotationTransform.setAttribute('rotation', '0 1 0 1.57');
             }
-            textNodeY[textNodeY.length] = text;
+            textNodesY[textNodesY.length] = text;
         }
         else if(axis=="z")
         {
@@ -975,10 +976,11 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
                 rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
                 rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
             }
-            textNodeZ[textNodeZ.length] = text;
+            textNodesZ[textNodesZ.length] = text;
         }
+
+        transforms[transforms.length]=textTransform;
         rotationTransform.appendChild(textTransform);
         home.appendChild(rotationTransform);
-        transforms[transforms.length] = textTransform;
     }
 };
