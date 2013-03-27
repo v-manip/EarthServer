@@ -62,6 +62,7 @@ EarthServerGenericClient.SceneManager = function()
     this.baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
     this.currentUIElement = 0;      //The current chosen UI element, which is a Model. Change everything for the model with that ID.
     this.progressCallback = undefined;//Callback function for the progress update.
+    this.annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
 
     /**
      * Enables/Disables the logging of Serverrequests,building of terrain etc.
@@ -124,6 +125,17 @@ EarthServerGenericClient.SceneManager = function()
     {
         if( this.TimeLog)
         {   console.timeEnd(eventName); }
+    };
+
+    this.addAnnotationsLayer = function(fontSize,fontColor)
+    {
+        var root = document.getElementById("trans");
+        if( root)
+        {
+            var layer = new EarthServerGenericClient.AnnotationLayer(root,fontSize,fontColor);
+        }
+        else
+        {   alert("Please add Layers after creating the scene.");   }
     };
 
     /**
@@ -626,9 +638,29 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Validates the received data from the server request.
+     * Checks if a texture and a heightmap are available at the moment.
+     * @param data - Received data from the server request.
+     * @returns {boolean} - TRUE if OK, FALSE if some data is missing
+     */
+    this.checkReceivedData = function( data)
+    {
+        this.receivedDataCount++;
+        this.reportProgress();
+
+        if( data === null || !data.validate() )
+        {
+            alert(this.name +": Request not successful.");
+            this.reportProgress();//NO Terrain will be built so report the progress here
+            return false;
+        }
+
+        return true;
+    };
+
+    /**
      * This creates a placeholder Element for the model. It consists of an simple quad.
      * Models that use this placeholder should remove it of course.
-     * @returns {HTMLElement}
      */
     this.createPlaceHolder = function()
     {
@@ -670,15 +702,30 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         shape.appendChild(triangleset);
         trans.appendChild(shape);
 
+        this.placeHolder = trans;
+        this.root.appendChild( this.placeHolder );
+
         appearance = null;
         material = null;
         shape = null;
         triangleset = null;
         coords = null;
         points = null;
-
-        return trans;
+        trans = null;
     };
+
+    /**
+     * Removes the PlaceHolder created in createPlaceHolder(). If already deleted nothing happens.
+     */
+    this.removePlaceHolder = function()
+    {
+        if( this.placeHolder !== null && this.placeHolder !== undefined )
+        {
+            this.root.removeChild( this.placeHolder);
+            this.placeHolder = null;
+        }
+    };
+
     /**
      * Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically by
      * the scene model.

@@ -37,6 +37,9 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
             context.putImageData(imageData,0,0);
         }
+        else
+        {   console.log("Could not create Canvas, response Texture is empty."); }
+
         return canvasTexture;
     };
 
@@ -241,12 +244,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
         canvasTexture = this.createCanvas(data.texture,index);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
-        //Remove older levels and replace it later with the new data
-        while (root.firstChild)
-        {
-            root.removeChild(root.firstChild);
-        }
-        //Remove Materials
+        //Remove old Materials of the deleted children
         this.clearMaterials();
 
         for(var currentChunk=0; currentChunk< chunkInfo.numChunks; currentChunk++)
