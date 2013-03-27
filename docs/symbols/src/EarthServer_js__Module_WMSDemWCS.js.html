@@ -173,20 +173,13 @@
 <span class='line'>166</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'>167</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'>168</span> 
-<span class='line'>169</span> </span><span class="COMM">/**
-<span class='line'>170</span>  * Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
-<span class='line'>171</span>  * @param transparency
-<span class='line'>172</span>  */</span><span class="WHIT">
-<span class='line'>173</span> </span><span class="NAME">EarthServerGenericClient.Model_WMSDemWCS.prototype.updateTransparency</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">transparency</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>174</span> </span><span class="WHIT">    </span><span class="NAME">this.terrain.setTransparency</span><span class="PUNC">(</span><span class="NAME">transparency</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>175</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>176</span> 
-<span class='line'>177</span> </span><span class="COMM">/**
-<span class='line'>178</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
-<span class='line'>179</span>  * @param element - The element where to append the specific UI elements for this model.
-<span class='line'>180</span>  * @param modelNumber - Number of this model in the SceneManager.
-<span class='line'>181</span>  */</span><span class="WHIT">
-<span class='line'>182</span> </span><span class="NAME">EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'>183</span> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>184</span> </span><span class="WHIT">    </span><span class="NAME">EarthServerGenericClient.appendElevationSlider</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>185</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>
+<span class='line'>169</span> 
+<span class='line'>170</span> </span><span class="COMM">/**
+<span class='line'>171</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+<span class='line'>172</span>  * @param element - The element where to append the specific UI elements for this model.
+<span class='line'>173</span>  * @param modelNumber - Number of this model in the SceneManager.
+<span class='line'>174</span>  */</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="NAME">EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>176</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">    </span><span class="NAME">EarthServerGenericClient.appendElevationSlider</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>

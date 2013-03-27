@@ -61,6 +61,7 @@ EarthServerGenericClient.SceneManager = function()
     this.totalLoadingProgress = 0;  //Value for the loading progress bar (all model loading combined)
     this.baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
     this.currentUIElement = 0;      //The current chosen UI element, which is a Model. Change everything for the model with that ID.
+    this.progressCallback = undefined;//Callback function for the progress update.
 
     /**
      * Enables/Disables the logging of Serverrequests,building of terrain etc.
@@ -126,26 +127,46 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Sets the callback function for the progress update. The progress function gives a parameter between 0-100.
+     * You can set callback = null for no progress update at all. If no callback is given at all the progress is
+     * printed to the console.
+     * @param callback
+     */
+    this.setProgressCallback=function(callback)
+    {
+        this.progressCallback = callback;
+    };
+    /**
      * All Modules and Terrain shall report their loading progress.
      * Modules when they receive data and terrains if they are done building the terrain.
      * Every time this function is called 1 is added to the total progress. It is assumed that for every
      * request a terrain is build thus 100% = model.requests*2
+     * If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
      * @param modelIndex - Index of the model.
      */
     this.reportProgress = function(modelIndex)
     {
-        this.modelLoadingProgress[modelIndex] += 1;
-
-        //Reset total loading progres to 0 and calc it with the new value
-        this.totalLoadingProgress = 0;
-        for(var i=0; i<this.modelLoadingProgress.length; i++)
+        //If null no progress update is wished
+        if( this.progressCallback !== null)
         {
-            var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
-            if( tmp > 1.0) tmp = 1;
-            this.totalLoadingProgress += tmp;
+            this.modelLoadingProgress[modelIndex] += 1;
+
+            //Reset total loading progress to 0 and calc it with the new value
+            this.totalLoadingProgress = 0;
+            for(var i=0; i<this.modelLoadingProgress.length; i++)
+            {
+                var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
+                if( tmp > 1.0) tmp = 1;
+                this.totalLoadingProgress += tmp;
+            }
+            this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
+
+            //Callback function or console?
+            if( this.progressCallback !== undefined)
+            {   this.progressCallback(this.totalLoadingProgress);    }
+            else
+            {   console.log(this.totalLoadingProgress); }
         }
-        this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
-        console.log(this.totalLoadingProgress);
     };
 
     /**
@@ -187,10 +208,10 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * Creates and returns the whole X3DOM Scene in the fishtank/cube with all added scene models.
-     * The Sizes of the cube are aspected as aspect ratios with values between 0 and 1.
+     * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
      * @param x3dID - ID of the x3d dom element
-     * @param sceneID - ID of the scene elemenet
+     * @param sceneID - ID of the scene element
      * @param cubeSizeX - width of the cube
      * @param cubeSizeY - height of the cube
      * @param cubeSizeZ - depth of the cube
@@ -296,8 +317,6 @@ EarthServerGenericClient.SceneManager = function()
 
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
-
-
     };
 
     /**
@@ -341,7 +360,6 @@ EarthServerGenericClient.SceneManager = function()
             var oldTrans = trans.getAttribute("translation");
             oldTrans = oldTrans.split(" ");
             oldTrans[which] = value - offset;
-            //alert(oldTrans);
             trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
         }
     };
@@ -578,11 +596,19 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Sets the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * Sets the initial transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
      * @param transparency
      */
     this.setTransparency = function( transparency ){
         this.transparency = parseFloat(transparency);
+    };
+
+    /**
+     * Updates the transparency during runtime of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * @param transparency
+     */
+    this.updateTransparency = function( transparency ){
+        this.terrain.setTransparency(transparency);
     };
 
     /**
@@ -643,6 +669,13 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         shape.appendChild(triangleset);
         trans.appendChild(shape);
 
+        appearance = null;
+        material = null;
+        shape = null;
+        triangleset = null;
+        coords = null;
+        points = null;
+
         return trans;
     };
     /**
@@ -651,7 +684,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param XRes - Size of the received data on the x-axis (e.g. the requested DEM )
      * @param YRes - Size of the received data on the y-axis
      * @param ZRes - Size of the received data on the z-axis
-     * @param minvalue - Minimum Value of the along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
      * @return {Element}
      */
     this.createTransform = function(XRes,YRes,ZRes,minvalue){
@@ -696,8 +729,6 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {Number}
          */
         this.ZResolution = 500;
-
-
 
         /**
          * Offset on the X-Axis for the model.

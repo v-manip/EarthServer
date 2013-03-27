@@ -152,7 +152,7 @@
 <span class='line'>145</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'>146</span> 
 <span class='line'>147</span> </span><span class="WHIT">    </span><span class="COMM">//2: create wcps query/queries</span><span class="WHIT">
-<span class='line'>148</span> </span><span class="WHIT">    </span><span class="COMM">//Either the user set query if all query strings are set. Or standard wcps query if wcps channels are not set.</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">    </span><span class="COMM">//Either the user query if all query strings are set. Or standard wcps query if wcps channels are not set.</span><span class="WHIT">
 <span class='line'>149</span> </span><span class="WHIT">    </span><span class="COMM">//Build one query for complete loading and multiple queries for progressive loading</span><span class="WHIT">
 <span class='line'>150</span> 
 <span class='line'>151</span> </span><span class="WHIT">    </span><span class="COMM">//IF something is not defined use standard query.</span><span class="WHIT">
@@ -263,19 +263,11 @@
 <span class='line'>256</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'>257</span> 
 <span class='line'>258</span> </span><span class="COMM">/**
-<span class='line'>259</span>  * Updates the transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
-<span class='line'>260</span>  * @param transparency
-<span class='line'>261</span>  */</span><span class="WHIT">
-<span class='line'>262</span> </span><span class="NAME">EarthServerGenericClient.Model_WCPSDemAlpha.prototype.updateTransparency</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">transparency</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>263</span> </span><span class="WHIT">    </span><span class="NAME">this.terrain.setTransparency</span><span class="PUNC">(</span><span class="NAME">transparency</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>264</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>265</span> 
-<span class='line'>266</span> </span><span class="COMM">/**
-<span class='line'>267</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
-<span class='line'>268</span>  * @param element - The element where to append the specific UI elements for this model.
-<span class='line'>269</span>  * @param modelNumber - Number of this model in the SceneManager.
-<span class='line'>270</span>  */</span><span class="WHIT">
-<span class='line'>271</span> </span><span class="NAME">EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'>272</span> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>273</span> </span><span class="WHIT">    </span><span class="NAME">EarthServerGenericClient.appendElevationSlider</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>274</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>
+<span class='line'>259</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+<span class='line'>260</span>  * @param element - The element where to append the specific UI elements for this model.
+<span class='line'>261</span>  * @param modelNumber - Number of this model in the SceneManager.
+<span class='line'>262</span>  */</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="NAME">EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">    </span><span class="NAME">EarthServerGenericClient.appendElevationSlider</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>

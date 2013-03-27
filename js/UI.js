@@ -65,12 +65,25 @@ EarthServerGenericClient.appendElevationSlider = function(element,moduleNumber){
     Div.setAttribute("id","EarthServerGenericClient_SPECIFICCell_Div_" + moduleNumber );
     Div.innerHTML = "Elevation:";
     element.appendChild(Div);
-    var ElavationSlider = new Rj.widget.HorizontalSlider("#EarthServerGenericClient_SPECIFICCell_Div_" + moduleNumber, 0,100);
-    ElavationSlider.addListener("hSliderListener", "valuechanged", function(value){
+    var ElevationSlider = new Rj.widget.HorizontalSlider("#EarthServerGenericClient_SPECIFICCell_Div_" + moduleNumber, 0,100);
+    ElevationSlider.addListener("hSliderListener", "valuechanged", function(value){
         EarthServerGenericClient_MainScene.updateElevation(value);
     });
-    ElavationSlider.$value = 10;
-    ElavationSlider.$instantChange = true;
+    ElevationSlider.$value = 10;
+    ElevationSlider.$instantChange = true;
 
+};
+
+EarthServerGenericClient.createProgressBar =  function(DivID)
+{
+    $( DivID ).progressbar({ value: 0, max: 100 });
+    $( DivID ).on( "progressbarcomplete", function( event, ui ) {
+        $( DivID ).toggle( "blind" );
+        } );
+
+    this.updateValue = function(value)
+    {
+        $( DivID ).progressbar( "option", "value", value );
+    };
 };
 
