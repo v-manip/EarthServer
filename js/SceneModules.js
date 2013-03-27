@@ -322,7 +322,6 @@ EarthServerGenericClient.SceneManager = function()
     /**
      *
      */
-    //TODO: Create axis labels ? Move to createScene?
     this.createAxisLabels = function()
     {
         axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
@@ -806,18 +805,168 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 
 /**
  * @class AxisLabels
+ * @description This class generates labels for each axis and side (except bottom) of the bounding box.
+ *
  * @param xSize
+ * The width of the bounding box.
+ *
  * @param ySize
+ * The height of the bounding box.
+ *
  * @param zSize
+ * The depth of the bounding box.
  *
  */
 EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {
-    var fontColor = "1 1 0";
-    var fontSize = 50.0;
-    //var transforms = new Array()
+    /**
+     * @description Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
+     * @type {string}
+     * @default "0.7 0.7 0.5"
+     */
+    var fontColor = "0.7 0.7 0.5";
 
-    //TODO: CREATE
+    /**
+     * @description Defines the size of the font. Value is always positive!
+     * @default 50.0
+     * @type {number}
+     */
+    var fontSize = 50.0;
+
+    /**
+     * @description Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
+     * @type {Array}
+     * @default Empty
+     */
+    var transforms = new Array();
+    /**
+     * @description Array stores all text nodes of the x-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesX = new Array();
+    /**
+     * @description Array stores all text nodes of the y-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesY = new Array();
+    /**
+     * @description Array stores all text nodes of the z-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesZ = new Array();
+
+    /**
+     * @description This function changes the text size of each label independent of its axis.
+     *
+     * @param size
+     * The parameter (positive value expected) represents the desired size of the font.
+     * Remember, the parameter represents the size in x3dom units not in pt like css.
+     * Hence the size value could be large.
+     */
+    this.changeFontSize = function(size)
+    {
+        size = Math.abs(size);
+        for(var i=0; i<transforms.length; i++)
+        {
+            var scale =x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
+
+            if(scale.x>=0) scale.x = size; else scale.x = -1 * size;
+            if(scale.y>=0) scale.y = size; else scale.y = -1 * size;
+            if(scale.z>=0) scale.z = size; else scale.z = -1 * size;
+
+            transforms[i].setAttribute('scale', scale.x + " " + scale.y + " " + scale.z);
+        }
+    };
+
+    /**
+     * This function changes the color of each label independent of its axis.
+     * @param color
+     * This parameter changes the current color value of each label.
+     * It expects a string in x3d color format. <br>
+     * E.g. "1.0 1.0 1.0" for white and "0.0 0.0 0.0" for black.
+     */
+    this.changeColor = function(color)
+    {
+        for(var i=0; i<transforms.length; i++)
+        {
+            var material = transforms[i].getElementsByTagName('material');
+
+            for(var j=0; j<material.length; j++)
+            {
+                material[j].setAttribute('emissiveColor', color);
+                material[j].setAttribute('diffuseColor', color);
+            }
+        }
+    };
+
+    /**
+     * @description This function changes the text of each label on the x-axis.
+     *
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameX = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesX.length; i++)
+        {
+            textNodesX[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @description This function changes the text of each label on the y-axis.
+     *
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameY = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesY.length; i++)
+        {
+            textNodesY[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameZ = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesZ.length; i++)
+        {
+            textNodesZ[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @description This function generates labels on all three axis (x,y,z). The labels will be
+     * added on each side (except bottom).
+     */
     this.create = function()
     {
         createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
@@ -834,6 +983,21 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
     };
 
+    /**
+     * @description This (private) function creates the needed x3dom nodes.
+     *
+     * @param axis
+     * Which axis do you want? Available: x, y, z
+     *
+     * @param side
+     * Choose the side of the axis. <br>
+     * Available for x: front (default), back and top. <br>
+     * Available for y: front (default), back, left and right. <br>
+     * Available for z: front (default), back and top.
+     *
+     * @param label
+     * This text will appear at the given axis.
+     */
     function createLabel(axis, side, label)
     {
         //Setup text
@@ -855,23 +1019,22 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         textTransform.appendChild(shape);
 
         var home = document.getElementById('x3dScene');
-        var rootTransform = document.createElement('transform');
+        var rotationTransform = document.createElement('transform');
 
         if(axis=="x")
         {
-            textTransform.setAttribute('translation', "0 " + -(ySize+fontSize) + " " + zSize);
-            textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
-            textTransform.setAttribute('rotation', '0 0 1 3.14');
+            textTransform.setAttribute('translation', "0 " + (ySize+fontSize/2) + " " + zSize);
+
             if(side=="back")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
-                textTransform.setAttribute('translation', "0 " + ySize + " " + (zSize+fontSize/2));
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-fontSize/2));
             }
+            textNodesX[textNodesX.length] = text;
         }
         else if(axis=="y")
         {
@@ -882,36 +1045,39 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             {
                 textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
-                rootTransform.setAttribute('rotation', '1 0 0 3.14');
+                rotationTransform.setAttribute('rotation', '1 0 0 3.14');
             }
             else if(side=="left")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 -1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 -1.57');
             }
             else if(side=="right")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 1.57');
+                rotationTransform.setAttribute('rotation', '0 1 0 1.57');
             }
+            textNodesY[textNodesY.length] = text;
         }
         else if(axis=="z")
         {
-            textTransform.setAttribute('translation', xSize + " " + -(ySize+fontSize) + " 0");
+            textTransform.setAttribute('translation', xSize + " " + (ySize+fontSize/2) + " 0");
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
             }
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '0 1 0 1.57');
                 textTransform.setAttribute('translation', "0 0 0");
 
-                rootTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rootTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + ySize + " 0");
+                rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + -ySize + " 0");
             }
+            textNodesZ[textNodesZ.length] = text;
         }
 
-        rootTransform.appendChild(textTransform);
-        home.appendChild(rootTransform);
+        transforms[transforms.length]=textTransform;
+        rotationTransform.appendChild(textTransform);
+        home.appendChild(rotationTransform);
     }
 };
