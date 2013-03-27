@@ -256,7 +256,7 @@ ul.inheritsList
 							<div class="fixedFont">
 								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#constructor">EarthServerGenericClient.AxisLabels</a></b>(xSize, ySize, zSize)
 							</div>
-							<div class="description"></div>
+							<div class="description">This class generates labels for each axis and side (except bottom) of the bounding box.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -264,6 +264,84 @@ ul.inheritsList
 			
 
 <!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.AxisLabels.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-fontColor">fontColor</a></b>
+								</div>
+								<div class="description">Defines the color of the text.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-fontSize">fontSize</a></b>
+								</div>
+								<div class="description">Defines the size of the font.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-textNodesX">textNodesX</a></b>
+								</div>
+								<div class="description">Array stores all text nodes of the x-axis.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-textNodesY">textNodesY</a></b>
+								</div>
+								<div class="description">Array stores all text nodes of the y-axis.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-textNodesZ">textNodesZ</a></b>
+								</div>
+								<div class="description">Array stores all text nodes of the z-axis.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-transforms">transforms</a></b>
+								</div>
+								<div class="description">Array stores all X3DOM transform nodes.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
 			
 
 <!-- ============================== methods summary ======================== -->
@@ -283,9 +361,9 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeColor">changeColor</a></b>(color, mode)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeColor">changeColor</a></b>(color)
 								</div>
-								<div class="description"></div>
+								<div class="description">This function changes the color of each label independent of its axis.</div>
 							</td>
 						</tr>
 					
@@ -294,7 +372,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeFontSize">changeFontSize</a></b>(size)
 								</div>
-								<div class="description"></div>
+								<div class="description">This function changes the text size of each label independent of its axis.</div>
 							</td>
 						</tr>
 					
@@ -303,7 +381,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeLabelNameX">changeLabelNameX</a></b>(string)
 								</div>
-								<div class="description"></div>
+								<div class="description">This function changes the text of each label on the x-axis.</div>
 							</td>
 						</tr>
 					
@@ -312,7 +390,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeLabelNameY">changeLabelNameY</a></b>(string)
 								</div>
-								<div class="description"></div>
+								<div class="description">This function changes the text of each label on the y-axis.</div>
 							</td>
 						</tr>
 					
@@ -321,7 +399,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#changeLabelNameZ">changeLabelNameZ</a></b>(string)
 								</div>
-								<div class="description"></div>
+								<div class="description">This function changes the text of each label on the z-axis.</div>
 							</td>
 						</tr>
 					
@@ -330,7 +408,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#create">create</a></b>()
 								</div>
-								<div class="description"></div>
+								<div class="description">This function generates labels on all three axis (x,y,z).</div>
 							</td>
 						</tr>
 					
@@ -339,7 +417,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AxisLabels.html#-createLabel">createLabel</a></b>(axis, side, label)
 								</div>
-								<div class="description"></div>
+								<div class="description">This (private) function creates the needed x3dom nodes.</div>
 							</td>
 						</tr>
 					
@@ -364,7 +442,7 @@ ul.inheritsList
 				</div>
 				
 				<div class="description">
-					
+					This class generates labels for each axis and side (except bottom) of the bounding box.
 					
 				</div>
 				
@@ -379,19 +457,19 @@ ul.inheritsList
 								 <b>xSize</b>
 								
 							</dt>
-								<dd></dd>
+								<dd>The width of the bounding box.</dd>
 						
 							<dt>
 								 <b>ySize</b>
 								
 							</dt>
-								<dd></dd>
+								<dd>The height of the bounding box.</dd>
 						
 							<dt>
 								 <b>zSize</b>
 								
 							</dt>
-								<dd></dd>
+								<dd>The depth of the bounding box.</dd>
 						
 						</dl>
 					
@@ -407,6 +485,185 @@ ul.inheritsList
 
 <!-- ============================== field details ========================== -->		
 			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="-fontColor"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>fontColor</b>
+					
+					</div>
+					<div class="description">
+						Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								"0.7 0.7 0.5"
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-fontSize"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>fontSize</b>
+					
+					</div>
+					<div class="description">
+						Defines the size of the font. Value is always positive!
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								50.0
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-textNodesX"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>textNodesX</b>
+					
+					</div>
+					<div class="description">
+						Array stores all text nodes of the x-axis.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								Empty
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-textNodesY"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>textNodesY</b>
+					
+					</div>
+					<div class="description">
+						Array stores all text nodes of the y-axis.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								Empty
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-textNodesZ"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>textNodesZ</b>
+					
+					</div>
+					<div class="description">
+						Array stores all text nodes of the z-axis.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								Empty
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-transforms"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>transforms</b>
+					
+					</div>
+					<div class="description">
+						Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								Empty
+							</dd>
+							</dl>
+						
+
+					
+				
+			
 
 <!-- ============================== method details ========================= -->		
 			
@@ -418,11 +675,11 @@ ul.inheritsList
 					<div class="fixedFont">
 					
 					
-					<b>changeColor</b>(color, mode)
+					<b>changeColor</b>(color)
 					
 					</div>
 					<div class="description">
-						
+						This function changes the color of each label independent of its axis.
 						
 						
 					</div>
@@ -437,13 +694,7 @@ ul.inheritsList
 									<b>color</b>
 									
 								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>mode</b>
-									
-								</dt>
-								<dd></dd>
+								<dd>This parameter changes the current color value of each label.It expects a string in x3d color format. <br>E.g. "1.0 1.0 1.0" for white and "0.0 0.0 0.0" for black.</dd>
 							
 							</dl>
 						
@@ -464,7 +715,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This function changes the text size of each label independent of its axis.
 						
 						
 					</div>
@@ -479,7 +730,7 @@ ul.inheritsList
 									<b>size</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The parameter (positive value expected) represents the desired size of the font.Remember, the parameter represents the size in x3dom units not in pt like css.Hence the size value could be large.</dd>
 							
 							</dl>
 						
@@ -500,7 +751,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This function changes the text of each label on the x-axis.
 						
 						
 					</div>
@@ -515,7 +766,7 @@ ul.inheritsList
 									<b>string</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Defines the new text.</dd>
 							
 							</dl>
 						
@@ -536,7 +787,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This function changes the text of each label on the y-axis.
 						
 						
 					</div>
@@ -551,7 +802,7 @@ ul.inheritsList
 									<b>string</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Defines the new text.</dd>
 							
 							</dl>
 						
@@ -572,7 +823,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This function changes the text of each label on the z-axis.
 						
 						
 					</div>
@@ -587,7 +838,7 @@ ul.inheritsList
 									<b>string</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Defines the new text.</dd>
 							
 							</dl>
 						
@@ -608,7 +859,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This function generates labels on all three axis (x,y,z). The labels will beadded on each side (except bottom).
 						
 						
 					</div>
@@ -633,7 +884,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						This (private) function creates the needed x3dom nodes.
 						
 						
 					</div>
@@ -648,19 +899,19 @@ ul.inheritsList
 									<b>axis</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Which axis do you want? Available: x, y, z</dd>
 							
 								<dt>
 									<b>side</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Choose the side of the axis. <br>Available for x: front (default), back and top. <br>Available for y: front (default), back, left and right. <br>Available for z: front (default), back and top.</dd>
 							
 								<dt>
 									<b>label</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>This text will appear at the given axis.</dd>
 							
 							</dl>
 						
@@ -685,7 +936,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Mar 26 2013 12:20:27 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Mar 27 2013 16:10:01 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>
