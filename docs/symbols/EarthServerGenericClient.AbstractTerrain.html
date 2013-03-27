@@ -285,7 +285,16 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#calcNumberOfChunks">calcNumberOfChunks</a></b>(width, height, chunkSize)
 								</div>
-								<div class="description">Calc the needed numbers of chunks for the terrain for a specific chunksize.</div>
+								<div class="description">Calcs the needed numbers of chunks for the terrain for a specific chunk size.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#clearMaterials">clearMaterials</a></b>()
+								</div>
+								<div class="description">Deletes all saved material IDs.</div>
 							</td>
 						</tr>
 					
@@ -295,6 +304,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#createCanvas">createCanvas</a></b>(texture, index)
 								</div>
 								<div class="description">Creates a html canvas element out of the texture and removes the alpha values.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#createChunkInfo">createChunkInfo</a></b>(index, chunkSize, chunkInfo, currentChunk, terrainWidth, terrainHeight)
+								</div>
+								<div class="description">This function calcs the needed information to build and place a chunk of a terrain.</div>
 							</td>
 						</tr>
 					
@@ -381,7 +399,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Calc the needed numbers of chunks for the terrain for a specific chunksize.
+						Calcs the needed numbers of chunks for the terrain for a specific chunk size.
 						
 						
 					</div>
@@ -422,6 +440,31 @@ ul.inheritsList
 								<dd><span class="light fixedFont">{{}}</span> - Returns a object with: numChunksX,numChunksY and numChunksX</dd>
 							
 							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="clearMaterials"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>clearMaterials</b>()
+					
+					</div>
+					<div class="description">
+						Deletes all saved material IDs. Use this function if you remove old material from the dom. (ProgressiveTerrain for example)
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
 						
 						
 						
@@ -469,6 +512,79 @@ ul.inheritsList
 							<dt class="heading">Returns:</dt>
 							
 								<dd><span class="light fixedFont">{HTMLElement}</span> - The canvas element.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="createChunkInfo"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{{xpos: number|ypos: number|chunkWidth: number|chunkHeight: number|terrainWidth: number|terrainHeight: number|ID: number|modelIndex: number}}</span>
+					<b>createChunkInfo</b>(index, chunkSize, chunkInfo, currentChunk, terrainWidth, terrainHeight)
+					
+					</div>
+					<div class="description">
+						This function calcs the needed information to build and place a chunk of a terrain.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>index</b>
+									
+								</dt>
+								<dd>- Index of the model using the terrain. Used for creating IDs.</dd>
+							
+								<dt>
+									<b>chunkSize</b>
+									
+								</dt>
+								<dd>- The desired size (count of values) of one chunk per axis.</dd>
+							
+								<dt>
+									<b>chunkInfo</b>
+									
+								</dt>
+								<dd>- The return of calcNumberOfChunks(). Info about number of chunks on each axis.</dd>
+							
+								<dt>
+									<b>currentChunk</b>
+									
+								</dt>
+								<dd>- The index of the current chunk to be build.</dd>
+							
+								<dt>
+									<b>terrainWidth</b>
+									
+								</dt>
+								<dd>- Width of the whole terrain. Used to calc texture coordinates.</dd>
+							
+								<dt>
+									<b>terrainHeight</b>
+									
+								</dt>
+								<dd>- Height of the whole terrain. Used to calc texture coordinates.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{{xpos: number|ypos: number|chunkWidth: number|chunkHeight: number|terrainWidth: number|terrainHeight: number|ID: number|modelIndex: number}}</span> </dd>
 							
 							</dl>
 						
@@ -616,7 +732,7 @@ ul.inheritsList
 									<b>value</b>
 									
 								</dt>
-								<dd>- Transparency value.</dd>
+								<dd>- Transparency value between 0 and 1.</dd>
 							
 							</dl>
 						
@@ -641,7 +757,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Mar 25 2013 15:42:06 GMT+0100 (MEZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Mar 27 2013 16:10:01 GMT+0100 (MEZ)
 		</div>
 	</body>
 </html>
