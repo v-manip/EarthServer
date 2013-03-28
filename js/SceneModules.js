@@ -127,15 +127,68 @@ EarthServerGenericClient.SceneManager = function()
         {   console.timeEnd(eventName); }
     };
 
-    this.addAnnotationsLayer = function(fontSize,fontColor)
+    /**
+     * Returns the index of an existing AnnotationLayer in the array or -1 if no layer with the given name was found.
+     * @param AnnotationLayerName - Name of the Layer
+     * @returns {number} - Either index in the array or -1 if not found
+     */
+    this.getAnnotationLayerIndex = function(AnnotationLayerName)
     {
-        var root = document.getElementById("trans");
+        for(var i=0;i<this.annotationLayers.length;i++)
+        {
+            if( this.annotationLayers[i].name === AnnotationLayerName)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    };
+
+    /**
+     * Adds an AnnotationsLayer to the scene.
+     * @param name - Name of the Layer. You need the name of a layer to add annotations to it.
+     * @param fontSize - Font size of all annotations added to this layer.
+     * @param fontColor - Color of all annotations added to this layer.
+     * @param fontHover - The annotation text hovers above the annotation marker by this value.
+     * @param markerColor - Color of the annotation marker
+     */
+    this.addAnnotationsLayer = function(name,fontSize,fontColor,fontHover,markerColor)
+    {
+        var root = document.getElementById("AnnotationsGroup");
         if( root)
         {
-            var layer = new EarthServerGenericClient.AnnotationLayer(root,fontSize,fontColor);
+            if( this.getAnnotationLayerIndex(name) < 0)
+            {
+                var layer = new EarthServerGenericClient.AnnotationLayer(name,root,fontSize,fontColor,fontHover,markerColor);
+                this.annotationLayers.push(layer);
+            }
+            else
+            {   alert("AnnotationLayer with this name already created.");   }
         }
         else
         {   alert("Please add Layers after creating the scene.");   }
+    };
+
+    /**
+     * Adds an annotation to an existing annotation layer.
+     * @param AnnotationLayerName - Name of the annotation layer to add the annotation to.
+     * @param xPos - Position on the x-axis of the annotation.
+     * @param yPos - Position on the y-axis of the annotation.
+     * @param zPos - Position on the z-axis of the annotation.
+     * @param Text - Text of the annotation.
+     */
+    this.addAnnotation = function(AnnotationLayerName,xPos,yPos,zPos,Text)
+    {
+        var index = this.getAnnotationLayerIndex(AnnotationLayerName);
+        if( index >= 0)
+        {
+            this.annotationLayers[index].addAnnotation(xPos,yPos,zPos,Text);
+        }
+        else
+        {
+            alert("Could not found a AnnotationLayer with name: " + AnnotationLayerName);
+        }
     };
 
     /**
@@ -329,6 +382,10 @@ EarthServerGenericClient.SceneManager = function()
 
         this.setView('EarthServerGenericClient_Cam_Front');
         this.trans = trans;
+
+        var annotationTrans = document.createElement("transform");
+        annotationTrans.setAttribute("id","AnnotationsGroup");
+        scene.appendChild(annotationTrans);
     };
 
     /**
@@ -337,7 +394,7 @@ EarthServerGenericClient.SceneManager = function()
     this.createAxisLabels = function()
     {
         axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
-        axisLabels.create();
+        axisLabels.createAxisLabels(this.xLabel,this.yLabel,this.zLabel);
     };
 
     /**
@@ -651,6 +708,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         {
             alert(this.name +": Request not successful.");
             this.reportProgress();//NO Terrain will be built so report the progress here
+            this.removePlaceHolder();//Remove the placeHolder.
             return false;
         }
 
@@ -932,7 +990,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
      * This function changes the color of each label independent of its axis.
      * @param color
      * This parameter changes the current color value of each label.
-     * It expects a string in x3d color format. <br>
+     * It expects a string in x3d color format.
      * E.g. "1.0 1.0 1.0" for white and "0.0 0.0 0.0" for black.
      */
     this.changeColor = function(color)
@@ -1014,20 +1072,20 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
      * @description This function generates labels on all three axis (x,y,z). The labels will be
      * added on each side (except bottom).
      */
-    this.create = function()
+    this.createAxisLabels = function(xLabel,yLabel,zLabel)
     {
-        createLabel("x", "front", EarthServerGenericClient_MainScene.xLabel);
-        createLabel("x", "back",  EarthServerGenericClient_MainScene.xLabel);
-        createLabel("x", "top",   EarthServerGenericClient_MainScene.xLabel);
+        createLabel("x", "front", xLabel);
+        createLabel("x", "back",  xLabel);
+        createLabel("x", "top",   xLabel);
 
-        createLabel("y", "front", EarthServerGenericClient_MainScene.yLabel);
-        createLabel("y", "back",  EarthServerGenericClient_MainScene.yLabel);
-        createLabel("y", "left",  EarthServerGenericClient_MainScene.yLabel);
-        createLabel("y", "right", EarthServerGenericClient_MainScene.yLabel);
+        createLabel("y", "front", yLabel);
+        createLabel("y", "back",  yLabel);
+        createLabel("y", "left",  yLabel);
+        createLabel("y", "right", yLabel);
 
-        createLabel("z", "front", EarthServerGenericClient_MainScene.zLabel);
-        createLabel("z", "back",  EarthServerGenericClient_MainScene.zLabel);
-        createLabel("z", "top",   EarthServerGenericClient_MainScene.zLabel);
+        createLabel("z", "front", zLabel);
+        createLabel("z", "back",  zLabel);
+        createLabel("z", "top",   zLabel);
     };
 
     /**
@@ -1065,7 +1123,8 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         shape.appendChild(text);
         textTransform.appendChild(shape);
 
-        var home = document.getElementById('x3dScene');
+        //var home = document.getElementById('x3dScene');
+        var home = document.getElementById('AnnotationsGroup');
         var rotationTransform = document.createElement('transform');
 
         if(axis=="x")

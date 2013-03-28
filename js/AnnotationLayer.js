@@ -1,19 +1,20 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
-EarthServerGenericClient.AnnotationLayer = function(root,fontSize,fontColor)
+EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerColor)
 {
+    this.name = Name;
+    var annotationTransforms = [];
+
     this.addAnnotation = function(xPos,yPos,zPos,Text)
     {
-        this.rootTransform = [];
-
         for(var i=0;i<2;i++)
         {
-            //Setup text
             var textTransform = document.createElement('transform');
             textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
             var shape = document.createElement('shape');
             var appearance = document.createElement('appearance');
+            appearance.setAttribute("id","Layer_Appearance_"+Name);
             var material = document.createElement('material');
             material.setAttribute('emissiveColor', fontColor);
             var text = document.createElement('text');
@@ -27,26 +28,52 @@ EarthServerGenericClient.AnnotationLayer = function(root,fontSize,fontColor)
             shape.appendChild(text);
             textTransform.appendChild(shape);
 
-            this.rootTransform[i] = document.createElement('transform');
+            if(i===0)
+            {
+                var sphere_trans = document.createElement("Transform");
+                sphere_trans.setAttribute("scale","10 10 10");
+                sphere_trans.setAttribute('translation', xPos + " " + yPos + " " + zPos);
+                var sphere_shape = document.createElement("Shape");
+                var sphere = document.createElement("Sphere");
+                var sphere_app = document.createElement("Appearance");
+                var sphere_material = document.createElement('material');
+                sphere_material.setAttribute('diffusecolor', markerColor);
+                sphere_app.appendChild(sphere_material);
+                sphere_shape.appendChild(sphere_app);
+                sphere_shape.appendChild(sphere);
+                sphere_trans.appendChild(sphere_shape);
 
-            textTransform.setAttribute('translation', xPos + " " + yPos + " " + zPos);
+                root.appendChild(sphere_trans);
+                annotationTransforms.push(sphere_trans);
+
+                sphere_trans = null;
+                sphere_shape = null;
+                sphere = null;
+                sphere_app = null;
+                sphere_material = null;
+            }
+
+            var rootTransform = document.createElement('transform');
+
+            textTransform.setAttribute('translation', xPos + " " + (yPos+fontHover) + " " + zPos);
             textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
 
             if(i===0)
             {
                 textTransform.setAttribute('rotation', '0 0 1 3.14');
-                this.rootTransform[i].setAttribute('rotation', '0 1 0 3.14');
             }
             else
             {
-                textTransform.setAttribute('rotation', '1 0 0 -1.57');
-                this.rootTransform[i].setAttribute('rotation', '0 1 0 3.14');
+                textTransform.setAttribute('rotation', '0 0 1 3.14');
+                textTransform.setAttribute('translation', -xPos + " " + (yPos+fontHover) + " " + -zPos);
+                rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
 
-            root.appendChild( this.rootTransform[i] );
+
+            annotationTransforms.push(rootTransform);
+            rootTransform.appendChild(textTransform);
+            root.appendChild( rootTransform );
         }
-
-
 
         textTransform = null;
         shape = null;
@@ -58,7 +85,9 @@ EarthServerGenericClient.AnnotationLayer = function(root,fontSize,fontColor)
 
     this.renderLayer = function( value )
     {
-        this.rootTransform[0].setAttribute("render", value);
-        this.rootTransform[1].setAttribute("render", value);
+        for(var i=0; i<annotationTransforms.length;i++)
+        {
+            annotationTransforms[i].setAttribute("render",value);
+        }
     };
 };

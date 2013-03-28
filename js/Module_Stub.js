@@ -77,18 +77,10 @@ EarthServerGenericClient.Model_Name.prototype.createModel=function(root, index, 
  */
 EarthServerGenericClient.Model_Name.prototype.receiveData= function( data)
 {
-    this.receivedDataCount++;
-    this.reportProgress();
-    if( data === null)
-    { console.log("Model_Name" + this.name +": Request not successful.");}
-    else
+    if( this.checkReceivedData(data))
     {
         //Remove the placeHolder
-        if( this.placeHolder !== null && this.placeHolder !== undefined )
-        {
-            this.root.removeChild( this.placeHolder);
-            this.placeHolder = null;
-        }
+        this.removePlaceHolder();
 
         var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));

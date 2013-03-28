@@ -241,7 +241,8 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 });
                 DataBlocks = null;
                 responseData.heightmap = hm;
-                callback.receiveData(receivedData);
+                //callback.receiveData(receivedData);
+                callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
             {
