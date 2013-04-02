@@ -49,8 +49,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setURL=function(url){
 };
 /**
  * Sets both coverage names.
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoverages = function (coverageImage, coverageDem) {
     /**

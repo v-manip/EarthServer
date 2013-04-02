@@ -151,16 +151,17 @@ EarthServerGenericClient.SceneManager = function()
      * @param fontSize - Font size of all annotations added to this layer.
      * @param fontColor - Color of all annotations added to this layer.
      * @param fontHover - The annotation text hovers above the annotation marker by this value.
+     * @param markerSize - The size if the annotation marker
      * @param markerColor - Color of the annotation marker
      */
-    this.addAnnotationsLayer = function(name,fontSize,fontColor,fontHover,markerColor)
+    this.addAnnotationsLayer = function(name,fontSize,fontColor,fontHover,markerSize,markerColor)
     {
         var root = document.getElementById("AnnotationsGroup");
         if( root)
         {
             if( this.getAnnotationLayerIndex(name) < 0)
             {
-                var layer = new EarthServerGenericClient.AnnotationLayer(name,root,fontSize,fontColor,fontHover,markerColor);
+                var layer = new EarthServerGenericClient.AnnotationLayer(name,root,fontSize,fontColor,fontHover,markerSize,markerColor);
                 this.annotationLayers.push(layer);
             }
             else

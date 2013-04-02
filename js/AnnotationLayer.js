@@ -1,7 +1,7 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
-EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerColor)
+EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
 {
     this.name = Name;
     var annotationTransforms = [];
@@ -17,6 +17,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
             appearance.setAttribute("id","Layer_Appearance_"+Name);
             var material = document.createElement('material');
             material.setAttribute('emissiveColor', fontColor);
+            material.setAttribute('diffuseColor', fontColor);
             var text = document.createElement('text');
             text.setAttribute('string', Text);
             var fontStyle = document.createElement('fontStyle');
@@ -31,7 +32,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
             if(i===0)
             {
                 var sphere_trans = document.createElement("Transform");
-                sphere_trans.setAttribute("scale","10 10 10");
+                sphere_trans.setAttribute("scale",markerSize + " " + markerSize + " "+markerSize);
                 sphere_trans.setAttribute('translation', xPos + " " + yPos + " " + zPos);
                 var sphere_shape = document.createElement("Shape");
                 var sphere = document.createElement("Sphere");

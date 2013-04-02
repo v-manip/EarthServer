@@ -92,7 +92,7 @@
         var pb = new EarthServerGenericClient.createProgressBar("#progressbar");
         EarthServerGenericClient_MainScene.setProgressCallback(pb.updateValue);
 
-        EarthServerGenericClient_MainScene.addAnnotationsLayer("TEST",50,"1 1 1",40,"1 1 1");
+        EarthServerGenericClient_MainScene.addAnnotationsLayer("TEST",50,"1 1 1",25,6,"1 1 1");
         EarthServerGenericClient_MainScene.addAnnotation("TEST",310,35,-170,"UAC Mars Base");
         EarthServerGenericClient_MainScene.addAnnotation("TEST",200,-45,400,"This is Sparta");
 
@@ -106,7 +106,7 @@
 <div id="progressbar"></div>
 
     <div id="x3domDIV">
-        <X3D id="x3d" showlog="false" showstat="true" width="900" height="600">
+        <X3D id="x3d" showlog="false" showstat="false" width="900" height="600">
             <scene id="x3dScene">
                 <Background DEF='back' groundAngle='0.9 1.5 1.57' groundColor='0.3 0.3 0.4 0.35 0.35 0.55 0.4 0.4 0.5 0.5 0.5 0.6'
                             skyAngle='0.9 1.5 1.57' skyColor='0.2 0.2 0.3 0.3 0.4 0.3 0.4 0.5 0.4 0.5 0.5 0.6'>

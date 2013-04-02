@@ -8,7 +8,6 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
 EarthServerGenericClient.AbstractTerrain = function()
 {
     var AppearanceDefined = [];//Stores all the already created appearances' names.
-    var materialNodes = [];//Stores the IDs of the materials to change the transparency.
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
      * @param texture - Texture to draw. Can be everything which can be rendered into a canvas.
@@ -137,13 +136,13 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.setTransparency = function(value)
     {
-        for(var k=0;k<materialNodes.length;k++)
+        for(var k=0;k<this.materialNodes.length;k++)
         {
-            var mat =  document.getElementById(materialNodes[k]);
+            var mat =  document.getElementById(this.materialNodes[k]);
             if( mat !== null)
             {   mat.setAttribute("transparency",value); }
             else
-            {   console.log("Material with ID " + materialNodes[k] + " not found.");    }
+            {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
         }
     };
 
@@ -152,7 +151,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.clearMaterials = function()
     {
-        materialNodes = [];
+       this.materialNodes = [];
     };
 
     /**
@@ -194,11 +193,11 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
-                    material.setAttribute("diffuseColor", "0.7,0.7,0.7");
+                    material.setAttribute("diffuseColor", "1 1 1");
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
-                    materialNodes.push( AppearanceName+"_mat");
+                   this.materialNodes.push( AppearanceName+"_mat");
 
                     appearance.appendChild(material);
                     appearance.appendChild(imageTransform);
@@ -233,6 +232,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     var chunkSize = 256;    //Size of one chunk. Chunks at the borders can be smaller. 256*256=2^16 is the max size because of only 16 bit indices.
     var canvasTexture;      //The canvas that holds the received image.
     var currentData = 0;    //Counter of the inserted levels.
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
 
     /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
@@ -295,8 +295,9 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  */
 EarthServerGenericClient.LODTerrain = function(root, data,index)
 {
-    var lodRange1       = 2000; //Distance to change between Full and 1/2 resolution.
-    var lodRange2       = 10000;//Distance to change between 1/2 and 1/4 resolution.
+    var lodRange1       = 10000; //Distance to change between Full and 1/2 resolution.
+    var lodRange2       = 20000;//Distance to change between 1/2 and 1/4 resolution.
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
 
     //The canvas that holds the received image.
     var canvasTexture   = this.createCanvas( data.texture,index);
