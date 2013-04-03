@@ -49,8 +49,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setURL=function(url){
 };
 /**
  * Sets both coverage names.
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoverages = function (coverageImage, coverageDem) {
     /**
@@ -131,8 +131,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     this.index = index;
 
     //Create Placeholder
-    this.placeHolder = this.createPlaceHolder();
-    this.root.appendChild( this.placeHolder );
+    this.createPlaceHolder();
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined
@@ -203,11 +202,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
  */
 EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( data)
 {
-    this.receivedDataCount++;
-    this.reportProgress();
-    if( data === null)
-    { console.log("WCPSDemAlpha "+ this.name +": Request not successful.");}
-    else
+    if( this.checkReceivedData(data))
     {
         //If progressive loading is enabled this function is called multiple times.
         //The lower resolution version shall be removed and replaced with the new one.
@@ -216,11 +211,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         {   this.root.removeChild(this.transformNode); }
 
         //In the first receiveData call remove the placeholder.
-        if( this.placeHolder !== null && this.placeHolder !== undefined )
-        {
-            this.root.removeChild( this.placeHolder);
-            this.placeHolder = null;
-        }
+        this.removePlaceHolder();
 
         var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
@@ -252,6 +243,11 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             if( this.receivedDataCount === this.requests)
             {   EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);   }
         }
+
+        //Delete transformNode when the last response call is done.
+        //Until that the pointer is needed to delete the old terrain just before the new terrain is build.
+        if( this.receivedDataCount === this.requests )
+        {   this.transformNode = null;  }
     }
 };
 

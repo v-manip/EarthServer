@@ -98,8 +98,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
     this.index = index;
 
     //Create Placeholder
-    this.placeHolder = this.createPlaceHolder();
-    this.root.appendChild( this.placeHolder );
+    this.createPlaceHolder();
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.URLDEM === undefined
@@ -149,18 +148,10 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, i
  */
 EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
 {
-    this.receivedDataCount++;
-    this.reportProgress();
-    if( data === null)
-    { console.log("Model_WCPSDemWCS" + this.name +": Request not successful.");}
-    else
+    if( this.checkReceivedData(data))
     {
         //Remove the placeHolder
-        if( this.placeHolder !== null && this.placeHolder !== undefined )
-        {
-            this.root.removeChild( this.placeHolder);
-            this.placeHolder = null;
-        }
+        this.removePlaceHolder();
 
         var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
@@ -174,6 +165,8 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         this.terrain.createTerrain();
         EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
         EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
     }
 };
 
