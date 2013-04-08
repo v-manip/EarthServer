@@ -17,7 +17,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      * Stores the IDs of the materials to change the transparency.
      * @type {Array}
      */
-    var materialNodes = [];
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
@@ -49,6 +49,9 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
             context.putImageData(imageData,0,0);
         }
+        else
+        {   console.log("Could not create Canvas, response Texture is empty."); }
+
         return canvasTexture;
     };
 
@@ -167,13 +170,13 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.setTransparency = function(value)
     {
-        for(var k=0;k<materialNodes.length;k++)
+        for(var k=0;k<this.materialNodes.length;k++)
         {
-            var mat =  document.getElementById(materialNodes[k]);
+            var mat =  document.getElementById(this.materialNodes[k]);
             if( mat !== null)
             {   mat.setAttribute("transparency",value); }
             else
-            {   console.log("Material with ID " + materialNodes[k] + " not found.");    }
+            {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
         }
     };
 
@@ -183,7 +186,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.clearMaterials = function()
     {
-        materialNodes = [];
+       this.materialNodes = [];
     };
 
 
@@ -234,11 +237,11 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
-                    material.setAttribute("diffuseColor", "0.7,0.7,0.7");
+                    material.setAttribute("diffuseColor", "1 1 1");
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
-                    materialNodes.push( AppearanceName+"_mat");
+                   this.materialNodes.push( AppearanceName+"_mat");
 
                     appearance.appendChild(material);
                     appearance.appendChild(imageTransform);
@@ -309,12 +312,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
         canvasTexture = this.createCanvas(data.texture,index);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
-        //Remove older levels and replace it later with the new data
-        while (root.firstChild)
-        {
-            root.removeChild(root.firstChild);
-        }
-        //Remove Materials
+        //Remove old Materials of the deleted children
         this.clearMaterials();
 
         for(var currentChunk=0; currentChunk< chunkInfo.numChunks; currentChunk++)
@@ -378,7 +376,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
      * @type {number}
      */
     var lodRange2       = 10000;
-
 
     /**
      * The canvas that holds the received image.

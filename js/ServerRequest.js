@@ -20,6 +20,21 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.minHMvalue =  Number.MAX_VALUE;//Lowest value in the heightmap
     this.maxHMvalue = -Number.MAX_VALUE;//Highest value in the heigtmap
     this.averageHMvalue = 0;        //Average value of the heightmap
+
+    this.validate = function()
+    {
+        //Texture
+        if( this.texture === undefined){    return false;   }
+        if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+
+        //Heightmap
+        if( this.heightmap === null){    return false;   }
+        if( this.width === null || this.height === null){    return false;   }
+        if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+
+        //Everything OK
+        return true;
+    };
 };
 
 /**
@@ -226,7 +241,8 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 });
                 DataBlocks = null;
                 responseData.heightmap = hm;
-                callback.receiveData(receivedData);
+                //callback.receiveData(receivedData);
+                callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
             {

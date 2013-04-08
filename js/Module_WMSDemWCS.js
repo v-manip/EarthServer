@@ -42,9 +42,9 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setURLs=function(WMSurl, demu
     this.URLDEM  = String(demurl);
 };
 /**
- * Sets both coveragenames
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
+ * Sets both coverage names
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
  */
 EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
     /**
@@ -106,8 +106,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, in
     this.index = index;
 
     //Create Placeholder
-    this.placeHolder = this.createPlaceHolder();
-    this.root.appendChild( this.placeHolder );
+    this.createPlaceHolder();
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWMS === undefined || this.URLDEM === undefined
@@ -138,18 +137,10 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, in
  */
 EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
 {
-    this.receivedDataCount++;
-    this.reportProgress();
-    if( data === null)
-    { console.log("Model_WMSDemWCS" + this.name +": Request not successful.");}
-    else
+    if( this.checkReceivedData(data))
     {
         //Remove the placeHolder
-        if( this.placeHolder !== null && this.placeHolder !== undefined )
-        {
-            this.root.removeChild( this.placeHolder);
-            this.placeHolder = null;
-        }
+        this.removePlaceHolder();
 
         var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
@@ -163,6 +154,8 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         this.terrain.createTerrain();
         EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
         EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
     }
 };
 

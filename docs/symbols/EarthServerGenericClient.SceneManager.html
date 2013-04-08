@@ -278,6 +278,16 @@ ul.inheritsList
 					<tbody>
 					
 						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#annotationLayers">annotationLayers</a></b>
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
 							<td class="attributes">&lt;inner&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
@@ -421,6 +431,24 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addAnnotation">addAnnotation</a></b>(AnnotationLayerName, xPos, yPos, zPos, Text)
+								</div>
+								<div class="description">Adds an annotation to an existing annotation layer.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addAnnotationsLayer">addAnnotationsLayer</a></b>(name, fontSize, fontColor, fontHover, markerSize, markerColor)
+								</div>
+								<div class="description">Adds an AnnotationsLayer to the scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addModel">addModel</a></b>(model)
 								</div>
 								<div class="description">Adds any scene model to the scene.</div>
@@ -460,6 +488,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createUI">createUI</a></b>(domElementID)
 								</div>
 								<div class="description">This creates the UI for the Scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getAnnotationLayerIndex">getAnnotationLayerIndex</a></b>(AnnotationLayerName)
+								</div>
+								<div class="description">Returns the index of an existing AnnotationLayer in the array or -1 if no layer with the given name was found.</div>
 							</td>
 						</tr>
 					
@@ -606,6 +643,28 @@ ul.inheritsList
 				<div class="sectionTitle">
 					Field Detail
 				</div>
+				
+					<a name="annotationLayers"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>annotationLayers</b>
+					
+					</div>
+					<div class="description">
+						
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
 				
 					<a name="-axisLabels"> </a>
 					<div class="fixedFont">&lt;inner&gt; 
@@ -963,6 +1022,132 @@ ul.inheritsList
 					Method Detail
 				</div>
 				
+					<a name="addAnnotation"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>addAnnotation</b>(AnnotationLayerName, xPos, yPos, zPos, Text)
+					
+					</div>
+					<div class="description">
+						Adds an annotation to an existing annotation layer.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>AnnotationLayerName</b>
+									
+								</dt>
+								<dd>- Name of the annotation layer to add the annotation to.</dd>
+							
+								<dt>
+									<b>xPos</b>
+									
+								</dt>
+								<dd>- Position on the x-axis of the annotation.</dd>
+							
+								<dt>
+									<b>yPos</b>
+									
+								</dt>
+								<dd>- Position on the y-axis of the annotation.</dd>
+							
+								<dt>
+									<b>zPos</b>
+									
+								</dt>
+								<dd>- Position on the z-axis of the annotation.</dd>
+							
+								<dt>
+									<b>Text</b>
+									
+								</dt>
+								<dd>- Text of the annotation.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="addAnnotationsLayer"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>addAnnotationsLayer</b>(name, fontSize, fontColor, fontHover, markerSize, markerColor)
+					
+					</div>
+					<div class="description">
+						Adds an AnnotationsLayer to the scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>name</b>
+									
+								</dt>
+								<dd>- Name of the Layer. You need the name of a layer to add annotations to it.</dd>
+							
+								<dt>
+									<b>fontSize</b>
+									
+								</dt>
+								<dd>- Font size of all annotations added to this layer.</dd>
+							
+								<dt>
+									<b>fontColor</b>
+									
+								</dt>
+								<dd>- Color of all annotations added to this layer.</dd>
+							
+								<dt>
+									<b>fontHover</b>
+									
+								</dt>
+								<dd>- The annotation text hovers above the annotation marker by this value.</dd>
+							
+								<dt>
+									<b>markerSize</b>
+									
+								</dt>
+								<dd>- The size if the annotation marker</dd>
+							
+								<dt>
+									<b>markerColor</b>
+									
+								</dt>
+								<dd>- Color of the annotation marker</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="addModel"> </a>
 					<div class="fixedFont">
 					
@@ -1139,6 +1324,49 @@ ul.inheritsList
 						
 						
 						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getAnnotationLayerIndex"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getAnnotationLayerIndex</b>(AnnotationLayerName)
+					
+					</div>
+					<div class="description">
+						Returns the index of an existing AnnotationLayer in the array or -1 if no layer with the given name was found.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>AnnotationLayerName</b>
+									
+								</dt>
+								<dd>- Name of the Layer</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> - Either index in the array or -1 if not found</dd>
+							
+							</dl>
 						
 						
 						
@@ -1567,7 +1795,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:27:58 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>
