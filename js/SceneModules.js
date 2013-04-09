@@ -65,7 +65,7 @@ EarthServerGenericClient.SceneManager = function()
     this.annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
 
     /**
-     * Enables/Disables the logging of Serverrequests,building of terrain etc.
+     * Enables/Disables the logging of Server requests, building of terrain etc.
      * @default false
      * @type {boolean}
      */
@@ -411,12 +411,13 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.
+     * @param modelIndex - Index of the model that should be altered
      * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
      * @param value - The new position
      */
-    this.updateOffset = function(which,value)
+    this.updateOffset = function(modelIndex,which,value)
     {
-        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.currentUIElement);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
 
         if( trans )
         {
@@ -436,23 +437,24 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * This changes the scaling on the Y-Axis(Elevation).
+     * @param modelIndex - Index of the model that should be altered
      * @param value - The base elevation is multiplied by this value
      */
-    this.updateElevation =function(value)
+    this.updateElevation =function(modelIndex,value)
     {
-        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.currentUIElement);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
 
         if( trans )
         {
             var oldTrans = trans.getAttribute("scale");
             oldTrans = oldTrans.split(" ");
 
-            if( this.baseElevation[this.currentUIElement] === undefined)
+            if( this.baseElevation[modelIndex] === undefined)
             {
-                this.baseElevation[this.currentUIElement] = oldTrans[1];
+                this.baseElevation[modelIndex] = oldTrans[1];
             }
 
-            oldTrans[1] = value*this.baseElevation[this.currentUIElement]/10;
+            oldTrans[1] = value*this.baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
         }
@@ -460,11 +462,12 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * Changes the transparency of the Scene Model.
+     * @param modelIndex - Index of the model that should be altered
      * @param value - New Transparency between 0-1 (Fully Opaque - Fully Transparent)
      */
-    this.updateTransparency = function(value)
+    this.updateTransparency = function(modelIndex,value)
     {
-        this.models[this.currentUIElement].updateTransparency(value);
+        this.models[modelIndex].updateTransparency(value);
     };
 
     /**
@@ -473,109 +476,7 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createUI = function(domElementID)
     {
-        var mytable = document.createElement("table");
-        var mytablebody = document.createElement("tbody");
-        mytable.appendChild(mytablebody);
-
-        var Element = document.getElementById(domElementID);
-        if(Element)
-        {   Element.appendChild(mytable);}
-        else
-        {   alert("Can't find DOM Element with ID: " + domElementID);   }
-
-
-        var mycurrent_row=document.createElement("tr");
-        mytablebody.appendChild(mycurrent_row);
-
-        var mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Modules";
-        mycurrent_row.appendChild(mycurrent_cell);
-        mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Common";
-        mycurrent_row.appendChild(mycurrent_cell);
-        mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Specific";
-        mycurrent_row.appendChild(mycurrent_cell);
-
-
-        //Cell 1: List with all modules
-        mycurrent_row=document.createElement("tr");
-        mycurrent_cell = document.createElement("td");
-        var module_list = document.createElement("ul");
-        module_list.setAttribute("id", "UI_ModuleList");
-        module_list.onclick = function(event) {
-            var target = EarthServerGenericClient.getEventTarget(event);
-            var UIID = target.id;
-            UIID = UIID.split(":");
-            EarthServerGenericClient_MainScene.currentUIElement = UIID[2];
-
-            //Set all style to none
-            for (var i = 0; i < EarthServerGenericClient_MainScene.models.length; i++)
-            {
-                var div = document.getElementById("EarthServerGenericClient_SliderDiv_" +i);
-                div.style.display = "none";
-                div = document.getElementById("EarthServerGenericClient_SPECIFICDiv_" + i);
-                div.style.display = "none";
-            }
-            //Set the chosen one to be shown
-            var theDiv = document.getElementById("EarthServerGenericClient_SliderDiv_" + EarthServerGenericClient_MainScene.currentUIElement);
-            theDiv.setAttribute("class", "active");
-            theDiv.style.display = "block";
-            theDiv = document.getElementById("EarthServerGenericClient_SPECIFICDiv_" + EarthServerGenericClient_MainScene.currentUIElement);
-            theDiv.setAttribute("class", "active");
-            theDiv.style.display = "block";
-
-        };
-
-        for (i = 0; i < this.models.length; i++)
-        {
-            var module = document.createElement("li");
-            module.setAttribute("id", "EarthServerGenericClient:MODULE:"+i);
-            module.innerHTML= this.models[i].name;
-            module_list.appendChild(module);
-        }
-
-        mycurrent_cell.appendChild(module_list);
-        mycurrent_row.appendChild(mycurrent_cell);
-        mytablebody.appendChild(mycurrent_row);
-
-        //Cell 2: Slider for the positioning X-Y-Z Axis
-        mycurrent_cell = document.createElement("td");
-        mycurrent_cell.setAttribute("id","EarthServerGenericClient_SliderCell");
-        mycurrent_row.appendChild(mycurrent_cell);
-
-        for (i = 0; i < this.models.length; i++)
-        {
-            var modelDiv = document.createElement("div");
-            modelDiv.setAttribute("id","EarthServerGenericClient_SliderDiv_" + i);
-            modelDiv.style.display = "none";
-            mycurrent_cell.appendChild(modelDiv);
-
-            EarthServerGenericClient.appendXYZASlider(modelDiv,i);
-        }
-
-        //Cell 4: Some specific stuff
-        mycurrent_cell = document.createElement("td");
-        mycurrent_cell.setAttribute("id","EarthServerGenericClient_SPECIFIC_Cell");
-        mycurrent_row.appendChild(mycurrent_cell);
-
-        for (var i = 0; i < this.models.length; i++)
-        {
-            var modelDiv = document.createElement("div");
-            modelDiv.setAttribute("id","EarthServerGenericClient_SPECIFICDiv_" + i);
-            modelDiv.style.display = "none";
-            mycurrent_cell.appendChild(modelDiv);
-
-            this.models[i].setSpecificElement(modelDiv,i);
-        }
-
-        //Make div 1 active
-        var div1 = document.getElementById("EarthServerGenericClient_SliderDiv_0");
-        div1.setAttribute("class", "active");
-        div1.style.display = "block";
-        div1 = document.getElementById("EarthServerGenericClient_SPECIFICDiv_0");
-        div1.setAttribute("class", "active");
-        div1.style.display = "block";
+        EarthServerGenericClient.createBasicUI(domElementID,this.models.length);
     };
 
     /**

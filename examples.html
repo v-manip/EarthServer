@@ -27,7 +27,7 @@
 
     <script type="text/javascript">
     var EarthServerGenericClient_MainScene = new EarthServerGenericClient.SceneManager();
-    EarthServerGenericClient_MainScene.setTimeLog(false);
+    EarthServerGenericClient_MainScene.setTimeLog(true);
 
     $(document).ready(function()
     {
@@ -36,9 +36,10 @@
         q.setURL("http://earthserver.bgs.ac.uk/petascope");
         q.setCoverages("bgs_rs", "os_dtm");
         q.setAreaOfInterest(400000,500000,450000,550000);
+        //q.setAreaOfInterest(375000,475000,475000,575000);
         q.setScale(1.0,0.3,1.0);
         q.setResolution(600,600);
-        //q.setProgressiveLoading(true);
+        q.setProgressiveLoading(true);
 
         /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
         WMS.setName("WMS_WCS");
@@ -93,8 +94,8 @@
         EarthServerGenericClient_MainScene.setProgressCallback(pb.updateValue);
 
         EarthServerGenericClient_MainScene.addAnnotationsLayer("TEST",50,"1 1 1",25,6,"1 1 1");
-        EarthServerGenericClient_MainScene.addAnnotation("TEST",310,35,-170,"UAC Mars Base");
-        EarthServerGenericClient_MainScene.addAnnotation("TEST",200,-45,400,"This is Sparta");
+        EarthServerGenericClient_MainScene.addAnnotation("TEST",310,35,-170,"CityName");
+        EarthServerGenericClient_MainScene.addAnnotation("TEST",200,-45,400,"You can annotate here");
 
         EarthServerGenericClient_MainScene.createModels();
     };
@@ -105,17 +106,20 @@
 
 <div id="progressbar"></div>
 
-    <div id="x3domDIV">
-        <X3D id="x3d" showlog="false" showstat="false" width="900" height="600">
+    <div id="x3dom">
+
+        <X3D id="x3d" showlog="false" showstat="false">
             <scene id="x3dScene">
                 <Background DEF='back' groundAngle='0.9 1.5 1.57' groundColor='0.3 0.3 0.4 0.35 0.35 0.55 0.4 0.4 0.5 0.5 0.5 0.6'
                             skyAngle='0.9 1.5 1.57' skyColor='0.2 0.2 0.3 0.3 0.4 0.3 0.4 0.5 0.4 0.5 0.5 0.6'>
                 </Background>
             </scene>
         </X3D>
+
+        <div id='x3domUI'></div>
     </div>
 
-    <div id='x3domUI'></div>
+
 
 </body>
 </html>
