@@ -95,8 +95,6 @@ EarthServerGenericClient.SceneManager = function()
      */
     var zLabel = "Z";
 
-    //TODO: create TEXT
-
     /**
      * Returns the number of registered scene models.
      * @returns {Number}
