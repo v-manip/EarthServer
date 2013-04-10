@@ -61,7 +61,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID,cntModels)
     {
         var module = document.createElement("li");
         module.setAttribute("id", "EarthServerGenericClient:MODULE:"+i);
-        module.innerHTML= EarthServerGenericClient_MainScene.models[i].name;
+        module.innerHTML= EarthServerGenericClient_MainScene.getModelName(i);
         module_list.appendChild(module);
     }
 
@@ -96,7 +96,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID,cntModels)
         modelDiv.style.display = "none";
         mycurrent_cell.appendChild(modelDiv);
 
-        EarthServerGenericClient_MainScene.models[i].setSpecificElement(modelDiv,i);
+        EarthServerGenericClient_MainScene.setSpecificElement(i,modelDiv);
     }
 
     //Make div 1 active
@@ -120,7 +120,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
         EarthServerGenericClient_MainScene.updateOffset(moduleNumber,0,value);
     });
 
-    var startValue = EarthServerGenericClient_MainScene.models[moduleNumber].xOffset * EarthServerGenericClient_MainScene.cubeSizeX;
+    var startValue = EarthServerGenericClient_MainScene.getModelOffsetX(moduleNumber) * EarthServerGenericClient_MainScene.cubeSizeX;
     XSlider.$value = startValue;
     XSlider.$instantChange = true;
 
@@ -134,7 +134,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
         EarthServerGenericClient_MainScene.updateOffset(moduleNumber,1,value);
     });
 
-    startValue = EarthServerGenericClient_MainScene.models[moduleNumber].yOffset * EarthServerGenericClient_MainScene.cubeSizeY;
+    startValue = EarthServerGenericClient_MainScene.getModelOffsetY(moduleNumber) * EarthServerGenericClient_MainScene.cubeSizeY;
     YSlider.$value = startValue;
     YSlider.$instantChange = true;
 
@@ -148,7 +148,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
         EarthServerGenericClient_MainScene.updateOffset(moduleNumber,2,value);
     });
 
-    startValue = EarthServerGenericClient_MainScene.models[moduleNumber].zOffset * EarthServerGenericClient_MainScene.cubeSizeZ;
+    startValue = EarthServerGenericClient_MainScene.getModelOffsetZ(moduleNumber) * EarthServerGenericClient_MainScene.cubeSizeZ;
     ZSlider.$value = startValue;
     ZSlider.$instantChange = true;
 
@@ -163,7 +163,7 @@ EarthServerGenericClient.appendXYZASlider = function(element, moduleNumber){
         EarthServerGenericClient_MainScene.updateTransparency(moduleNumber,value);
     });
 
-    startValue = EarthServerGenericClient_MainScene.models[moduleNumber].transparency*100;
+    startValue = EarthServerGenericClient_MainScene.getModelTransparency(moduleNumber)*100;
     ASlider.$value = startValue;
     ASlider.$instantChange = true;
 

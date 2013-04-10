@@ -5,9 +5,11 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
 {
     this.name = Name;
     var annotationTransforms = [];
+    var annotations = [];
 
     this.addAnnotation = function(xPos,yPos,zPos,Text)
     {
+        annotations.push(Text);
         for(var i=0;i<2;i++)
         {
             var textTransform = document.createElement('transform');
@@ -90,5 +92,15 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
         {
             annotationTransforms[i].setAttribute("render",value);
         }
+    };
+
+    this.getAnnotationTexts = function()
+    {
+        var arrayReturn = [];
+
+        for(var i=0; i<annotations.length;i++)
+        {   arrayReturn.push(annotations[i]);    }
+
+        return arrayReturn;
     };
 };
