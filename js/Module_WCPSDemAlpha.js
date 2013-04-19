@@ -112,12 +112,11 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelALPHA = f
 /**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
- * @param index - Index of this model in the SceneManager list.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root, index, cubeSizeX, cubeSizeY, cubeSizeZ){
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
         alert("root is not defined");
 
@@ -128,7 +127,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
     this.cubeSizeZ = cubeSizeZ;
 
     this.root = root;
-    this.index = index;
 
     //Create Placeholder
     this.createPlaceHolder();
@@ -254,9 +252,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
 /**
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
- * @param modelNumber - Number of this model in the SceneManager.
  */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement= function(element,modelNumber)
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement= function(element)
 {
-    EarthServerGenericClient.appendElevationSlider(element,modelNumber);
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
 };

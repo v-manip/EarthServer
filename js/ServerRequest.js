@@ -106,7 +106,6 @@ EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,
  */
 EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, query, DemInAlpha)
 {
-    EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
     try
     {
         responseData.texture.onload = function()
@@ -161,7 +160,8 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
         };
 
         responseData.textureUrl = url + "?query=" + encodeURI(query);
-        responseData.texture.src = url + "?query=" + encodeURI(query);
+        EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
+        responseData.texture.src = responseData.textureUrl;
     }
     catch(error)
     {
@@ -184,6 +184,8 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
     var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
     request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
 
+    EarthServerGenericClient_MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
     $.ajax(
         {
             url: WCSurl,
@@ -192,6 +194,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             data: request,
             success: function(receivedData)
             {
+                EarthServerGenericClient_MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 var Grid = $(receivedData).find('GridEnvelope');
                 var low  = $(Grid).find('low').text().split(" ");
                 var high = $(Grid).find('high').text().split(" ");
@@ -241,11 +244,11 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 });
                 DataBlocks = null;
                 responseData.heightmap = hm;
-                //callback.receiveData(receivedData);
                 callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
             {
+                EarthServerGenericClient_MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
             }
         }

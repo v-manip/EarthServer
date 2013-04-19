@@ -55,58 +55,26 @@ EarthServerGenericClient.getEventTarget = function(e)
  * @class SceneManager is the main class of the unified client.
  * All scene models are registered in this class with the add() function.
  * The createScene() function creates a x3dom scene with all scene models.
+ * The createUI() function creates the UI.
  */
 EarthServerGenericClient.SceneManager = function()
 {
-    /**
-     * An Array of scene models.
-     * @type {Array}
-     * @default []
-     */
-    this.models = [];
-    /**
-     * An Array to store the models loading progress.
-     * @type {Array}
-     * @default []
-     */
-    this.modelLoadingProgress = [];
-    /**
-     * Value for the loading progress bar (all model loading combined).
-     * @type {number}
-     * @default 0
-     */
-    this.totalLoadingProgress = 0;
-    /**
-     * Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
-     * @type {Array}
-     * @default []
-     */
-    this.baseElevation = [];
-    /**
-     * The current chosen UI element, which is a Model. Change everything for the model with that ID.
-     * @type {number}
-     * @default []
-     */
-    this.currentUIElement = 0;
-    /**
-     * Callback function for the progress update.
-     * @type {undefined}
-     * @default undefined
-     */
-    this.progressCallback = undefined;
+    var models = [];               //Array of scene models
+    var modelLoadingProgress = []; //Array to store the models loading progress
+    var totalLoadingProgress = 0;  //Value for the loading progress bar (all model loading combined)
+    var baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
+    var currentUIElement = 0;      //The current chosen UI element, which is a Model. Change everything for the model with that ID.
+    var progressCallback = undefined;//Callback function for the progress update.
+    var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
+    var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
+    var axisLabels = null;
 
     /**
-     *
-     * @type {Array}
-     */
-    this.annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
-
-    /**
-     * Enables/Disables the logging of Serverrequests,building of terrain etc.
+     * Enables/Disables the logging of Server requests, building of terrain etc.
      * @default false
      * @type {boolean}
      */
-    this.TimeLog = false;
+    var timeLog= false;
 
     /**
      * This variable contains the AxisLabel object.
@@ -121,28 +89,127 @@ EarthServerGenericClient.SceneManager = function()
      * @default "x"
      * @type {String}
      */
-    this.xLabel = "X";
+    var xLabel = "X";
 
     /**
      * Name of the Y-Axis to be displayed.
      * @default "y"
      * @type {String}
      */
-    this.yLabel = "Y";
+    var yLabel = "Y";
 
     /**
      * Name of the Z-Axis to be displayed.
      * @default "z"
      * @type {String}
      */
-    this.zLabel = "Z";
+    var zLabel = "Z";
 
     /**
-     * Max resolution per dimension (standard PC)
-     * @default 1000 (200 on a mobile platform)
+     * Returns the number of registered scene models.
+     * @returns {Number}
+     */
+    this.getModelCount = function()
+    {
+        return models.length;
+    };
+
+    /**
+     * Returns the name of the scene model with the given index.
+     * @param modelIndex - Index of the model.
+     * @returns {String}
+     */
+    this.getModelName = function(modelIndex)
+    {
+        if(modelIndex < models.length)
+        {   return models[modelIndex].name; }
+        else
+        {   return "No model with ID " + modelIndex;    }
+    };
+
+    /**
+     * Returns the X offset of the model with the given index.
+     * @param modelIndex - Index of the model.
+     * @returns {Number}
+     */
+    this.getModelOffsetX= function(modelIndex)
+    {
+        if(modelIndex < models.length)
+        {   return models[modelIndex].xOffset; }
+        else
+        {
+            console.log("MainScene::getModelOffsetX: No model with ID " + modelIndex);
+            return 0;
+        }
+    };
+
+    /**
+     * Returns the Y offset of the model with the given index.
+     * @param modelIndex - Index of the model.
+     * @returns {Number}
+     */
+    this.getModelOffsetY= function(modelIndex)
+    {
+        if(modelIndex < models.length)
+        {   return models[modelIndex].yOffset; }
+        else
+        {
+            console.log("MainScene::getModelOffsetY: No model with ID " + modelIndex);
+            return 0;
+        }
+    };
+
+    /**
+     * Returns the Z offset of the model with the given index.
+     * @param modelIndex - Index of the model.
+     * @returns {Number}
+     */
+    this.getModelOffsetZ= function(modelIndex)
+    {
+        if(modelIndex < models.length)
+        {   return models[modelIndex].zOffset; }
+        else
+        {
+            console.log("MainScene::getModelOffsetZ: No model with ID " + modelIndex);
+            return 0;
+        }
+    };
+
+    /**
+     * Returns the transparency of the model with the given index.
+     * @param modelIndex - Index of the model.
+     * @returns {Number}
+     */
+    this.getModelTransparency = function(modelIndex)
+    {
+        if(modelIndex < models.length)
+        {   return models[modelIndex].transparency; }
+        else
+        {
+            console.log("MainScene::getModelTransparency: No model with ID " + modelIndex);
+            return 0;
+        }
+    };
+
+    /**
+     * Let the scene model set it's specific UI element in the given domElement.
+     * @param modelIndex - Index of the model.
+     * @param domElement - domElement to put the UI element into.
+     */
+    this.setSpecificElement = function(modelIndex,domElement)
+    {
+        if(modelIndex < models.length)
+        {   models[modelIndex].setSpecificElement(domElement); }
+        else
+        {
+            console.log("MainScene::SetSpecificElement: No model with ID " + modelIndex);
+        }
+    };
+
+    /**
+     * @default 1000 / 200 on a mobile platform
      * @type {Number}
      */
-    var maxResolution = 1000;
     if( EarthServerGenericClient.isMobilePlatform())  //and for mobile Clients
         maxResolution = 200;
 
@@ -151,14 +218,14 @@ EarthServerGenericClient.SceneManager = function()
      * @param value - Boolean
      */
     this.setTimeLog = function(value)
-    {   this.TimeLog = value; };
+    {   timeLog = value; };
     /**
      * Starts the timer for a logging event with the given name.
      * @param eventName
      */
     this.timeLogStart = function(eventName)
     {
-        if( this.TimeLog)
+        if( timeLog)
         {   console.time(eventName); }
     };
     /**
@@ -167,8 +234,66 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.timeLogEnd = function(eventName)
     {
-        if( this.TimeLog)
+        if( timeLog)
         {   console.timeEnd(eventName); }
+    };
+
+    /**
+     * Determines if an annotation layer will be drawn.
+     * @param layerName - Name of the annotation layer.
+     * @param drawValue - boolean value.
+     */
+    this.drawAnnotationLayer = function(layerName,drawValue)
+    {
+        var index = this.getAnnotationLayerIndex(layerName);
+        if( index < annotationLayers.length )
+        {   annotationLayers[index].renderLayer(drawValue); }
+        else
+        {   console.log("MainScene::drawAnnotationLayer: No Layer with name " + layerName);  }
+    };
+
+    /**
+     * Returns the annotation texts of a given annotation layer as an array of strings.
+     * @param layerName - Name of the Annotation Layer.
+     * @returns {*} - Array of Annotations as strings.
+     */
+    this.getAnnotationLayerTexts = function(layerName)
+    {
+        var index = this.getAnnotationLayerIndex(layerName);
+        if( index < annotationLayers.length )
+        {   return annotationLayers[index].getAnnotationTexts(); }
+        else
+        {
+            var val = [];
+            val.push("MainScene::getAnnotationLayerTexts: No Layer with name " + layerName);
+            console.log(val);
+            return val;
+        }
+    };
+
+    /**
+     * Returns the number of registered AnnotationLayers.
+     * @returns {Number}
+     */
+    this.getAnnotationLayerCount = function()
+    {
+        return annotationLayers.length;
+    };
+
+    /**
+     * Returns the name of the AnnotationLayer with the given index.
+     * @param layerIndex - Index of the AnnotationLayer.
+     * @returns {*} - Either the Name of the AnnotationLayer or "No Name"
+     */
+    this.getAnnotationLayerName = function(layerIndex)
+    {
+        if( layerIndex < annotationLayers.length)
+        {   return annotationLayers[layerIndex].name; }
+        else
+        {
+            console.log("MainScene::getAnnotationLayerName: No Layer with ID " + layerIndex);
+            return "No Name";
+        }
     };
 
     /**
@@ -178,9 +303,9 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.getAnnotationLayerIndex = function(AnnotationLayerName)
     {
-        for(var i=0;i<this.annotationLayers.length;i++)
+        for(var i=0;i<annotationLayers.length;i++)
         {
-            if( this.annotationLayers[i].name === AnnotationLayerName)
+            if( annotationLayers[i].name === AnnotationLayerName)
             {
                 return i;
             }
@@ -206,7 +331,7 @@ EarthServerGenericClient.SceneManager = function()
             if( this.getAnnotationLayerIndex(name) < 0)
             {
                 var layer = new EarthServerGenericClient.AnnotationLayer(name,root,fontSize,fontColor,fontHover,markerSize,markerColor);
-                this.annotationLayers.push(layer);
+                annotationLayers.push(layer);
             }
             else
             {   alert("AnnotationLayer with this name already created.");   }
@@ -228,7 +353,7 @@ EarthServerGenericClient.SceneManager = function()
         var index = this.getAnnotationLayerIndex(AnnotationLayerName);
         if( index >= 0)
         {
-            this.annotationLayers[index].addAnnotation(xPos,yPos,zPos,Text);
+            annotationLayers[index].addAnnotation(xPos,yPos,zPos,Text);
         }
         else
         {
@@ -244,7 +369,7 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.setProgressCallback=function(callback)
     {
-        this.progressCallback = callback;
+        progressCallback = callback;
     };
     /**
      * All Modules and Terrain shall report their loading progress.
@@ -257,25 +382,25 @@ EarthServerGenericClient.SceneManager = function()
     this.reportProgress = function(modelIndex)
     {
         //If null no progress update is wished
-        if( this.progressCallback !== null)
+        if( progressCallback !== null)
         {
-            this.modelLoadingProgress[modelIndex] += 1;
+            modelLoadingProgress[modelIndex] += 1;
 
             //Reset total loading progress to 0 and calc it with the new value
-            this.totalLoadingProgress = 0;
-            for(var i=0; i<this.modelLoadingProgress.length; i++)
+            totalLoadingProgress = 0;
+            for(var i=0; i<modelLoadingProgress.length; i++)
             {
-                var tmp = this.modelLoadingProgress[i] / ( this.models[i].requests *2 );
+                var tmp = modelLoadingProgress[i] / ( models[i].requests *2 );
                 if( tmp > 1.0) tmp = 1;
-                this.totalLoadingProgress += tmp;
+                totalLoadingProgress += tmp;
             }
-            this.totalLoadingProgress = (this.totalLoadingProgress / this.modelLoadingProgress.length)*100;
+            totalLoadingProgress = (totalLoadingProgress / modelLoadingProgress.length)*100;
 
             //Callback function or console?
-            if( this.progressCallback !== undefined)
-            {   this.progressCallback(this.totalLoadingProgress);    }
+            if( progressCallback !== undefined)
+            {   progressCallback(totalLoadingProgress);    }
             else
-            {   console.log(this.totalLoadingProgress); }
+            {   console.log(totalLoadingProgress); }
         }
     };
 
@@ -295,11 +420,11 @@ EarthServerGenericClient.SceneManager = function()
     this.addModel = function( model )
     {
         //Model ID is the current length of the models array. That means to IDs start at 0 and increase by 1.
-        model.modelID = this.models.length;
+        model.index = models.length;
         //Store model in the array
-        this.models.push(model);
+        models.push(model);
         //Initialize it's loading progress to 0
-        this.modelLoadingProgress[model.modelID] = 0;
+        modelLoadingProgress[model.index] = 0;
     };
 
     /**
@@ -318,14 +443,37 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
-     * Creates and returns the whole X3DOM Scene in the fishtank/cube with all added scene models.
+     * Returns the number of defined cameras
+     * @returns {Number}
+     */
+    this.getCameraDefCount = function()
+    {
+        return cameraDefs.length;
+    };
+
+    /**
+     * Returns the definition of the camera with the given index.
+     * Format: "CameraName:CameraID"
+     * @param cameraIndex
+     * @returns {String}
+     */
+    this.getCameraDef = function(cameraIndex)
+    {
+        if(cameraIndex < cameraDefs.length)
+        {   return cameraDefs[cameraIndex]; }
+        else
+        {   return "Camera:NotDefined"}
+    };
+
+    /**
+     * Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.
      * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
-     * @param x3dID - ID of the x3d dom element
-     * @param sceneID - ID of the scene element
-     * @param cubeSizeX - width of the cube
-     * @param cubeSizeY - height of the cube
-     * @param cubeSizeZ - depth of the cube
+     * @param x3dID - ID of the x3d dom element.
+     * @param sceneID - ID of the scene element.
+     * @param cubeSizeX - width of the cube.
+     * @param cubeSizeY - height of the cube.
+     * @param cubeSizeZ - depth of the cube.
      */
     this.createScene = function(x3dID,sceneID, cubeSizeX, cubeSizeY, cubeSizeZ )
     {
@@ -348,40 +496,35 @@ EarthServerGenericClient.SceneManager = function()
             return;
         }
 
+        //Background
+        var background = document.createElement("Background");
+        background.setAttribute("groundAngle",'0.9 1.5 1.57');
+        background.setAttribute("groundColor",'0.3 0.3 0.4 0.35 0.35 0.55 0.4 0.4 0.5 0.5 0.5 0.6');
+        background.setAttribute("skyAngle",'0.9 1.5 1.57');
+        background.setAttribute("skyColor",'0.2 0.2 0.3 0.3 0.4 0.3 0.4 0.5 0.4 0.5 0.5 0.6');
+        scene.appendChild(background);
+
         //Cameras
         var cam1 = document.createElement('Viewpoint');
         cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
         cam1.setAttribute("position", "0 0 " + this.cubeSizeZ*2);
+        cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
+
         var cam2 = document.createElement('Viewpoint');
         cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
         cam2.setAttribute("position", "0 " + this.cubeSizeY*2.5 + " 0");
         cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
+        cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
+
         var cam3 = document.createElement('Viewpoint');
         cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
         cam3.setAttribute("position", "" + -this.cubeSizeX*2+ " 0 0");
         cam3.setAttribute("orientation", "0 1 0 -1.55");
+        cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
+
         scene.appendChild(cam1);
         scene.appendChild(cam2);
         scene.appendChild(cam3);
-
-        var buttonTopView = document.createElement('button');
-        buttonTopView.setAttribute("id","EarthServerGenericClient_Button_TopView");
-        buttonTopView.setAttribute("class", "inside");
-        buttonTopView.setAttribute("onclick", "EarthServerGenericClient_MainScene.setView('EarthServerGenericClient_Cam_Top');return false;");
-        buttonTopView.innerHTML = "TopView";
-        scene.appendChild(buttonTopView);
-        var buttonFrontView = document.createElement('button');
-        buttonFrontView.setAttribute("id","EarthServerGenericClient_Button_FrontView");
-        buttonFrontView.setAttribute("class", "inside");
-        buttonFrontView.setAttribute("onclick", "EarthServerGenericClient_MainScene.setView('EarthServerGenericClient_Cam_Front');return false;");
-        buttonFrontView.innerHTML = "FrontView";
-        scene.appendChild(buttonFrontView);
-        var buttonSideView = document.createElement('button');
-        buttonSideView.setAttribute("id","EarthServerGenericClient_Button_SideView");
-        buttonSideView.setAttribute("class", "inside");
-        buttonSideView.setAttribute("onclick", "EarthServerGenericClient_MainScene.setView('EarthServerGenericClient_Cam_Side');return false;");
-        buttonSideView.innerHTML = "SideView";
-        scene.appendChild(buttonSideView);
 
         var shape = document.createElement('Shape');
         var appearance = document.createElement('Appearance');
@@ -440,7 +583,7 @@ EarthServerGenericClient.SceneManager = function()
     this.createAxisLabels = function()
     {
         axisLabels = new EarthServerGenericClient.AxisLabels(this.cubeSizeX/2, this.cubeSizeY/2, this.cubeSizeZ/2);
-        axisLabels.createAxisLabels(this.xLabel,this.yLabel,this.zLabel);
+        axisLabels.createAxisLabels(xLabel,yLabel,zLabel);
     };
 
     /**
@@ -448,20 +591,21 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
-        for(var i=0; i< this.models.length; i++)
+        for(var i=0; i< models.length; i++)
         {
-            this.models[i].createModel(this.trans, i,this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ);
+            models[i].createModel(this.trans,this.cubeSizeX,this.cubeSizeY,this.cubeSizeZ);
         }
     };
 
     /**
      * Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.
+     * @param modelIndex - Index of the model that should be altered
      * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
      * @param value - The new position
      */
-    this.updateOffset = function(which,value)
+    this.updateOffset = function(modelIndex,which,value)
     {
-        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.currentUIElement);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
 
         if( trans )
         {
@@ -481,23 +625,24 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * This changes the scaling on the Y-Axis(Elevation).
+     * @param modelIndex - Index of the model that should be altered
      * @param value - The base elevation is multiplied by this value
      */
-    this.updateElevation =function(value)
+    this.updateElevation =function(modelIndex,value)
     {
-        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.currentUIElement);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
 
         if( trans )
         {
             var oldTrans = trans.getAttribute("scale");
             oldTrans = oldTrans.split(" ");
 
-            if( this.baseElevation[this.currentUIElement] === undefined)
+            if( baseElevation[modelIndex] === undefined)
             {
-                this.baseElevation[this.currentUIElement] = oldTrans[1];
+                baseElevation[modelIndex] = oldTrans[1];
             }
 
-            oldTrans[1] = value*this.baseElevation[this.currentUIElement]/10;
+            oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
         }
@@ -505,11 +650,13 @@ EarthServerGenericClient.SceneManager = function()
 
     /**
      * Changes the transparency of the Scene Model.
+     * @param modelIndex - Index of the model that should be altered
      * @param value - New Transparency between 0-1 (Fully Opaque - Fully Transparent)
      */
-    this.updateTransparency = function(value)
+    this.updateTransparency = function(modelIndex,value)
     {
-        this.models[this.currentUIElement].updateTransparency(value);
+        if(modelIndex < models.length)
+        {   models[modelIndex].updateTransparency(value);   }
     };
 
     /**
@@ -518,121 +665,19 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createUI = function(domElementID)
     {
-        var mytable = document.createElement("table");
-        var mytablebody = document.createElement("tbody");
-        mytable.appendChild(mytablebody);
-
-        var Element = document.getElementById(domElementID);
-        if(Element)
-        {   Element.appendChild(mytable);}
-        else
-        {   alert("Can't find DOM Element with ID: " + domElementID);   }
-
-
-        var mycurrent_row=document.createElement("tr");
-        mytablebody.appendChild(mycurrent_row);
-
-        var mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Modules";
-        mycurrent_row.appendChild(mycurrent_cell);
-        mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Common";
-        mycurrent_row.appendChild(mycurrent_cell);
-        mycurrent_cell = document.createElement("th");
-        mycurrent_cell.innerHTML = "Specific";
-        mycurrent_row.appendChild(mycurrent_cell);
-
-
-        //Cell 1: List with all modules
-        mycurrent_row=document.createElement("tr");
-        mycurrent_cell = document.createElement("td");
-        var module_list = document.createElement("ul");
-        module_list.setAttribute("id", "UI_ModuleList");
-        module_list.onclick = function(event) {
-            var target = EarthServerGenericClient.getEventTarget(event);
-            var UIID = target.id;
-            UIID = UIID.split(":");
-            EarthServerGenericClient_MainScene.currentUIElement = UIID[2];
-
-            //Set all style to none
-            for (var i = 0; i < EarthServerGenericClient_MainScene.models.length; i++)
-            {
-                var div = document.getElementById("EarthServerGenericClient_SliderDiv_" +i);
-                div.style.display = "none";
-                div = document.getElementById("EarthServerGenericClient_SPECIFICDiv_" + i);
-                div.style.display = "none";
-            }
-            //Set the chosen one to be shown
-            var theDiv = document.getElementById("EarthServerGenericClient_SliderDiv_" + EarthServerGenericClient_MainScene.currentUIElement);
-            theDiv.setAttribute("class", "active");
-            theDiv.style.display = "block";
-            theDiv = document.getElementById("EarthServerGenericClient_SPECIFICDiv_" + EarthServerGenericClient_MainScene.currentUIElement);
-            theDiv.setAttribute("class", "active");
-            theDiv.style.display = "block";
-
-        };
-
-        for (i = 0; i < this.models.length; i++)
-        {
-            var module = document.createElement("li");
-            module.setAttribute("id", "EarthServerGenericClient:MODULE:"+i);
-            module.innerHTML= this.models[i].name;
-            module_list.appendChild(module);
-        }
-
-        mycurrent_cell.appendChild(module_list);
-        mycurrent_row.appendChild(mycurrent_cell);
-        mytablebody.appendChild(mycurrent_row);
-
-        //Cell 2: Slider for the positioning X-Y-Z Axis
-        mycurrent_cell = document.createElement("td");
-        mycurrent_cell.setAttribute("id","EarthServerGenericClient_SliderCell");
-        mycurrent_row.appendChild(mycurrent_cell);
-
-        for (i = 0; i < this.models.length; i++)
-        {
-            var modelDiv = document.createElement("div");
-            modelDiv.setAttribute("id","EarthServerGenericClient_SliderDiv_" + i);
-            modelDiv.style.display = "none";
-            mycurrent_cell.appendChild(modelDiv);
-
-            EarthServerGenericClient.appendXYZASlider(modelDiv,i);
-        }
-
-        //Cell 4: Some specific stuff
-        mycurrent_cell = document.createElement("td");
-        mycurrent_cell.setAttribute("id","EarthServerGenericClient_SPECIFIC_Cell");
-        mycurrent_row.appendChild(mycurrent_cell);
-
-        for (var i = 0; i < this.models.length; i++)
-        {
-            var modelDiv = document.createElement("div");
-            modelDiv.setAttribute("id","EarthServerGenericClient_SPECIFICDiv_" + i);
-            modelDiv.style.display = "none";
-            mycurrent_cell.appendChild(modelDiv);
-
-            this.models[i].setSpecificElement(modelDiv,i);
-        }
-
-        //Make div 1 active
-        var div1 = document.getElementById("EarthServerGenericClient_SliderDiv_0");
-        div1.setAttribute("class", "active");
-        div1.style.display = "block";
-        div1 = document.getElementById("EarthServerGenericClient_SPECIFICDiv_0");
-        div1.setAttribute("class", "active");
-        div1.style.display = "block";
+        EarthServerGenericClient.createBasicUI(domElementID);
     };
 
     /**
      * Sets the names of the axes to be displayed.
-     * @param xLabel - width
-     * @param yLabel - height
-     * @param zLabel - depth
+     * @param LabelX - width
+     * @param LabelY - height
+     * @param LabelZ - depth
      */
-    this.setAxisLabels = function( xLabel, yLabel, zLabel){
-        this.xLabel = String(xLabel);
-        this.yLabel = String(yLabel);
-        this.zLabel = String(zLabel);
+    this.setAxisLabels = function( LabelX, LabelY, LabelZ){
+        xLabel = String(LabelX);
+        yLabel = String(LabelY);
+        zLabel = String(LabelZ);
     };
 
 
@@ -756,7 +801,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         //ReceivedDataCount is the number of already received responses.
         //it is doubled because for each request one terrain will be build.
         var totalProgress = ((this.receivedDataCount) / (this.requests * 2))*100;
-        EarthServerGenericClient_MainScene.reportProgress(this.modelID,totalProgress);
+        EarthServerGenericClient_MainScene.reportProgress(this.index,totalProgress);
     };
 
     /**
@@ -864,7 +909,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.createTransform = function(xRes,yRes,zRes,minvalue){
         var trans = document.createElement('Transform');
-        trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.modelID);
+        trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
 
         this.YResolution = yRes;
 
