@@ -84,43 +84,35 @@
 <span class='line'> 77</span>  */</span><span class="WHIT">
 <span class='line'> 78</span> </span><span class="NAME">EarthServerGenericClient.Model_Name.prototype.receiveData</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">data</span><span class="PUNC">)</span><span class="WHIT">
 <span class='line'> 79</span> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 80</span> </span><span class="WHIT">    </span><span class="NAME">this.receivedDataCount</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="NAME">this.reportProgress</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 82</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">data</span><span class="WHIT"> </span><span class="PUNC">===</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'> 83</span> </span><span class="WHIT">    </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="NAME">console.log</span><span class="PUNC">(</span><span class="STRN">"Model_Name"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="STRN">": Request not successful."</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 84</span> </span><span class="WHIT">    </span><span class="KEYW">else</span><span class="WHIT">
-<span class='line'> 85</span> </span><span class="WHIT">    </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 86</span> </span><span class="WHIT">        </span><span class="COMM">//Remove the placeHolder</span><span class="WHIT">
-<span class='line'> 87</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">this.placeHolder</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="NAME">this.placeHolder</span><span class="WHIT"> </span><span class="PUNC">!==</span><span class="WHIT"> </span><span class="NAME">undefined</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'> 88</span> </span><span class="WHIT">        </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 89</span> </span><span class="WHIT">            </span><span class="NAME">this.root.removeChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">this.placeHolder</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 90</span> </span><span class="WHIT">            </span><span class="NAME">this.placeHolder</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 91</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 92</span> 
-<span class='line'> 93</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">YResolution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.maxHMvalue</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.minHMvalue</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 94</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">transform</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.createTransform</span><span class="PUNC">(</span><span class="NAME">data.width</span><span class="PUNC">,</span><span class="NAME">YResolution</span><span class="PUNC">,</span><span class="NAME">data.height</span><span class="PUNC">,</span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.minHMvalue</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 95</span> </span><span class="WHIT">        </span><span class="NAME">this.root.appendChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">transform</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">this.checkReceivedData</span><span class="PUNC">(</span><span class="NAME">data</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">    </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 82</span> </span><span class="WHIT">        </span><span class="COMM">//Remove the placeHolder</span><span class="WHIT">
+<span class='line'> 83</span> </span><span class="WHIT">        </span><span class="NAME">this.removePlaceHolder</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 84</span> 
+<span class='line'> 85</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">YResolution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.maxHMvalue</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.minHMvalue</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">transform</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.createTransform</span><span class="PUNC">(</span><span class="NAME">data.width</span><span class="PUNC">,</span><span class="NAME">YResolution</span><span class="PUNC">,</span><span class="NAME">data.height</span><span class="PUNC">,</span><span class="NAME">parseFloat</span><span class="PUNC">(</span><span class="NAME">data.minHMvalue</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="WHIT">        </span><span class="NAME">this.root.appendChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">transform</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 88</span> 
+<span class='line'> 89</span> </span><span class="WHIT">        </span><span class="COMM">//Set transparency</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="WHIT">        </span><span class="NAME">data.transparency</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.transparency</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 91</span> 
+<span class='line'> 92</span> </span><span class="WHIT">        </span><span class="COMM">//Create Terrain out of the received data</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">        </span><span class="COMM">//Example LOD Terrain</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">        </span><span class="COMM">//this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">        </span><span class="COMM">//this.terrain.createTerrain();</span><span class="WHIT">
 <span class='line'> 96</span> 
-<span class='line'> 97</span> </span><span class="WHIT">        </span><span class="COMM">//Set transparency</span><span class="WHIT">
-<span class='line'> 98</span> </span><span class="WHIT">        </span><span class="NAME">data.transparency</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.transparency</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 99</span> 
-<span class='line'>100</span> </span><span class="WHIT">        </span><span class="COMM">//Create Terrain out of the received data</span><span class="WHIT">
-<span class='line'>101</span> </span><span class="WHIT">        </span><span class="COMM">//Example LOD Terrain</span><span class="WHIT">
-<span class='line'>102</span> </span><span class="WHIT">        </span><span class="COMM">//this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);</span><span class="WHIT">
-<span class='line'>103</span> </span><span class="WHIT">        </span><span class="COMM">//this.terrain.createTerrain();</span><span class="WHIT">
-<span class='line'>104</span> 
-<span class='line'>105</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>106</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'>107</span> 
-<span class='line'>108</span> 
-<span class='line'>109</span> </span><span class="COMM">/**
-<span class='line'>110</span>  * @ignore &lt;-- REMOVE ME FOR DOCUMENTATION
-<span class='line'>111</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
-<span class='line'>112</span>  * @param element - The element where to append the specific UI elements for this model.
-<span class='line'>113</span>  * @param modelNumber - Number of this model in the SceneManager.
-<span class='line'>114</span>  */</span><span class="WHIT">
-<span class='line'>115</span> </span><span class="NAME">EarthServerGenericClient.Model_Name.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'>116</span> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'>117</span> </span><span class="WHIT">    </span><span class="COMM">//Example:</span><span class="WHIT">
-<span class='line'>118</span> </span><span class="WHIT">    </span><span class="COMM">//EarthServerGenericClient.appendElevationSlider(element,modelNumber);</span><span class="WHIT">
-<span class='line'>119</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>
+<span class='line'>100</span> 
+<span class='line'>101</span> </span><span class="COMM">/**
+<span class='line'>102</span>  * @ignore &lt;-- REMOVE ME FOR DOCUMENTATION
+<span class='line'>103</span>  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+<span class='line'>104</span>  * @param element - The element where to append the specific UI elements for this model.
+<span class='line'>105</span>  * @param modelNumber - Number of this model in the SceneManager.
+<span class='line'>106</span>  */</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="NAME">EarthServerGenericClient.Model_Name.prototype.setSpecificElement</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">element</span><span class="PUNC">,</span><span class="NAME">modelNumber</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">    </span><span class="COMM">//Example:</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="COMM">//EarthServerGenericClient.appendElevationSlider(element,modelNumber);</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="PUNC">}</span><span class="PUNC">;</span></pre></body></html>

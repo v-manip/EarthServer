@@ -215,8 +215,6 @@ ul.inheritsList
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
-	<li><a href="../symbols/Function.html">Function</a></li>
-	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -237,7 +235,7 @@ ul.inheritsList
 				Abstract base class for scene models.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneModules.js.html">SceneModules.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
 				
 			</p>
 
@@ -451,7 +449,7 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createTransform">createTransform</a></b>(XRes, YRes, ZRes, minvalue)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#createTransform">createTransform</a></b>(xRes, yRes, zRes, minvalue)
 								</div>
 								<div class="description">Creates the transform for the scene model to fit into the fishtank/cube.</div>
 							</td>
@@ -471,7 +469,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#reportProgress">reportProgress</a></b>()
 								</div>
-								<div class="description">Modules report their loading progress to this function which reports to the main scene.</div>
+								<div class="description">Modules report their loading progress to this function which leads the information to the main scene.</div>
 							</td>
 						</tr>
 					
@@ -480,7 +478,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAreaOfInterest">setAreaOfInterest</a></b>(minx, miny, maxx, maxy)
 								</div>
-								<div class="description">Sets the area of interest for the model.</div>
+								<div class="description">Sets the area of interest for the model (Lower Corner, Upper Corner).</div>
 							</td>
 						</tr>
 					
@@ -507,7 +505,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setName">setName</a></b>(modelName)
 								</div>
-								<div class="description">Sets the name of the scene model to be displayed.</div>
+								<div class="description">Sets the name of the scene model.</div>
 							</td>
 						</tr>
 					
@@ -1058,7 +1056,7 @@ ul.inheritsList
 					<div class="fixedFont">
 					
 					<span class="light">{Element}</span>
-					<b>createTransform</b>(XRes, YRes, ZRes, minvalue)
+					<b>createTransform</b>(xRes, yRes, zRes, minvalue)
 					
 					</div>
 					<div class="description">
@@ -1074,28 +1072,28 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>XRes</b>
+									<b>xRes</b>
 									
 								</dt>
-								<dd>- Size of the received data on the x-axis (e.g. the requested DEM )</dd>
+								<dd>Size of the received data on the x-axis (e.g. the requested DEM )</dd>
 							
 								<dt>
-									<b>YRes</b>
+									<b>yRes</b>
 									
 								</dt>
-								<dd>- Size of the received data on the y-axis</dd>
+								<dd>Size of the received data on the y-axis</dd>
 							
 								<dt>
-									<b>ZRes</b>
+									<b>zRes</b>
 									
 								</dt>
-								<dd>- Size of the received data on the z-axis</dd>
+								<dd>Size of the received data on the z-axis</dd>
 							
 								<dt>
 									<b>minvalue</b>
 									
 								</dt>
-								<dd>- Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)</dd>
+								<dd>Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)</dd>
 							
 							</dl>
 						
@@ -1148,7 +1146,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Modules report their loading progress to this function which reports to the main scene.
+						Modules report their loading progress to this function which leads the information to the main scene.
 						
 						
 					</div>
@@ -1173,7 +1171,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the area of interest for the model. (Lower Corner, Upper Corner)
+						Sets the area of interest for the model (Lower Corner, Upper Corner).
 						
 						
 					</div>
@@ -1188,25 +1186,25 @@ ul.inheritsList
 									<b>minx</b>
 									
 								</dt>
-								<dd>- Minimum/Lower Latitude</dd>
+								<dd>Minimum of lower latitude</dd>
 							
 								<dt>
 									<b>miny</b>
 									
 								</dt>
-								<dd>- Minimum/Lower Longitude</dd>
+								<dd>Minimum of lower longitude</dd>
 							
 								<dt>
 									<b>maxx</b>
 									
 								</dt>
-								<dd>- Maximum/Upper Latitude</dd>
+								<dd>Maximum of upper latitude</dd>
 							
 								<dt>
 									<b>maxy</b>
 									
 								</dt>
-								<dd>- Maximum/Upper Longitude</dd>
+								<dd>Maximum of upper longitude</dd>
 							
 							</dl>
 						
@@ -1267,7 +1265,7 @@ ul.inheritsList
 									<b>imageFormat</b>
 									
 								</dt>
-								<dd>- Default "png"</dd>
+								<dd>Default format is "png".</dd>
 							
 							</dl>
 						
@@ -1288,7 +1286,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the name of the scene model to be displayed.
+						Sets the name of the scene model.The name is useful for the demo because it appears in the category "Modules".
 						
 						
 					</div>
@@ -1303,7 +1301,7 @@ ul.inheritsList
 									<b>modelName</b>
 									
 								</dt>
-								<dd>- Name of the model</dd>
+								<dd>Sets the name of model.</dd>
 							
 							</dl>
 						
@@ -1324,7 +1322,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the position of the scene model within the fishtank/cube. Values between [0-1]
+						Sets the position of the scene model within the fishtank/cube.The function accepts values in the range of 0 and 1 for each parameter.
 						
 						
 					</div>
@@ -1339,19 +1337,19 @@ ul.inheritsList
 									<b>xOffset</b>
 									
 								</dt>
-								<dd>- Offset on the x-axis/width  Default:0</dd>
+								<dd>Offset on the x-axis (width).</dd>
 							
 								<dt>
 									<b>yOffset</b>
 									
 								</dt>
-								<dd>- Offset on the y-axis/height Default:0</dd>
+								<dd>Offset on the y-axis (height).</dd>
 							
 								<dt>
 									<b>zOffset</b>
 									
 								</dt>
-								<dd>- Offset on the z-axis/depth  Default:0</dd>
+								<dd>Offset on the z-axis (depth).</dd>
 							
 							</dl>
 						
@@ -1387,13 +1385,13 @@ ul.inheritsList
 									<b>xRes</b>
 									
 								</dt>
-								<dd>- Resolution on the x-axis/Latitude</dd>
+								<dd>Resolution on the x-axis/Latitude</dd>
 							
 								<dt>
 									<b>zRes</b>
 									
 								</dt>
-								<dd>- Resolution on the z-axis/Longitude</dd>
+								<dd>Resolution on the z-axis/Longitude</dd>
 							
 							</dl>
 						
@@ -1414,7 +1412,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the size of the scene model compared to the fishtank/cube. Values between 0 - 1.
+						Sets the size of the scene model compared to the fishtank/cube.The function accepts values in the range of 0 and 1 for each parameter.
 						
 						
 					</div>
@@ -1429,19 +1427,19 @@ ul.inheritsList
 									<b>xScale</b>
 									
 								</dt>
-								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
+								<dd>Size of the model on the x-axis (width).</dd>
 							
 								<dt>
 									<b>yScale</b>
 									
 								</dt>
-								<dd>- Size of the model on the y-axis/height Default:0.3 (30% of the cube)</dd>
+								<dd>Size of the model on the y-axis (height).</dd>
 							
 								<dt>
 									<b>zScale</b>
 									
 								</dt>
-								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
+								<dd>Size of the model on the x-axis (width).</dd>
 							
 							</dl>
 						
@@ -1462,7 +1460,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the initial transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+						Sets the initial transparency of the scene model.The function accepts a parameter value in the range of 0 (fully opaque) and 1(fully transparent).
 						
 						
 					</div>
@@ -1477,7 +1475,7 @@ ul.inheritsList
 									<b>transparency</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>Value of visibility.</dd>
 							
 							</dl>
 						
@@ -1498,7 +1496,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Updates the transparency during runtime of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+						Updates the transparency during runtime of the scene model.The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
 						
 						
 					</div>
@@ -1538,7 +1536,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 02 2013 17:46:11 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

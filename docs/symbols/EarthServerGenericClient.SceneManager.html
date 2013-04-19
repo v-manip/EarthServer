@@ -215,8 +215,6 @@ ul.inheritsList
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
-	<li><a href="../symbols/Function.html">Function</a></li>
-	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -237,7 +235,7 @@ ul.inheritsList
 				SceneManager is the main class of the unified client.All scene models are registered in this class with the add() function.The createScene() function creates a x3dom scene with all scene models.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneModules.js.html">SceneModules.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
 				
 			</p>
 
@@ -280,12 +278,82 @@ ul.inheritsList
 					<tbody>
 					
 						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#annotationLayers">annotationLayers</a></b>
+								</div>
+								<div class="description"></div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-axisLabels">axisLabels</a></b>
+								</div>
+								<div class="description">This variable contains the AxisLabel object.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#baseElevation">baseElevation</a></b>
+								</div>
+								<div class="description">Every Model has it's base elevation on the Y-Axis.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#currentUIElement">currentUIElement</a></b>
+								</div>
+								<div class="description">The current chosen UI element, which is a Model.</div>
+							</td>
+						</tr>
+					
+						<tr>
 							<td class="attributes">&lt;inner&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
 								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-maxResolution">maxResolution</a></b>
 								</div>
-								<div class="description"></div>
+								<div class="description">Max resolution per dimension (standard PC)</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#modelLoadingProgress">modelLoadingProgress</a></b>
+								</div>
+								<div class="description">An Array to store the models loading progress.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#models">models</a></b>
+								</div>
+								<div class="description">An Array of scene models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#progressCallback">progressCallback</a></b>
+								</div>
+								<div class="description">Callback function for the progress update.</div>
 							</td>
 						</tr>
 					
@@ -296,6 +364,16 @@ ul.inheritsList
 								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#TimeLog">TimeLog</a></b>
 								</div>
 								<div class="description">Enables/Disables the logging of Serverrequests,building of terrain etc.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#totalLoadingProgress">totalLoadingProgress</a></b>
+								</div>
+								<div class="description">Value for the loading progress bar (all model loading combined).</div>
 							</td>
 						</tr>
 					
@@ -566,11 +644,11 @@ ul.inheritsList
 					Field Detail
 				</div>
 				
-					<a name="-maxResolution"> </a>
-					<div class="fixedFont">&lt;inner&gt; 
+					<a name="annotationLayers"> </a>
+					<div class="fixedFont">
 					
 					
-					<b>maxResolution</b>
+					<b>annotationLayers</b>
 					
 					</div>
 					<div class="description">
@@ -585,10 +663,206 @@ ul.inheritsList
 						
 						
 						
+
+					<hr />
+				
+					<a name="-axisLabels"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>axisLabels</b>
+					
+					</div>
+					<div class="description">
+						This variable contains the AxisLabel object.This object manages the labels and its appearances on each axis.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
 							<dl class="detailList">
 							<dt class="heading">Default Value:</dt>
 							<dd>
-								1000 / 200 on a mobile platform
+								null
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="baseElevation"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>baseElevation</b>
+					
+					</div>
+					<div class="description">
+						Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								[]
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="currentUIElement"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>currentUIElement</b>
+					
+					</div>
+					<div class="description">
+						The current chosen UI element, which is a Model. Change everything for the model with that ID.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								[]
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="-maxResolution"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>maxResolution</b>
+					
+					</div>
+					<div class="description">
+						Max resolution per dimension (standard PC)
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								1000 (200 on a mobile platform)
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="modelLoadingProgress"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>modelLoadingProgress</b>
+					
+					</div>
+					<div class="description">
+						An Array to store the models loading progress.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								[]
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="models"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>models</b>
+					
+					</div>
+					<div class="description">
+						An Array of scene models.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								[]
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="progressCallback"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>progressCallback</b>
+					
+					</div>
+					<div class="description">
+						Callback function for the progress update.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								undefined
 							</dd>
 							</dl>
 						
@@ -618,6 +892,35 @@ ul.inheritsList
 							<dt class="heading">Default Value:</dt>
 							<dd>
 								false
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="totalLoadingProgress"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>totalLoadingProgress</b>
+					
+					</div>
+					<div class="description">
+						Value for the loading progress bar (all model loading combined).
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								0
 							</dd>
 							</dl>
 						
@@ -868,7 +1171,7 @@ ul.inheritsList
 									<b>model</b>
 									
 								</dt>
-								<dd>- any scene model.</dd>
+								<dd>Any type of scene model.</dd>
 							
 							</dl>
 						
@@ -1093,7 +1396,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Number}</span> maximum Resolution</dd>
+								<dd><span class="light fixedFont">{Number}</span> </dd>
 							
 							</dl>
 						
@@ -1492,7 +1795,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 02 2013 17:46:11 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>
