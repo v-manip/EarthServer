@@ -215,8 +215,6 @@ ul.inheritsList
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
-	<li><a href="../symbols/Function.html">Function</a></li>
-	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -239,7 +237,7 @@ ul.inheritsList
 				This terrain build up a LOD with 3 levels of the received data.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_Terrain.js.html">Terrain.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__Terrain.js.html">Terrain.js</a>.
 				
 			</p>
 
@@ -268,6 +266,78 @@ ul.inheritsList
 			
 
 <!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.LODTerrain.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#-canvasTexture">canvasTexture</a></b>
+								</div>
+								<div class="description">The canvas that holds the received image.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#-chunkInfo">chunkInfo</a></b>
+								</div>
+								<div class="description">General information about the number of chunks needed to build the terrain.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#-chunkSize">chunkSize</a></b>
+								</div>
+								<div class="description">Size of one chunk.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#-lodRange1">lodRange1</a></b>
+								</div>
+								<div class="description">Distance to change between full and 1/2 resolution.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.LODTerrain.html#-lodRange2">lodRange2</a></b>
+								</div>
+								<div class="description">Distance to change between 1/2 and 1/4 resolution.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#materialNodes">materialNodes</a></dd>
+				</dl>
+				
 			
 
 <!-- ============================== methods summary ======================== -->
@@ -333,19 +403,19 @@ ul.inheritsList
 								 <b>root</b>
 								
 							</dt>
-								<dd>- Dom Element to append the terrain to.</dd>
+								<dd>Dom Element to append the terrain to.</dd>
 						
 							<dt>
 								 <b>data</b>
 								
 							</dt>
-								<dd>- Received Data of the Server request.</dd>
+								<dd>Received Data of the Server request.</dd>
 						
 							<dt>
 								 <b>index</b>
 								
 							</dt>
-								<dd>- Index of the model that uses this terrain.</dd>
+								<dd>Index of the model that uses this terrain.</dd>
 						
 						</dl>
 					
@@ -360,6 +430,121 @@ ul.inheritsList
 			
 
 <!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="-canvasTexture"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>canvasTexture</b>
+					
+					</div>
+					<div class="description">
+						The canvas that holds the received image.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-chunkInfo"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>chunkInfo</b>
+					
+					</div>
+					<div class="description">
+						General information about the number of chunks needed to build the terrain.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-chunkSize"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>chunkSize</b>
+					
+					</div>
+					<div class="description">
+						Size of one chunk. Chunks at the borders can be smaller.We want to build 3 chunks for the LOD with different resolution but the same size on the screen.With 253 values the length of the most detailed chunk is 252.The second chunk has 127 values and the length of 126. With a scale of 2 it's back to the size of 252.The third chunk has 64 values and the length if 63. With a scale of 4 it's also back to the size 252.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-lodRange1"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>lodRange1</b>
+					
+					</div>
+					<div class="description">
+						Distance to change between full and 1/2 resolution.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-lodRange2"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>lodRange2</b>
+					
+					</div>
+					<div class="description">
+						Distance to change between 1/2 and 1/4 resolution.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
 			
 
 <!-- ============================== method details ========================= -->		
@@ -405,7 +590,11 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
+<<<<<<< HEAD
 			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
+=======
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
+>>>>>>> SirSlaxalot/master
 		</div>
 	</body>
 </html>

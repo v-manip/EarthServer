@@ -26,8 +26,10 @@ Function.prototype.inheritsFrom = function( parentClassOrObject )
 };
 
 /**
- * This function checks if this code is running is on a mobile platform.
- * @return true if mobile platform, false if not
+ * This function checks if this code is running on a mobile platform.
+ * The function returns true if it's a mobile platform, false if not.
+ * @return {boolean}
+ *
  */
 EarthServerGenericClient.isMobilePlatform = function ()
 {
@@ -65,6 +67,10 @@ EarthServerGenericClient.SceneManager = function()
     var progressCallback = undefined;//Callback function for the progress update.
     var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
     var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
+<<<<<<< HEAD
+=======
+    var maxResolution = 1000;
+>>>>>>> SirSlaxalot/master
     var axisLabels = null;
 
     /**
@@ -73,6 +79,17 @@ EarthServerGenericClient.SceneManager = function()
      * @type {boolean}
      */
     var timeLog= false;
+<<<<<<< HEAD
+=======
+
+    /**
+     * This variable contains the AxisLabel object.
+     * This object manages the labels and its appearances on each axis.
+     * @default null
+     * @type {Object}
+     */
+    var axisLabels = null;
+>>>>>>> SirSlaxalot/master
 
     /**
      * Name of the X-Axis to be displayed.
@@ -200,7 +217,6 @@ EarthServerGenericClient.SceneManager = function()
      * @default 1000 / 200 on a mobile platform
      * @type {Number}
      */
-    var maxResolution = 1000;//Max Resolution per dimension (Standard PC)
     if( EarthServerGenericClient.isMobilePlatform())  //and for mobile Clients
         maxResolution = 200;
 
@@ -398,14 +414,15 @@ EarthServerGenericClient.SceneManager = function()
     /**
      * Returns the maximum resolution per dimension of a scene model.
      * This number depends on power templates (e.g. mobile device).
-     * @return {Number} maximum Resolution
+     * @return {Number}
      */
     this.getMaxResolution = function()
     {   return maxResolution;   };
 
     /**
      * Adds any scene model to the scene.
-     * @param model - any scene model.
+     * @param model
+     *      Any type of scene model.
      */
     this.addModel = function( model )
     {
@@ -678,18 +695,24 @@ EarthServerGenericClient.SceneManager = function()
  */
 EarthServerGenericClient.AbstractSceneModel = function(){
     /**
-     * Sets the name of the scene model to be displayed.
-     * @param modelName - Name of the model
+     * Sets the name of the scene model.
+     * The name is useful for the demo because it appears in the category "Modules".
+     * @param modelName
+     *      Sets the name of model.
      */
     this.setName = function(modelName){
         this.name = String(modelName);
     };
     /**
-     * Sets the area of interest for the model. (Lower Corner, Upper Corner)
-     * @param minx - Minimum/Lower Latitude
-     * @param miny - Minimum/Lower Longitude
-     * @param maxx - Maximum/Upper Latitude
-     * @param maxy - Maximum/Upper Longitude
+     * Sets the area of interest for the model (Lower Corner, Upper Corner).
+     * @param minx
+     *      Minimum of lower latitude
+     * @param miny
+     *      Minimum of lower longitude
+     * @param maxx
+     *      Maximum of upper latitude
+     * @param maxy
+     *      Maximum of upper longitude
      */
     this.setAreaOfInterest = function(minx,miny,maxx,maxy){
         this.minx = minx;
@@ -699,8 +722,10 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
     /**
      * Sets the resolution of the scene model (if possible).
-     * @param xRes - Resolution on the x-axis/Latitude
-     * @param zRes - Resolution on the z-axis/Longitude
+     * @param xRes
+     *      Resolution on the x-axis/Latitude
+     * @param zRes
+     *      Resolution on the z-axis/Longitude
      */
     this.setResolution = function(xRes,zRes){
         this.XResolution = parseInt(xRes);
@@ -715,10 +740,14 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Sets the position of the scene model within the fishtank/cube. Values between [0-1]
-     * @param xOffset - Offset on the x-axis/width  Default:0
-     * @param yOffset - Offset on the y-axis/height Default:0
-     * @param zOffset - Offset on the z-axis/depth  Default:0
+     * Sets the position of the scene model within the fishtank/cube.
+     * The function accepts values in the range of 0 and 1 for each parameter.
+     * @param xOffset
+     *      Offset on the x-axis (width).
+     * @param yOffset
+     *      Offset on the y-axis (height).
+     * @param zOffset
+     *      Offset on the z-axis (depth).
      */
     this.setOffset = function( xOffset, yOffset, zOffset){
         this.xOffset = parseFloat(xOffset);
@@ -726,10 +755,14 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.zOffset = parseFloat(zOffset);
     };
     /**
-     * Sets the size of the scene model compared to the fishtank/cube. Values between 0 - 1.
-     * @param xScale - Size of the model on the x-axis/width  Default:1   (whole cube)
-     * @param yScale - Size of the model on the y-axis/height Default:0.3 (30% of the cube)
-     * @param zScale - Size of the model on the x-axis/width  Default:1   (whole cube)
+     * Sets the size of the scene model compared to the fishtank/cube.
+     * The function accepts values in the range of 0 and 1 for each parameter.
+     * @param xScale
+     *      Size of the model on the x-axis (width).
+     * @param yScale
+     *      Size of the model on the y-axis (height).
+     * @param zScale
+     *      Size of the model on the x-axis (width).
      */
     this.setScale = function( xScale, yScale, zScale){
         this.xScale = parseFloat(xScale);
@@ -739,22 +772,26 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 
     /**
      * Sets the image format for the server request.
-     * @param imageFormat - Default "png"
+     * @param imageFormat
+     *      Default format is "png".
      */
     this.setImageFormat = function( imageFormat){
         this.imageFormat = String(imageFormat);
     };
 
     /**
-     * Sets the initial transparency of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * Sets the initial transparency of the scene model.
+     * The function accepts a parameter value in the range of 0 (fully opaque) and 1(fully transparent).
      * @param transparency
+     *      Value of visibility.
      */
     this.setTransparency = function( transparency ){
         this.transparency = parseFloat(transparency);
     };
 
     /**
-     * Updates the transparency during runtime of the scene model. Values between 0-1 (Fully Opaque - Fully Transparent).
+     * Updates the transparency during runtime of the scene model.
+     * The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
      * @param transparency
      */
     this.updateTransparency = function( transparency ){
@@ -762,7 +799,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Modules report their loading progress to this function which reports to the main scene.
+     * Modules report their loading progress to this function which leads the information to the main scene.
      */
     this.reportProgress = function()
     {
@@ -867,21 +904,25 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     /**
      * Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically by
      * the scene model.
-     * @param XRes - Size of the received data on the x-axis (e.g. the requested DEM )
-     * @param YRes - Size of the received data on the y-axis
-     * @param ZRes - Size of the received data on the z-axis
-     * @param minvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param xRes
+     *      Size of the received data on the x-axis (e.g. the requested DEM )
+     * @param yRes
+     *      Size of the received data on the y-axis
+     * @param zRes
+     *      Size of the received data on the z-axis
+     * @param minvalue
+     *      Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
      * @return {Element}
      */
-    this.createTransform = function(XRes,YRes,ZRes,minvalue){
+    this.createTransform = function(xRes,yRes,zRes,minvalue){
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
 
-        this.YResolution = YRes;
+        this.YResolution = yRes;
 
-        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(XRes)-1);
+        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(xRes)-1);
         var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
-        var scaleZ = (this.cubeSizeZ*this.zScale)/(parseInt(ZRes)-1);
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(parseInt(zRes)-1);
         trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
         var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
@@ -994,14 +1035,11 @@ EarthServerGenericClient.AbstractSceneModel = function(){
  * @description This class generates labels for each axis and side (except bottom) of the bounding box.
  *
  * @param xSize
- * The width of the bounding box.
- *
+ *      The width of the bounding box.
  * @param ySize
- * The height of the bounding box.
- *
+ *      The height of the bounding box.
  * @param zSize
- * The depth of the bounding box.
- *
+ *      The depth of the bounding box.
  */
 EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 {

@@ -215,8 +215,6 @@ ul.inheritsList
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
-	<li><a href="../symbols/Function.html">Function</a></li>
-	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -239,7 +237,7 @@ ul.inheritsList
 				This terrain should receive multiple insertLevel calls. It removes the old versionand replace it with the new data. It can be used for progressive loading.Example: WCPSDemAlpha with progressive loading using the progressiveWCPSImageLoader.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/code_Terrain.js.html">Terrain.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__Terrain.js.html">Terrain.js</a>.
 				
 			</p>
 
@@ -268,6 +266,68 @@ ul.inheritsList
 			
 
 <!-- ============================== properties summary ===================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class EarthServerGenericClient.ProgressiveTerrain.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html#-canvasTexture">canvasTexture</a></b>
+								</div>
+								<div class="description">The canvas that holds the received image.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html#-chunkInfo">chunkInfo</a></b>
+								</div>
+								<div class="description">General information about the amount of chunks needed to build the terrain.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html#-chunkSize">chunkSize</a></b>
+								</div>
+								<div class="description">Size of one chunk.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;inner&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html#-currentData">currentData</a></b>
+								</div>
+								<div class="description">Counter of the inserted levels.</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+				<dl class="inheritsList">
+				<dt>Fields borrowed from class <a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a>: </dt><dd><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#materialNodes">materialNodes</a></dd>
+				</dl>
+				
 			
 
 <!-- ============================== methods summary ======================== -->
@@ -333,7 +393,7 @@ ul.inheritsList
 								 <b>index</b>
 								
 							</dt>
-								<dd>- Index of the model using this terrain.</dd>
+								<dd>Index of the model using this terrain.</dd>
 						
 						</dl>
 					
@@ -348,6 +408,99 @@ ul.inheritsList
 			
 
 <!-- ============================== field details ========================== -->		
+			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="-canvasTexture"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>canvasTexture</b>
+					
+					</div>
+					<div class="description">
+						The canvas that holds the received image.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-chunkInfo"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>chunkInfo</b>
+					
+					</div>
+					<div class="description">
+						General information about the amount of chunks needed to build the terrain.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-chunkSize"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>chunkSize</b>
+					
+					</div>
+					<div class="description">
+						Size of one chunk. Chunks at the borders can be smaller.256*256 (2^16) is the max size because of only 16 bit indices.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="-currentData"> </a>
+					<div class="fixedFont">&lt;inner&gt; 
+					
+					
+					<b>currentData</b>
+					
+					</div>
+					<div class="description">
+						Counter of the inserted levels.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
 			
 
 <!-- ============================== method details ========================= -->		
@@ -379,13 +532,13 @@ ul.inheritsList
 									<b>root</b>
 									
 								</dt>
-								<dd>- Dom Element to append the terrain to.</dd>
+								<dd>Dom Element to append the terrain to.</dd>
 							
 								<dt>
 									<b>data</b>
 									
 								</dt>
-								<dd>- Received Data of the Server request.</dd>
+								<dd>Received Data of the Server request.</dd>
 							
 							</dl>
 						
@@ -410,7 +563,11 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
+<<<<<<< HEAD
 			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
+=======
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
+>>>>>>> SirSlaxalot/master
 		</div>
 	</body>
 </html>

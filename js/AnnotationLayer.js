@@ -14,9 +14,15 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  */
 EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
 {
+<<<<<<< HEAD
     this.name = Name;   //Name of this layer
     var annotationTransforms = []; //Array with all transform to switch rendering
     var annotations = [];   //The text of the annotations (displayed in the UI)
+=======
+    this.name = Name;
+    var annotationTransforms = [];
+    var annotations = [];
+>>>>>>> SirSlaxalot/master
 
     /**
      * Adds an annotation marker and -text to the annotation layer.
@@ -27,10 +33,14 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
      */
     this.addAnnotation = function(xPos,yPos,zPos,Text)
     {
+<<<<<<< HEAD
         annotations.push(Text);//save the text for later queries
 
         //We draw 2 texts without their backfaces.
         //So the user can see the text from most angles and not mirror inverted.
+=======
+        annotations.push(Text);
+>>>>>>> SirSlaxalot/master
         for(var i=0;i<2;i++)
         {
             var textTransform = document.createElement('transform');
@@ -120,10 +130,13 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
         }
     };
 
+<<<<<<< HEAD
     /**
      * Returns an array with the annotation text.
      * @returns {Array}
      */
+=======
+>>>>>>> SirSlaxalot/master
     this.getAnnotationTexts = function()
     {
         var arrayReturn = [];
