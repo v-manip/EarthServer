@@ -1,15 +1,36 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
+/**
+ * @class Annotation Layer to create multiple Annotations with the same style who belong together.
+ * @param Name - Name of the Layer. To be displayed and to add annotations to it.
+ * @param root - X3dom element to append the annotations.
+ * @param fontSize - Font size of the annotations.
+ * @param fontColor - Font color of the annotations
+ * @param fontHover - The annotations hovers above the marker by this value.
+ * @param markerSize - Size of the annotations marker.
+ * @param markerColor - Color of the annotations marker.
+ * @constructor
+ */
 EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
 {
-    this.name = Name;
-    var annotationTransforms = [];
-    var annotations = [];
+    this.name = Name;   //Name of this layer
+    var annotationTransforms = []; //Array with all transform to switch rendering
+    var annotations = [];   //The text of the annotations (displayed in the UI)
 
+    /**
+     * Adds an annotation marker and -text to the annotation layer.
+     * @param xPos - Position on the X-Axis of the marker and center of the annotation.
+     * @param yPos - Position on the Y-Axis of the marker and center of the annotation.
+     * @param zPos - Position on the Z-Axis of the marker and center of the annotation.
+     * @param Text - Text for the annotation.
+     */
     this.addAnnotation = function(xPos,yPos,zPos,Text)
     {
-        annotations.push(Text);
+        annotations.push(Text);//save the text for later queries
+
+        //We draw 2 texts without their backfaces.
+        //So the user can see the text from most angles and not mirror inverted.
         for(var i=0;i<2;i++)
         {
             var textTransform = document.createElement('transform');
@@ -31,6 +52,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
             shape.appendChild(text);
             textTransform.appendChild(shape);
 
+            //one marker is enough
             if(i===0)
             {
                 var sphere_trans = document.createElement("Transform");
@@ -61,6 +83,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
             textTransform.setAttribute('translation', xPos + " " + (yPos+fontHover) + " " + zPos);
             textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
 
+            //One text "normal" and one "mirror inverted"
             if(i===0)
             {
                 textTransform.setAttribute('rotation', '0 0 1 3.14');
@@ -72,8 +95,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
                 rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
 
-
-            annotationTransforms.push(rootTransform);
+            annotationTransforms.push(rootTransform);//save the transform to toggle rendering
             rootTransform.appendChild(textTransform);
             root.appendChild( rootTransform );
         }
@@ -86,6 +108,10 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
         fontStyle = null;
     };
 
+    /**
+     * Determine the rendering of this layer.
+     * @param value - boolean
+     */
     this.renderLayer = function( value )
     {
         for(var i=0; i<annotationTransforms.length;i++)
@@ -94,6 +120,10 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
         }
     };
 
+    /**
+     * Returns an array with the annotation text.
+     * @returns {Array}
+     */
     this.getAnnotationTexts = function()
     {
         var arrayReturn = [];

@@ -37,7 +37,7 @@ EarthServerGenericClient.AbstractTerrain = function()
             context.putImageData(imageData,0,0);
         }
         else
-        {   console.log("Could not create Canvas, response Texture is empty."); }
+        {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
 
         return canvasTexture;
     };
@@ -105,10 +105,9 @@ EarthServerGenericClient.AbstractTerrain = function()
     /**
      * Returns a height map part from the given height map specified in the info parameter.
      * @param info - Which part of the heightmap should be returned.
-     * @param hm - The heightmap from which the parts is extracted.
      * @returns {*}
      */
-    this.getHeightMap = function(info,hm)
+    this.getHeightMap = function(info)
     {
         try
         {
@@ -118,7 +117,11 @@ EarthServerGenericClient.AbstractTerrain = function()
                 heightmapPart[i] = new Array(info.chunkWidth);
                 for(var j=0; j<info.chunkWidth; j++)
                 {
-                    heightmapPart[i][j] = hm[info.xpos+j][info.ypos+i];
+                    //If the requested position is out of bounce return the min value of the hm.
+                    if(i > this.data.width || j > this.data.height || info.xpos+j < 0 || info.ypos+i <0)
+                    {   heightmapPart[i][j] = this.data.minHMvalue;    }
+                    else
+                    {   heightmapPart[i][j] = this.data.heightmap[info.xpos+j][info.ypos+i];    }
                 }
             }
             return heightmapPart;
@@ -216,6 +219,19 @@ EarthServerGenericClient.AbstractTerrain = function()
             return null;
         }
     };
+
+    /**
+     * Returns the Width of the Heightmap of the terrain.
+     * @returns {number}
+     */
+    this.getHeightmapWidth = function()
+    {   return this.data.width; };
+    /**
+     * Returns the Height of the Heightmap of the terrain.
+     * @returns {*|number}
+     */
+    this.getHeightmapHeight = function()
+    {   return this.data.height; };
 };
 
 /**
@@ -241,6 +257,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
      */
     this.insertLevel = function(root,data)
     {
+        this.data = data;
         canvasTexture = this.createCanvas(data.texture,index);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
@@ -253,7 +270,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             {
                 //Build all necessary information and values to create a chunk
                 var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
-                var hm = this.getHeightMap(info,data.heightmap);
+                var hm = this.getHeightMap(info);
                 var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
@@ -298,6 +315,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
     var lodRange1       = 10000; //Distance to change between Full and 1/2 resolution.
     var lodRange2       = 20000;//Distance to change between 1/2 and 1/4 resolution.
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.data = data;
 
     //The canvas that holds the received image.
     var canvasTexture   = this.createCanvas( data.texture,index);
@@ -322,7 +340,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
             {
                 //Build all necessary information and values to create a chunk
                 var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
-                var hm = this.getHeightMap(info,data.heightmap);
+                var hm = this.getHeightMap(info);
                 var appearance = this.getAppearances("TerrainApp_"+index,3,index,canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
