@@ -28,7 +28,7 @@
 
     <script type="text/javascript">
     var EarthServerGenericClient_MainScene = new EarthServerGenericClient.SceneManager();
-    EarthServerGenericClient_MainScene.setTimeLog(false);
+    EarthServerGenericClient_MainScene.setTimeLog(true);
 
     $(document).ready(function()
     {
@@ -40,7 +40,7 @@
         //q.setAreaOfInterest(375000,475000,475000,575000);
         q.setScale(1.0,0.3,1.0);
         q.setResolution(600,600);
-        //q.setProgressiveLoading(true);
+        q.setProgressiveLoading(true);
 
         /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
         WMS.setName("WMS_WCS");
