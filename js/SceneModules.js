@@ -67,6 +67,7 @@ EarthServerGenericClient.SceneManager = function()
     var progressCallback = undefined;//Callback function for the progress update.
     var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
     var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
+    var maxResolution = 1000;
     var axisLabels = null;
 
     /**
