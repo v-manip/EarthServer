@@ -67,11 +67,7 @@ EarthServerGenericClient.SceneManager = function()
     var progressCallback = undefined;//Callback function for the progress update.
     var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
     var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
-<<<<<<< HEAD
-=======
     var maxResolution = 1000;
->>>>>>> SirSlaxalot/master
-    var axisLabels = null;
 
     /**
      * Enables/Disables the logging of Server requests, building of terrain etc.
@@ -79,8 +75,6 @@ EarthServerGenericClient.SceneManager = function()
      * @type {boolean}
      */
     var timeLog= false;
-<<<<<<< HEAD
-=======
 
     /**
      * This variable contains the AxisLabel object.
@@ -89,7 +83,7 @@ EarthServerGenericClient.SceneManager = function()
      * @type {Object}
      */
     var axisLabels = null;
->>>>>>> SirSlaxalot/master
+
 
     /**
      * Name of the X-Axis to be displayed.

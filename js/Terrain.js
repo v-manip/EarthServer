@@ -63,7 +63,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      *      Height of the entire terrain.
      * @param chunkSize
      *      The size of one chunk.
-     * @returns {Object literal} numChunksX: number, numChunksY: number, numChunks: number
+     * @returns {} numChunksX: number, numChunksY: number, numChunks: number
      */
     this.calcNumberOfChunks = function(width,height,chunkSize)
     {
@@ -99,7 +99,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      *      Width of the whole terrain. Used to calc texture coordinates.
      * @param terrainHeight
      *      Height of the whole terrain. Used to calc texture coordinates.
-     * @returns {Object literal}
+     * @returns {}
      *      xpos: number, ypos: number, chunkWidth: number,
      *      chunkHeight: number, terrainWidth: number,
      *      terrainHeight: number, ID: number, modelIndex: number
@@ -132,19 +132,8 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * Returns a height map part from the given height map specified in the info parameter.
-<<<<<<< HEAD
      * @param info - Which part of the heightmap should be returned.
      * @returns {*}
-=======
-     * @param info
-     *      Which part of the heightmap should be returned. In this case the parameter is an object literal
-     *      and uses the following attributes: xpos: number, ypos: number, chunkWidth: number, chunkHeight: number
-     * @param  hm
-     *      The heightmap from which the parts is extracted.
-     * @returns {Array}
-     *      Returns a 2D Array, use it as follows Array[chunk height][chunk width].
-     * @throws If any error occurs, the function will return null.
->>>>>>> SirSlaxalot/master
      */
     this.getHeightMap = function(info)
     {
@@ -215,7 +204,7 @@ EarthServerGenericClient.AbstractTerrain = function()
      *      Transparency of the appearance.
      * @returns {Array}
      *      Array of appearance nodes.
-     *      @throws If any error occurs, the function will return null.
+     *      If any error occurs, the function will return null.
      */
     this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency) {
         try {
@@ -389,12 +378,9 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  */
 EarthServerGenericClient.LODTerrain = function(root, data,index)
 {
-<<<<<<< HEAD
-    var lodRange1       = 10000; //Distance to change between Full and 1/2 resolution.
-    var lodRange2       = 20000;//Distance to change between 1/2 and 1/4 resolution.
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
-=======
+
     /**
      * Distance to change between full and 1/2 resolution.
      * @type {number}
@@ -405,7 +391,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
      * @type {number}
      */
     var lodRange2       = 10000;
->>>>>>> SirSlaxalot/master
+
 
     /**
      * The canvas that holds the received image.
