@@ -48,14 +48,14 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
 {
     var counter = 0;
     this.name = "Combined Callback: " + callback.name;
-    EarthServerGenericClient_MainScene.timeLogStart("Combine: " + callback.name);
+    EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
 
     this.receiveData = function(data)
     {
         counter++;
         if( counter ==  numberToCombine)
         {
-            EarthServerGenericClient_MainScene.timeLogEnd("Combine: " + callback.name);
+            EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
             callback.receiveData(data);
         }
     }
@@ -110,7 +110,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
     {
         responseData.texture.onload = function()
         {
-            EarthServerGenericClient_MainScene.timeLogEnd("WCPS: " + callback.name);
+            EarthServerGenericClient.MainScene.timeLogEnd("WCPS: " + callback.name);
             if(DemInAlpha)
             {
                 responseData.heightmapUrl = responseData.texture.src;
@@ -118,6 +118,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
                 var canvas = document.createElement('canvas');
                 canvas.width = responseData.texture.width;
                 canvas.height = responseData.texture.height;
+                //console.log("Image: " + responseData.texture.width +"x"+ responseData.texture.height);
                 var context = canvas.getContext('2d');
                 context.drawImage(responseData.texture, 0, 0);
 
@@ -160,7 +161,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
         };
 
         responseData.textureUrl = url + "?query=" + encodeURI(query);
-        EarthServerGenericClient_MainScene.timeLogStart("WCPS: " + callback.name);
+        EarthServerGenericClient.MainScene.timeLogStart("WCPS: " + callback.name);
         responseData.texture.src = responseData.textureUrl;
     }
     catch(error)
@@ -184,7 +185,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
     var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
     request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
 
-    EarthServerGenericClient_MainScene.timeLogStart("WCS Coverage: " + callback.name );
+    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
 
     $.ajax(
         {
@@ -194,7 +195,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             data: request,
             success: function(receivedData)
             {
-                EarthServerGenericClient_MainScene.timeLogEnd("WCS Coverage: " + callback.name );
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 var Grid = $(receivedData).find('GridEnvelope');
                 var low  = $(Grid).find('low').text().split(" ");
                 var high = $(Grid).find('high').text().split(" ");
@@ -248,7 +249,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             },
             error: function(xhr, ajaxOptions, thrownError)
             {
-                EarthServerGenericClient_MainScene.timeLogEnd("WCS Coverage: " + callback.name );
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
             }
         }
@@ -292,7 +293,7 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
     {
         if(which >= 0)
         {
-            EarthServerGenericClient_MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
+            EarthServerGenericClient.MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
             EarthServerGenericClient.getWCPSImage(this,responseData[which],WCPSurl,WCPSqueries[which],DemInAlpha);
         }
         else
@@ -300,7 +301,7 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
     };
     this.receiveData = function(data)
     {
-        EarthServerGenericClient_MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
+        EarthServerGenericClient.MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
         which--;
         this.makeRequest(which);
         callback.receiveData(data);

@@ -232,10 +232,13 @@ ul.inheritsList
 				
 				
 			
-				SceneManager is the main class of the unified client.All scene models are registered in this class with the add() function.The createScene() function creates a x3dom scene with all scene models.The createUI() function creates the UI.
+				SceneManager is the main class of the unified client.
+All scene models are registered in this class with the add() function.
+The createScene() function creates a x3dom scene with all scene models.
+The createUI() function creates the UI.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneModules.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneManager.js</a>.
 				
 			</p>
 
@@ -795,7 +798,8 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						This variable contains the AxisLabel object.This object manages the labels and its appearances on each axis.
+						This variable contains the AxisLabel object.
+This object manages the labels and its appearances on each axis.
 						
 						
 					</div>
@@ -1368,7 +1372,9 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
+						Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.
+The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
+Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
 						
 						
 					</div>
@@ -1667,7 +1673,8 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Returns the definition of the camera with the given index.Format: "CameraName:CameraID"
+						Returns the definition of the camera with the given index.
+Format: "CameraName:CameraID"
 						
 						
 					</div>
@@ -1742,7 +1749,8 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Returns the maximum resolution per dimension of a scene model.This number depends on power templates (e.g. mobile device).
+						Returns the maximum resolution per dimension of a scene model.
+This number depends on power templates (e.g. mobile device).
 						
 						
 					</div>
@@ -2021,7 +2029,11 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						All Modules and Terrain shall report their loading progress.Modules when they receive data and terrains if they are done building the terrain.Every time this function is called 1 is added to the total progress. It is assumed that for everyrequest a terrain is build thus 100% = model.requests*2If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
+						All Modules and Terrain shall report their loading progress.
+Modules when they receive data and terrains if they are done building the terrain.
+Every time this function is called 1 is added to the total progress. It is assumed that for every
+request a terrain is build thus 100% = model.requests*2
+If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
 						
 						
 					</div>
@@ -2105,7 +2117,9 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Sets the callback function for the progress update. The progress function gives a parameter between 0-100.You can set callback = null for no progress update at all. If no callback is given at all the progress isprinted to the console.
+						Sets the callback function for the progress update. The progress function gives a parameter between 0-100.
+You can set callback = null for no progress update at all. If no callback is given at all the progress is
+printed to the console.
 						
 						
 					</div>

@@ -359,7 +359,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
         canvasTexture = null;
         chunkInfo = null;
 
-        EarthServerGenericClient_MainScene.reportProgress(index);
+        EarthServerGenericClient.MainScene.reportProgress(index);
     };
 };
 EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
@@ -454,7 +454,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
         canvasTexture = null;
         chunkInfo = null;
 
-        EarthServerGenericClient_MainScene.reportProgress(index);
+        EarthServerGenericClient.MainScene.reportProgress(index);
     };
 };
 EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);

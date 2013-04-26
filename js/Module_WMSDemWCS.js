@@ -95,7 +95,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cu
     if( root === undefined)
         alert("root is not defined");
 
-    EarthServerGenericClient_MainScene.timeLogStart("Create Model " + this.name);
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
 
     this.cubeSizeX = cubeSizeX;
     this.cubeSizeY = cubeSizeY;
@@ -147,11 +147,11 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         //Set transparency
         data.transparency = this.transparency;
         //Create Terrain out of the received data
-        EarthServerGenericClient_MainScene.timeLogStart("Create Terrain " + this.name);
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
         this.terrain.createTerrain();
-        EarthServerGenericClient_MainScene.timeLogEnd("Create Terrain " + this.name);
-        EarthServerGenericClient_MainScene.timeLogEnd("Create Model " + this.name);
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;
     }
