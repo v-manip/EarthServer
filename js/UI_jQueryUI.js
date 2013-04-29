@@ -38,7 +38,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
             EarthServerGenericClient.MainScene.getModelOffsetZ(i) * EarthServerGenericClient.MainScene.getCubeSizeZ(),
             EarthServerGenericClient.MainScene.updateOffset);
 
-        EarthServerGenericClient.appendASlider(div,i);
+        EarthServerGenericClient.appendAlphaSlider(div,i);
         EarthServerGenericClient.MainScene.setSpecificElement(i,div);
 
         div=null;
@@ -91,6 +91,12 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
             -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
+        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"R","Radius",i,0,5000,500,
+            EarthServerGenericClient.MainScene.updateLightRadius);
+
+        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"I","Intensity",i,0,10,2,
+            EarthServerGenericClient.MainScene.updateLightIntensity);
+
         lightDiv=null;
         lightHeader=null;
     }
@@ -113,7 +119,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
             checkbox.setAttribute("checked","checked");
             checkbox.setAttribute("onchange","EarthServerGenericClient.MainScene.drawAnnotationLayer('"+ALname+"',this.checked)");
             ap.appendChild(checkbox);
-            //Build list with annotations in this layer ulli
+            //Build list with annotations in this layer
             var list = document.createElement("ul");
             var annotationTexts = EarthServerGenericClient.MainScene.getAnnotationLayerTexts(ALname);
             for(var k=0; k<annotationTexts.length;k++)
@@ -167,7 +173,29 @@ EarthServerGenericClient.appendXYZSlider = function(domElement,sliderID,label,el
     });
 };
 
-EarthServerGenericClient.appendASlider = function(domElement, moduleNumber){
+EarthServerGenericClient.appendGenericSlider = function(domElement,sliderID,label,elementID,min,max,startValue,callback)
+{
+    var p = document.createElement("p");
+    p.innerHTML = label;
+    domElement.appendChild(p);
+
+    var slider = document.createElement("div");
+    slider.setAttribute("id",sliderID);
+    domElement.appendChild(slider);
+
+    $( "#"+sliderID ).slider({
+        range: "max",
+        min: min,
+        max: max,
+        value: startValue,
+        slide: function( event, ui ) {
+            callback(elementID,ui.value);
+        }
+    });
+
+};
+
+EarthServerGenericClient.appendAlphaSlider = function(domElement, moduleNumber){
     //AlphaChannel
     var ap = document.createElement("p");
     ap.setAttribute("id","EarthServerGenericClient_SliderCell_a_" + moduleNumber );

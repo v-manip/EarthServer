@@ -58,8 +58,17 @@ EarthServerGenericClient.getEventTarget = function(e)
     return e.target || e.srcElement;
 };
 
-
-EarthServerGenericClient.Light = function(domElement,position,radius,color)
+/**
+ * Creates a light to enlighten the scene.
+ * @param domElement - Dom element to append the light to.
+ * @param index - Index of the light.
+ * @param position - Position of the light (local coordinates)
+ * @param radius - Radius of the light.
+ * @param color - Color if the Light
+ * @returns {HTMLElement} - The Light dom element.
+ * @constructor
+ */
+EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
 {
     var ambientIntensity = "1";
     var intensity        = "3";
@@ -72,6 +81,7 @@ EarthServerGenericClient.Light = function(domElement,position,radius,color)
     if(domElement !== undefined && domElement !== null)
     {
         var light = document.createElement("PointLight");
+        light.setAttribute("id", "EarthServerGenericClient_Light_"+index);
         light.setAttribute("ambientIntensity",ambientIntensity);
         light.setAttribute("color",color);
         light.setAttribute("intensity",intensity);
@@ -81,7 +91,6 @@ EarthServerGenericClient.Light = function(domElement,position,radius,color)
         domElement.appendChild(light);
         light = null;
     }
-
 };
 
 /**
@@ -622,7 +631,7 @@ EarthServerGenericClient.SceneManager = function()
             var lightTransform = document.createElement("transform");
             lightTransform.setAttribute("id","EarthServerGenericClient_lightTransform0");
             lightTransform.setAttribute("translation","0 0 0");
-            lights.push(new EarthServerGenericClient.Light(lightTransform, "0 0 0"));
+            lights.push(new EarthServerGenericClient.Light(lightTransform,0, "0 0 0"));
             scene.appendChild(lightTransform);
         }
 
@@ -737,13 +746,50 @@ EarthServerGenericClient.SceneManager = function()
     {
         var trans = document.getElementById("EarthServerGenericClient_lightTransform"+lightIndex);
 
-        if( trans )
+        if( trans && which !== undefined && value !== undefined )
         {
             var oldTrans = trans.getAttribute("translation");
             oldTrans = oldTrans.split(" ");
             oldTrans[which] = value;
             trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
         }
+        else
+        {
+            console.log("EarthServerGenericClient::SceneManager: Can't update light position.");
+            console.log("Index " + lightIndex + ", Axis "+ which + " and Position " + value);
+        }
+    };
+
+    /**
+     * Updates the radius of the light with the given index.
+     * @param lightIndex - Index of the light.
+     * @param value - New radius.
+     */
+    this.updateLightRadius = function(lightIndex,value)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            light.setAttribute("radius",value);
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
+    };
+
+    /**
+     * Updates the intensity of the light with the given index.
+     * @param lightIndex - Index of the light.
+     * @param value - New intensity.
+     */
+    this.updateLightIntensity = function(lightIndex,value)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            light.setAttribute("intensity",value);
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
     };
 
     /**

@@ -5,16 +5,15 @@
     <title>Earth Demo</title>
 
     <link rel="stylesheet" type="text/css" href="css/x3dom.css" />
-    <link rel="stylesheet" type="text/css" href="css/raswct.css">
     <link rel="stylesheet" type="text/css" href="css/earthservergenericclient.css" />
-    <link rel="stylesheet" type="text/css" href="js-ext/jquery-ui-1.10.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="js-ext/jquery-ui/themes/base/jquery-ui.css">
 
     <!--<script type="text/javascript" src="http://x3dom.org/download/dev/x3dom-full.js"></script>-->
 	<script type="text/javascript" src="js-ext/x3dom-full.js"></script>
     <!--<script type="text/javascript" src="raswct/raswct.js"></script>-->
 
-    <script type="text/javascript" src="js-ext/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
-    <script type="text/javascript" src="js-ext/jquery-ui-1.10.2/ui/jquery-ui.js"></script>
+    <script type="text/javascript" src="js-ext/jquery-ui/jquery-1.9.1.js"></script>
+    <script type="text/javascript" src="js-ext/jquery-ui/ui/jquery-ui.js"></script>
 
     <script src="js/SceneManager.js" type="text/javascript"></script>
     <script src="js/Module_Base.js" type="text/javascript"></script>
@@ -31,7 +30,7 @@
     <script type="text/javascript">
     //Namespace
     var EarthServerGenericClient = EarthServerGenericClient || {};
-    EarthServerGenericClient.MainScene.setTimeLog(false);
+    EarthServerGenericClient.MainScene.setTimeLog(true);
     EarthServerGenericClient.MainScene.addLightToScene(true);
     //EarthServerGenericClient.MainScene.setBackground("0.3 0.3 0.4 0.35 0.35 0.55 0.4 0.4 0.5 0.5 0.5 0.6","0.9 1.5 1.57","0.2 0.3 0.2 0.3 0.4 0.3 0.4 0.5 0.4 0.5 0.5 0.6","0.9 1.5 1.57");
     EarthServerGenericClient.MainScene.setBackground("0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57","0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57");
@@ -48,7 +47,7 @@
         q.setCoordinateReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/27700");
         q.setScale(1.0,0.3,1.0);
         q.setResolution(1000,1000);
-        q.setProgressiveLoading(false);
+        q.setProgressiveLoading(true);
 
         /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
         WMS.setName("WMS_WCS");
@@ -90,7 +89,8 @@
         g.setWCPSQuery(g_query);
 
         EarthServerGenericClient.MainScene.addModel(q);
-        //EarthServerGenericClient.MainScene.addModel(g);
+        EarthServerGenericClient.MainScene.addModel(g);
+        //EarthServerGenericClient.MainScene.addModel(WMS);
 
         EarthServerGenericClient.MainScene.createScene('x3d','x3dScene',1,0.5,1 );
 
