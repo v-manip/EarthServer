@@ -16,7 +16,7 @@ Besides this introduction, the Unified Web 3D Client project comes with example 
 How to Setup a Scene
 --------------------
 
-In example_BGS.html and example_JUB.html you will find a very simple website that includes a client setup using some publicly available OGC enabled data sources.
+In example_BGS.html and example_JUB.html you will find very simple websites that includes a client setup using some publicly available OGC enabled data sources.
 
 How to Develop Custom Modules
 -----------------------------
