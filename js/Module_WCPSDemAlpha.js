@@ -183,6 +183,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
                 tmpString[i] = tmpString[i].replace("$MINY",this.miny);
                 tmpString[i] = tmpString[i].replace("$MAXX",this.maxx);
                 tmpString[i] = tmpString[i].replace("$MAXY",this.maxy);
+                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
+                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
                 tmpString[i] = tmpString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
                 tmpString[i] = tmpString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
             }

@@ -1,5 +1,5 @@
 /**
- * Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
+ * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
  * For every appearance in the appearances parameter one level is built with 25% size of the last level.
  * @param parentNode - Dom element to append the elevation grids to.
  * @param info - Information about the ID,position of the chunk, the heightmap's size and the modelIndex.
@@ -12,7 +12,7 @@ function ElevationGrid(parentNode,info, hf,appearances)
     "use strict";
 
     /**
-     * Creates and inserts elevation grid (terrain chunk) into DOM.
+     * Creates and inserts elevation grid (terrain chunk) into the DOM.
      */
     function setupChunk()
     {

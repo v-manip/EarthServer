@@ -19,43 +19,11 @@
     EarthServerGenericClient.MainScene.setTimeLog(false);//TimeLogging: outputs time of loading and building the models to the console
     EarthServerGenericClient.MainScene.addLightToScene(true);//Adds a light into the scene
     // background of the render window
-    EarthServerGenericClient.MainScene.setBackground("0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57","0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57");
+    EarthServerGenericClient.MainScene.setBackground("0.9 0.9 0.9 0.8 0.8 0.8 0.7 0.7 0.7 0.6 0.6 0.6","0.9 1.5 1.57","0.6 0.6 0.8 0.5 0.5 0.7 0.4 0.4 0.6 0.3 0.3 0.5","0.9 1.5 1.57");
 
     // create the models:
     $(document).ready(function()
     {
-        var BGS = new EarthServerGenericClient.Model_WCPSDemAlpha();
-        BGS.setName("BGS");
-        BGS.setURL("http://earthserver.bgs.ac.uk/petascope");
-        BGS.setCoverages("bgs_rs", "os_dtm");
-        BGS.setAreaOfInterest(400000,500000,450000,550000);
-        BGS.setCoordinateReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/27700");
-        BGS.setScale(1.0,0.3,1.0);//Size within the cube 100%width, 30%height and 100%length
-        BGS.setResolution(1000,1000);//Resolution of the model
-        BGS.setProgressiveLoading(false);//Progressive Loading in three steps.
-
-        /*var WMS =  new EarthServerGenericClient.Model_WMSDemWCS();
-        WMS.setName("WMS_WCS");
-        WMS.setURLs("http://planetserver.jacobs-university.de:8080/petascope/wms","http://planetserver.jacobs-university.de:8080/petascope");
-        WMS.setCoverages("galehrsc_wms","galehrscdtm");
-        WMS.setWMSVersion("1.1");
-        WMS.setCoordinateReferenceSystem("SRS","EPSG:4326");
-        WMS.setAreaOfInterest(137,-6,138,-5);
-        WMS.setResolution(1000,1000);
-        WMS.setOffset(0,0.4,0);*/
-
-        /*var BGS_LOW = new EarthServerGenericClient.Model_WCPSDemAlpha();
-         BGS_LOW.setName("BGS Low Resolution");
-         BGS_LOW.setURL("http://earthserver.bgs.ac.uk/petascope");
-         BGS_LOW.setCoverages("bgs_rs", "os_dtm");
-         BGS_LOW.setAreaOfInterest(400000,500000,450000,550000);
-         BGS_LOW.setScale(1.0,0.2,1.0);
-         BGS_LOW.setOffset(0,0.4,0);
-         BGS_LOW.setResolution(200,200);
-         BGS_LOW.setWCPSForChannelRED('scale(trim($CI.red, {x($MINX:$MAXX), y($MINY:$MAXY) }), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {});');
-         BGS_LOW.setWCPSForChannelGREEN('scale(trim($CI.green, {x($MINX:$MAXX), y($MINY:$MAXY) }), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {});');
-         BGS_LOW.setWCPSForChannelBLUE('scale(trim($CI.blue, {x($MINX:$MAXX), y($MINY:$MAXY) }), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {});');
-         BGS_LOW.setWCPSForChannelALPHA('(char) (((scale(trim(dtm , {x($MINX:$MAXX), y($MINY:$MAXY)}), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {})) / 1349) * 255)');*/
 
         var JUB = new EarthServerGenericClient.Model_WCPSDemWCS();
         JUB.setName("JUB");
@@ -74,23 +42,19 @@
         JUB.setWCPSQuery(JUB_query);
 
         // add models to the scene
-        EarthServerGenericClient.MainScene.addModel(BGS);
-        //EarthServerGenericClient.MainScene.addModel(BGS_LOW);
         EarthServerGenericClient.MainScene.addModel(JUB);
-        //EarthServerGenericClient.MainScene.addModel(WMS);
 
         // create the scene: Cube has 50% height compared to width and length
         EarthServerGenericClient.MainScene.createScene('x3d','x3dScene',1,0.5,1 );
 
         // add annotation layers and annotation (after creating the scene)
         EarthServerGenericClient.MainScene.addAnnotationsLayer("Layer1","JUB",50,"1 1 1",25,6,"1 1 1");
-        EarthServerGenericClient.MainScene.addAnnotation("Layer1",310,35,-170,"CityName");
-        EarthServerGenericClient.MainScene.addAnnotation("Layer1",200,-45,400,"You can annotate here");
+        EarthServerGenericClient.MainScene.addAnnotation("Layer1",310,20,-170,"CityName");
+        EarthServerGenericClient.MainScene.addAnnotation("Layer1",200,-30,400,"You can annotate here");
 
         // create the UI and axis labels
         EarthServerGenericClient.MainScene.createUI('x3domUI');
-        EarthServerGenericClient.MainScene.setAxisLabels("Latitude","Height","Longitude");
-        EarthServerGenericClient.MainScene.createAxisLabels();
+        EarthServerGenericClient.MainScene.createAxisLabels("Latitude","Height","Longitude");
     });
 
     document.onload = function()

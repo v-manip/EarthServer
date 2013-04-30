@@ -2,10 +2,9 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
- * Generic Server Response Data object. All requests store the response in an instance of this object.
+ * @class Generic Server Response Data object. All requests store the response in an instance of this object.
  * One instance can be given as parameter for different requests if all requests writes different fields.
  * Example: One WMS request for the texture and one WCS request for the heightmap.
- * @constructor
  */
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          //Heightmap
@@ -21,6 +20,10 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.maxHMvalue = -Number.MAX_VALUE;//Highest value in the heigtmap
     this.averageHMvalue = 0;        //Average value of the heightmap
 
+    /**
+     * Validates if the response full successfully: Was an image and a height map received?
+     * @returns {boolean} - True if both image and heightmap are present, false if not.
+     */
     this.validate = function()
     {
         //Texture
@@ -50,6 +53,10 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
     this.name = "Combined Callback: " + callback.name;
     EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
 
+    /**
+     * @ignore
+     * @param data - Server response data object
+     */
     this.receiveData = function(data)
     {
         counter++;
@@ -289,6 +296,10 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
     for(var i=0;i<WCPSqueries.length;i++)
     {   responseData[i] = new EarthServerGenericClient.ServerResponseData();    }
 
+    /**
+     * @ignore
+     * @param which - index of the request to make.
+     */
     this.makeRequest =  function(which)
     {
         if(which >= 0)
@@ -299,6 +310,10 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
         else
         {   responseData = null;  }
     };
+    /**
+     * @ignore
+     * @param data - Server response data object
+     */
     this.receiveData = function(data)
     {
         EarthServerGenericClient.MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
@@ -310,7 +325,7 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
 };
 
 /**
- * Requets an image via WCPS and a dem via WCS.
+ * Requests an image via WCPS and a dem via WCS.
  * @param callback - Module requesting this data.
  * @param WCPSurl - URL of the WCPS service.
  * @param WCPSquery - WCPS Query for the image.

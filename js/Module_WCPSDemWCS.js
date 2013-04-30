@@ -77,6 +77,15 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCSVersion = function(ver
 };
 
 /**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
@@ -112,9 +121,9 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, c
     if( this.WCPSQuery === undefined)
     {
         this.WCPSQuery =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-        this.WCPSQuery += "red: scale(trim(i.red, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSQuery += "green: scale(trim(i.green, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSQuery += "blue: scale(trim(i.blue, {x(" + this.minx + ":" +  this.maxx + "), y(" + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
+        this.WCPSQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += 'blue: scale(trim(i.blue, {x(:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
         this.WCPSQuery += '}, "' + this.imageFormat +'" )';
     }
     else //A custom query was defined so use it
@@ -125,6 +134,8 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, c
         this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
         this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
         this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
+        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
+        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
         this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
         this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
     }

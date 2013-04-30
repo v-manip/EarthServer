@@ -191,13 +191,21 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
+	<li><a href="../symbols/Array.html">Array</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AnnotationLayer.html">EarthServerGenericClient.AnnotationLayer</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.createProgressBar.html">EarthServerGenericClient.createProgressBar</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Light.html">EarthServerGenericClient.Light</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
@@ -214,6 +222,8 @@ ul.inheritsList
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
 	
 </ul>
 <hr />
@@ -235,7 +245,7 @@ ul.inheritsList
 				Abstract base class for terrains.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__Terrain.js.html">Terrain.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_Terrain.js.html">Terrain.js</a>.
 				
 			</p>
 
@@ -366,9 +376,27 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getHeightMap">getHeightMap</a></b>(info, hm)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getHeightMap">getHeightMap</a></b>(info)
 								</div>
 								<div class="description">Returns a height map part from the given height map specified in the info parameter.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getHeightmapHeight">getHeightmapHeight</a></b>()
+								</div>
+								<div class="description">Returns the Height of the Heightmap of the terrain.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html#getHeightmapWidth">getHeightmapWidth</a></b>()
+								</div>
+								<div class="description">Returns the Width of the Heightmap of the terrain.</div>
 							</td>
 						</tr>
 					
@@ -481,7 +509,7 @@ ul.inheritsList
 					<a name="calcNumberOfChunks"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Object literal}</span>
+					
 					<b>calcNumberOfChunks</b>(width, height, chunkSize)
 					
 					</div>
@@ -501,19 +529,19 @@ ul.inheritsList
 									<b>width</b>
 									
 								</dt>
-								<dd>Width of the entire terrain.</dd>
+								<dd>- Width of the entire terrain.</dd>
 							
 								<dt>
 									<b>height</b>
 									
 								</dt>
-								<dd>Height of the entire terrain.</dd>
+								<dd>- Height of the entire terrain.</dd>
 							
 								<dt>
 									<b>chunkSize</b>
 									
 								</dt>
-								<dd>The size of one chunk.</dd>
+								<dd>- The size of one chunk.</dd>
 							
 							</dl>
 						
@@ -524,7 +552,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Object literal}</span> numChunksX: number, numChunksY: number, numChunks: number</dd>
+								<dd>numChunksX: number, numChunksY: number, numChunks: number</dd>
 							
 							</dl>
 						
@@ -581,13 +609,13 @@ ul.inheritsList
 									<b>texture</b>
 									
 								</dt>
-								<dd>Texture to draw. Can be everything which can be rendered into a canvas.</dd>
+								<dd>- Texture to draw. Can be everything which can be rendered into a canvas.</dd>
 							
 								<dt>
 									<b>index</b>
 									
 								</dt>
-								<dd>Index of the model using this canvas. Used to give the canvas a unique ID.</dd>
+								<dd>- Index of the model using this canvas. Used to give the canvas a unique ID.</dd>
 							
 							</dl>
 						
@@ -610,7 +638,7 @@ ul.inheritsList
 					<a name="createChunkInfo"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Object literal}</span>
+					
 					<b>createChunkInfo</b>(index, chunkSize, chunkInfo, currentChunk, terrainWidth, terrainHeight)
 					
 					</div>
@@ -630,37 +658,37 @@ ul.inheritsList
 									<b>index</b>
 									
 								</dt>
-								<dd>Index of the model using the terrain. Used for creating IDs.</dd>
+								<dd>- Index of the model using the terrain. Used for creating IDs.</dd>
 							
 								<dt>
 									<b>chunkSize</b>
 									
 								</dt>
-								<dd>The desired size (count of values) of one chunk per axis.</dd>
+								<dd>- The desired size (count of values) of one chunk per axis.</dd>
 							
 								<dt>
 									<b>chunkInfo</b>
 									
 								</dt>
-								<dd>This parameter uses an object that will be returned by calcNumberOfChunks().     It contains the information about a terrain and its chunks (e.g. number of chunks on each axis).</dd>
+								<dd>- This parameter uses an object that will be returned by calcNumberOfChunks().     It contains the information about a terrain and its chunks (e.g. number of chunks on each axis).</dd>
 							
 								<dt>
 									<b>currentChunk</b>
 									
 								</dt>
-								<dd>The index of the current chunk to be build.</dd>
+								<dd>- The index of the current chunk to be build.</dd>
 							
 								<dt>
 									<b>terrainWidth</b>
 									
 								</dt>
-								<dd>Width of the whole terrain. Used to calc texture coordinates.</dd>
+								<dd>- Width of the whole terrain. Used to calc texture coordinates.</dd>
 							
 								<dt>
 									<b>terrainHeight</b>
 									
 								</dt>
-								<dd>Height of the whole terrain. Used to calc texture coordinates.</dd>
+								<dd>- Height of the whole terrain. Used to calc texture coordinates.</dd>
 							
 							</dl>
 						
@@ -671,7 +699,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Object literal}</span> xpos: number, ypos: number, chunkWidth: number,     chunkHeight: number, terrainWidth: number,     terrainHeight: number, ID: number, modelIndex: number</dd>
+								<dd>xpos: number, ypos: number, chunkWidth: number,     chunkHeight: number, terrainWidth: number,     terrainHeight: number, ID: number, modelIndex: number</dd>
 							
 							</dl>
 						
@@ -683,7 +711,7 @@ ul.inheritsList
 					<a name="getAppearances"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Array}</span>
+					<span class="light">{<a href="../symbols/Array.html">Array</a>}</span>
 					<b>getAppearances</b>(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency)
 					
 					</div>
@@ -703,52 +731,42 @@ ul.inheritsList
 									<b>AppearanceName</b>
 									
 								</dt>
-								<dd>Name of the appearance. If this name is not set in the array, it will be registered.     In the case the name is already set, the existing one will be used.</dd>
+								<dd>- Name of the appearance. If this name is not set in the array, it will be registered.     In the case the name is already set, the existing one will be used.</dd>
 							
 								<dt>
 									<b>AppearanceCount</b>
 									
 								</dt>
-								<dd>Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.</dd>
+								<dd>- Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.</dd>
 							
 								<dt>
 									<b>modelIndex</b>
 									
 								</dt>
-								<dd>Index of the model using this appearance.</dd>
+								<dd>- Index of the model using this appearance.</dd>
 							
 								<dt>
 									<b>canvasTexture</b>
 									
 								</dt>
-								<dd>Canvas element to be used in the appearance as texture.</dd>
+								<dd>- Canvas element to be used in the appearance as texture.</dd>
 							
 								<dt>
 									<b>transparency</b>
 									
 								</dt>
-								<dd>Transparency of the appearance.</dd>
+								<dd>- Transparency of the appearance.</dd>
 							
 							</dl>
 						
 						
 						
-						
-							<dl class="detailList">
-							<dt class="heading">Throws:</dt>
-							
-								<dt>
-									 <b></b>
-								</dt>
-								<dd>If any error occurs, the function will return null.</dd>
-							
-							</dl>
 						
 						
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> Array of appearance nodes.</dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/Array.html">Array</a>}</span> - Array of appearance nodes. If any error occurs, the function will return null.</dd>
 							
 							</dl>
 						
@@ -760,8 +778,8 @@ ul.inheritsList
 					<a name="getHeightMap"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Array}</span>
-					<b>getHeightMap</b>(info, hm)
+					<span class="light">{*}</span>
+					<b>getHeightMap</b>(info)
 					
 					</div>
 					<div class="description">
@@ -780,34 +798,82 @@ ul.inheritsList
 									<b>info</b>
 									
 								</dt>
-								<dd>Which part of the heightmap should be returned. In this case the parameter is an object literal     and uses the following attributes: xpos: number, ypos: number, chunkWidth: number, chunkHeight: number</dd>
-							
-								<dt>
-									<b>hm</b>
-									
-								</dt>
-								<dd>The heightmap from which the parts is extracted.</dd>
+								<dd>- Which part of the heightmap should be returned.</dd>
 							
 							</dl>
 						
 						
 						
-						
-							<dl class="detailList">
-							<dt class="heading">Throws:</dt>
-							
-								<dt>
-									 <b></b>
-								</dt>
-								<dd>If any error occurs, the function will return null.</dd>
-							
-							</dl>
 						
 						
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> Returns a 2D Array, use it as follows Array[chunk height][chunk width].</dd>
+								<dd><span class="light fixedFont">{*}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getHeightmapHeight"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{*|number}</span>
+					<b>getHeightmapHeight</b>()
+					
+					</div>
+					<div class="description">
+						Returns the Height of the Heightmap of the terrain.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{*|number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getHeightmapWidth"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getHeightmapWidth</b>()
+					
+					</div>
+					<div class="description">
+						Returns the Width of the Heightmap of the terrain.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> </dd>
 							
 							</dl>
 						
@@ -839,7 +905,7 @@ ul.inheritsList
 									<b>value</b>
 									
 								</dt>
-								<dd>Transparency value between 0 (full visible) and 1 (invisible).</dd>
+								<dd>- Transparency value between 0 (full visible) and 1 (invisible).</dd>
 							
 							</dl>
 						
@@ -864,11 +930,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-<<<<<<< HEAD
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
-=======
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
->>>>>>> SirSlaxalot/master
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

@@ -59,13 +59,12 @@ EarthServerGenericClient.getEventTarget = function(e)
 };
 
 /**
- * Creates a light to enlighten the scene.
+ * @class Creates a light to enlighten the scene.
  * @param domElement - Dom element to append the light to.
  * @param index - Index of the light.
  * @param position - Position of the light (local coordinates)
  * @param radius - Radius of the light.
  * @param color - Color if the Light
- * @returns {HTMLElement} - The Light dom element.
  * @constructor
  */
 EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
@@ -108,18 +107,26 @@ EarthServerGenericClient.SceneManager = function()
     var progressCallback = undefined;//Callback function for the progress update.
     var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
     var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
-    var maxResolution = 1000;
-    var lights = [];
-    var lightInScene = false;
+    var lights = [];                //Array of (Point)lights
+    var lightInScene = false;       //Flag if a light should be added to the scene
+
+    //Default cube sizes
     var cubeSizeX = 1000;
     var cubeSizeY = 1000;
     var cubeSizeZ = 1000;
 
     //Background
     var Background_groundAngle = "0.9 1.5 1.57";
-    var Background_groundColor = "0.3 0.3 0.4 0.35 0.35 0.55 0.4 0.4 0.5 0.5 0.5 0.6";
+    var Background_groundColor = "0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85";
     var Background_skyAngle    = "0.9 1.5 1.57";
-    var Background_skyColor    = "0.2 0.2 0.3 0.3 0.4 0.3 0.4 0.5 0.4 0.5 0.5 0.6";
+    var Background_skyColor    = "0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85";
+
+    /**
+     * The maximum resolution in one axis of one scene model.
+     * @default 2000
+     * @type {number}
+     */
+    var maxResolution = 2000;
 
     /**
      * Enables/Disables the logging of Server requests, building of terrain etc.
@@ -137,38 +144,19 @@ EarthServerGenericClient.SceneManager = function()
     var axisLabels = null;
 
     /**
-     * Name of the X-Axis to be displayed.
-     * @default "x"
-     * @type {String}
-     */
-    var xLabel = "X";
-
-    /**
-     * Name of the Y-Axis to be displayed.
-     * @default "y"
-     * @type {String}
-     */
-    var yLabel = "Y";
-
-    /**
-     * Name of the Z-Axis to be displayed.
-     * @default "z"
-     * @type {String}
-     */
-    var zLabel = "Z";
-
-    /**
      * Return the size of the cube in the x axis
      * @returns {number}
      */
     this.getCubeSizeX = function()
     {   return cubeSizeX;   };
+
     /**
      * Return the size of the cube in the y axis
      * @returns {number}
      */
     this.getCubeSizeY = function()
     {   return cubeSizeY;   };
+
     /**
      * Return the size of the cube in the z axis
      * @returns {number}
@@ -337,6 +325,7 @@ EarthServerGenericClient.SceneManager = function()
         if( timeLog)
         {   console.time(eventName); }
     };
+
     /**
      * Ends the timer for a logging event with the given name and prints the result.
      * @param eventName
@@ -587,6 +576,8 @@ EarthServerGenericClient.SceneManager = function()
     /**
      * Returns the definition of the camera with the given index.
      * Format: "CameraName:CameraID"
+     * CameraName is for the UI (show on a button or label)
+     * CameraID is the ID of the dom element
      * @param cameraIndex - Index of the camera.
      * @returns {String}
      */
@@ -603,7 +594,7 @@ EarthServerGenericClient.SceneManager = function()
      * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
      * @param x3dID - ID of the x3d dom element.
-     * @param sceneID - ID of the scene element.
+     * @param sceneID - ID of the x3dom scene element.
      * @param SizeX - width of the cube.
      * @param SizeY - height of the cube.
      * @param SizeZ - depth of the cube.
@@ -625,7 +616,7 @@ EarthServerGenericClient.SceneManager = function()
             return;
         }
 
-        //Light
+        // Light
         if( lightInScene)
         {
             var lightTransform = document.createElement("transform");
@@ -635,7 +626,7 @@ EarthServerGenericClient.SceneManager = function()
             scene.appendChild(lightTransform);
         }
 
-        //Background
+        // Background
         var background = document.createElement("Background");
         background.setAttribute("groundAngle",Background_groundAngle);
         background.setAttribute("groundColor",Background_groundColor);
@@ -643,7 +634,7 @@ EarthServerGenericClient.SceneManager = function()
         background.setAttribute("skyColor",Background_skyColor);
         scene.appendChild(background);
 
-        //Cameras
+        // Cameras
         var cam1 = document.createElement('Viewpoint');
         cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
         cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
@@ -665,6 +656,7 @@ EarthServerGenericClient.SceneManager = function()
         scene.appendChild(cam2);
         scene.appendChild(cam3);
 
+        // Cube
         var shape = document.createElement('Shape');
         var appearance = document.createElement('Appearance');
         var material = document.createElement('Material');
@@ -719,8 +711,13 @@ EarthServerGenericClient.SceneManager = function()
     /**
      * Creates the axis labels around the cube.
      */
-    this.createAxisLabels = function()
+    this.createAxisLabels = function(xLabel,yLabel,zLabel)
     {
+        //Use given parameters or default values if parameters are not defined
+        xLabel = xLabel || "X";
+        yLabel = yLabel || "Y";
+        zLabel = zLabel || "Z";
+
         axisLabels = new EarthServerGenericClient.AxisLabels(cubeSizeX/2, cubeSizeY/2, cubeSizeZ/2);
         axisLabels.createAxisLabels(xLabel,yLabel,zLabel);
     };
@@ -873,20 +870,7 @@ EarthServerGenericClient.SceneManager = function()
         EarthServerGenericClient.createBasicUI(domElementID);
     };
 
-    /**
-     * Sets the names of the axes to be displayed.
-     * @param LabelX - width
-     * @param LabelY - height
-     * @param LabelZ - depth
-     */
-    this.setAxisLabels = function( LabelX, LabelY, LabelZ){
-        xLabel = String(LabelX);
-        yLabel = String(LabelY);
-        zLabel = String(LabelZ);
-    };
-
-
 };
 
-//Declaration of main scene
+// Create main scene
 EarthServerGenericClient.MainScene = new EarthServerGenericClient.SceneManager();

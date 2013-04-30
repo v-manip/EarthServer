@@ -200,25 +200,25 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
      * @type {Array}
      * @default Empty
      */
-    var transforms = new Array();
+    var transforms = [];
     /**
      * @description Array stores all text nodes of the x-axis.
      * @type {Array}
      * @default Empty
      */
-    var textNodesX = new Array();
+    var textNodesX = [];
     /**
      * @description Array stores all text nodes of the y-axis.
      * @type {Array}
      * @default Empty
      */
-    var textNodesY = new Array();
+    var textNodesY = [];
     /**
      * @description Array stores all text nodes of the z-axis.
      * @type {Array}
      * @default Empty
      */
-    var textNodesZ = new Array();
+    var textNodesZ = [];
 
     /**
      * @description This function changes the text size of each label independent of its axis.

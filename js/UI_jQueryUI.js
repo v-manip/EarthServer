@@ -1,6 +1,10 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
+/**
+ * Creates the basic UI
+ * @param domElementID - Dom element to append the UI to.
+ */
 EarthServerGenericClient.createBasicUI = function(domElementID)
 {
     var UI_DIV = document.getElementById(domElementID);
@@ -151,7 +155,18 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     UI_DIV = null;
 };
 
-
+/**
+ * Appends a axis slider to a UI element. Axis sliders call the callback function with an ID,axis and their value.
+ * @param domElement - Append the slider to this dom element.
+ * @param sliderID - Dom ID for this slider.
+ * @param label - Label (displayed in the UI) for this slider
+ * @param elementID - First parameter for the callback function. Change the element with this ID.
+ * @param axis - Axis this slider should effect. 0:x 1:y 2:z
+ * @param min - Minimum value of this slider.
+ * @param max - Maximum value of this slider.
+ * @param startValue - Start value of this slider.
+ * @param callback - Callback function, every time the slider is moved this function will be called.
+ */
 EarthServerGenericClient.appendXYZSlider = function(domElement,sliderID,label,elementID,axis,min,max,startValue,callback)
 {
     var p = document.createElement("p");
@@ -173,6 +188,17 @@ EarthServerGenericClient.appendXYZSlider = function(domElement,sliderID,label,el
     });
 };
 
+/**
+ * Generic sliders are calling their callback function with an element ID and their value.
+ * @param domElement - Append the slider to this dom element.
+ * @param sliderID - Dom ID for this slider.
+ * @param label - Label (displayed in the UI) for this slider
+ * @param elementID - First parameter for the callback function. Change the element with this ID.
+ * @param min - Minimum value of this slider.
+ * @param max - Maximum value of this slider.
+ * @param startValue - Start value of this slider.
+ * @param callback - Callback function, every time the slider is moved this function will be called.
+ */
 EarthServerGenericClient.appendGenericSlider = function(domElement,sliderID,label,elementID,min,max,startValue,callback)
 {
     var p = document.createElement("p");
@@ -195,6 +221,11 @@ EarthServerGenericClient.appendGenericSlider = function(domElement,sliderID,labe
 
 };
 
+/**
+ * Special slider for setting the transparency of scene models.
+ * @param domElement - Append the slider to this dom element.
+ * @param moduleNumber - Index of the scene model.
+ */
 EarthServerGenericClient.appendAlphaSlider = function(domElement, moduleNumber){
     //AlphaChannel
     var ap = document.createElement("p");
@@ -219,6 +250,11 @@ EarthServerGenericClient.appendAlphaSlider = function(domElement, moduleNumber){
 
 };
 
+/**
+ * Special slider for setting the elevation of scene models.
+ * @param domElement - Append the slider to this dom element.
+ * @param moduleNumber - Index of the scene model.
+ */
 EarthServerGenericClient.appendElevationSlider = function(domElement,moduleNumber){
 
     var ep = document.createElement("p");
@@ -243,6 +279,10 @@ EarthServerGenericClient.appendElevationSlider = function(domElement,moduleNumbe
 
 };
 
+/**
+ * @class The default progress bar to display the progress in loading and creating the scene models.
+ * @param DivID
+ */
 EarthServerGenericClient.createProgressBar =  function(DivID)
 {
     $( "#"+DivID ).progressbar({ value: 0, max: 100 });
@@ -250,6 +290,10 @@ EarthServerGenericClient.createProgressBar =  function(DivID)
         $( "#"+DivID ).toggle( "blind" );
     } );
 
+    /**
+     * Updates the value in the progress bar.
+     * @param value - New value
+     */
     this.updateValue = function(value)
     {
         $( "#"+DivID ).progressbar( "option", "value", value );

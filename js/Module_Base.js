@@ -92,11 +92,11 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Modules report their loading progress to this function which reports to the main scene.
+     * Modules report their loading progress with this function which reports to the main scene.
      */
     this.reportProgress = function()
     {
-        //The total progress of this module depens on the number of requests it does.
+        //The total progress of this module depends on the number of requests it does.
         //The progress parameter is the progress of ONE request.
         //ReceivedDataCount is the number of already received responses.
         //it is doubled because for each request one terrain will be build.

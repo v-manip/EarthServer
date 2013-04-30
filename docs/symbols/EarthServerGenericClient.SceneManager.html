@@ -191,13 +191,21 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
+	<li><a href="../symbols/Array.html">Array</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AnnotationLayer.html">EarthServerGenericClient.AnnotationLayer</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.createProgressBar.html">EarthServerGenericClient.createProgressBar</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Light.html">EarthServerGenericClient.Light</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
@@ -214,6 +222,8 @@ ul.inheritsList
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
 	
 </ul>
 <hr />
@@ -232,13 +242,10 @@ ul.inheritsList
 				
 				
 			
-				SceneManager is the main class of the unified client.
-All scene models are registered in this class with the add() function.
-The createScene() function creates a x3dom scene with all scene models.
-The createUI() function creates the UI.
+				SceneManager is the main class of the unified client.All scene models are registered in this class with the add() function.The createScene() function creates a x3dom scene with all scene models.The createUI() function creates the UI.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneManager.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneManager.js.html">SceneManager.js</a>.
 				
 			</p>
 
@@ -281,16 +288,6 @@ The createUI() function creates the UI.
 					<tbody>
 					
 						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#annotationLayers">annotationLayers</a></b>
-								</div>
-								<div class="description"></div>
-							</td>
-						</tr>
-					
-						<tr>
 							<td class="attributes">&lt;inner&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
@@ -301,62 +298,12 @@ The createUI() function creates the UI.
 						</tr>
 					
 						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#baseElevation">baseElevation</a></b>
-								</div>
-								<div class="description">Every Model has it's base elevation on the Y-Axis.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#currentUIElement">currentUIElement</a></b>
-								</div>
-								<div class="description">The current chosen UI element, which is a Model.</div>
-							</td>
-						</tr>
-					
-						<tr>
 							<td class="attributes">&lt;inner&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
 								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-maxResolution">maxResolution</a></b>
 								</div>
-								<div class="description">Max resolution per dimension (standard PC)</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#modelLoadingProgress">modelLoadingProgress</a></b>
-								</div>
-								<div class="description">An Array to store the models loading progress.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#models">models</a></b>
-								</div>
-								<div class="description">An Array of scene models.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#progressCallback">progressCallback</a></b>
-								</div>
-								<div class="description">Callback function for the progress update.</div>
+								<div class="description">The maximum resolution in one axis of one scene model.</div>
 							</td>
 						</tr>
 					
@@ -367,50 +314,6 @@ The createUI() function creates the UI.
 								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-timeLog">timeLog</a></b>
 								</div>
 								<div class="description">Enables/Disables the logging of Server requests, building of terrain etc.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;inner&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-<<<<<<< HEAD
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-xLabel">xLabel</a></b>
-=======
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#totalLoadingProgress">totalLoadingProgress</a></b>
-								</div>
-								<div class="description">Value for the loading progress bar (all model loading combined).</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#xLabel">xLabel</a></b>
->>>>>>> SirSlaxalot/master
-								</div>
-								<div class="description">Name of the X-Axis to be displayed.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;inner&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-yLabel">yLabel</a></b>
-								</div>
-								<div class="description">Name of the Y-Axis to be displayed.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;inner&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">
-								<b><a href="../symbols/EarthServerGenericClient.SceneManager.html#-zLabel">zLabel</a></b>
-								</div>
-								<div class="description">Name of the Z-Axis to be displayed.</div>
 							</td>
 						</tr>
 					
@@ -447,9 +350,18 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addAnnotationsLayer">addAnnotationsLayer</a></b>(name, fontSize, fontColor, fontHover, markerSize, markerColor)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addAnnotationsLayer">addAnnotationsLayer</a></b>(layerName, modelName, fontSize, fontColor, fontHover, markerSize, markerColor)
 								</div>
 								<div class="description">Adds an AnnotationsLayer to the scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#addLightToScene">addLightToScene</a></b>(value)
+								</div>
+								<div class="description">Sets if a light is inserted into the scene.</div>
 							</td>
 						</tr>
 					
@@ -465,9 +377,9 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createAxisLabels">createAxisLabels</a></b>()
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createAxisLabels">createAxisLabels</a></b>(xLabel, yLabel, zLabel)
 								</div>
-								<div class="description"></div>
+								<div class="description">Creates the axis labels around the cube.</div>
 							</td>
 						</tr>
 					
@@ -483,7 +395,7 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createScene">createScene</a></b>(x3dID, sceneID, cubeSizeX, cubeSizeY, cubeSizeZ)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#createScene">createScene</a></b>(x3dID, sceneID, SizeX, SizeY, SizeZ)
 								</div>
 								<div class="description">Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.</div>
 							</td>
@@ -564,6 +476,42 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getCubeSizeX">getCubeSizeX</a></b>()
+								</div>
+								<div class="description">Return the size of the cube in the x axis</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getCubeSizeY">getCubeSizeY</a></b>()
+								</div>
+								<div class="description">Return the size of the cube in the y axis</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getCubeSizeZ">getCubeSizeZ</a></b>()
+								</div>
+								<div class="description">Return the size of the cube in the z axis</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getLightCount">getLightCount</a></b>()
+								</div>
+								<div class="description">Returns the number of scene lights.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getMaxResolution">getMaxResolution</a></b>()
 								</div>
 								<div class="description">Returns the maximum resolution per dimension of a scene model.</div>
@@ -576,6 +524,15 @@ The createUI() function creates the UI.
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getModelCount">getModelCount</a></b>()
 								</div>
 								<div class="description">Returns the number of registered scene models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#getModelIndex">getModelIndex</a></b>(modelName)
+								</div>
+								<div class="description">Returns the index of a scene model with a given name.</div>
 							</td>
 						</tr>
 					
@@ -636,9 +593,9 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setAxisLabels">setAxisLabels</a></b>(LabelX, LabelY, LabelZ)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#setBackground">setBackground</a></b>(skyColors, skyAngles, groundColors, groundAngles)
 								</div>
-								<div class="description">Sets the names of the axes to be displayed.</div>
+								<div class="description">This function sets the background of the X3Dom render window.</div>
 							</td>
 						</tr>
 					
@@ -708,6 +665,33 @@ The createUI() function creates the UI.
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateLightIntensity">updateLightIntensity</a></b>(lightIndex, value)
+								</div>
+								<div class="description">Updates the intensity of the light with the given index.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateLightPosition">updateLightPosition</a></b>(lightIndex, which, value)
+								</div>
+								<div class="description">Updates the position of a light.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateLightRadius">updateLightRadius</a></b>(lightIndex, value)
+								</div>
+								<div class="description">Updates the radius of the light with the given index.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.SceneManager.html#updateOffset">updateOffset</a></b>(modelIndex, which, value)
 								</div>
 								<div class="description">Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.</div>
@@ -768,28 +752,6 @@ The createUI() function creates the UI.
 					Field Detail
 				</div>
 				
-					<a name="annotationLayers"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>annotationLayers</b>
-					
-					</div>
-					<div class="description">
-						
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-
-					<hr />
-				
 					<a name="-axisLabels"> </a>
 					<div class="fixedFont">&lt;inner&gt; 
 					
@@ -798,8 +760,7 @@ The createUI() function creates the UI.
 					
 					</div>
 					<div class="description">
-						This variable contains the AxisLabel object.
-This object manages the labels and its appearances on each axis.
+						This variable contains the AxisLabel object.This object manages the labels and its appearances on each axis.
 						
 						
 					</div>
@@ -820,64 +781,6 @@ This object manages the labels and its appearances on each axis.
 
 					<hr />
 				
-					<a name="baseElevation"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>baseElevation</b>
-					
-					</div>
-					<div class="description">
-						Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								[]
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="currentUIElement"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>currentUIElement</b>
-					
-					</div>
-					<div class="description">
-						The current chosen UI element, which is a Model. Change everything for the model with that ID.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								[]
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
 					<a name="-maxResolution"> </a>
 					<div class="fixedFont">&lt;inner&gt; 
 					
@@ -886,7 +789,7 @@ This object manages the labels and its appearances on each axis.
 					
 					</div>
 					<div class="description">
-						Max resolution per dimension (standard PC)
+						The maximum resolution in one axis of one scene model.
 						
 						
 					</div>
@@ -900,94 +803,7 @@ This object manages the labels and its appearances on each axis.
 							<dl class="detailList">
 							<dt class="heading">Default Value:</dt>
 							<dd>
-								1000 (200 on a mobile platform)
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="modelLoadingProgress"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>modelLoadingProgress</b>
-					
-					</div>
-					<div class="description">
-						An Array to store the models loading progress.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								[]
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="models"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>models</b>
-					
-					</div>
-					<div class="description">
-						An Array of scene models.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								[]
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="progressCallback"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>progressCallback</b>
-					
-					</div>
-					<div class="description">
-						Callback function for the progress update.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								undefined
+								2000
 							</dd>
 							</dl>
 						
@@ -1017,127 +833,6 @@ This object manages the labels and its appearances on each axis.
 							<dt class="heading">Default Value:</dt>
 							<dd>
 								false
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-<<<<<<< HEAD
-					<a name="-xLabel"> </a>
-					<div class="fixedFont">&lt;inner&gt; 
-=======
-					<a name="totalLoadingProgress"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>totalLoadingProgress</b>
-					
-					</div>
-					<div class="description">
-						Value for the loading progress bar (all model loading combined).
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								0
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="xLabel"> </a>
-					<div class="fixedFont">
->>>>>>> SirSlaxalot/master
-					
-					
-					<b>xLabel</b>
-					
-					</div>
-					<div class="description">
-						Name of the X-Axis to be displayed.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								"x"
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="-yLabel"> </a>
-					<div class="fixedFont">&lt;inner&gt; 
-					
-					
-					<b>yLabel</b>
-					
-					</div>
-					<div class="description">
-						Name of the Y-Axis to be displayed.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								"y"
-							</dd>
-							</dl>
-						
-
-					<hr />
-				
-					<a name="-zLabel"> </a>
-					<div class="fixedFont">&lt;inner&gt; 
-					
-					
-					<b>zLabel</b>
-					
-					</div>
-					<div class="description">
-						Name of the Z-Axis to be displayed.
-						
-						
-					</div>
-					
-					
-
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Default Value:</dt>
-							<dd>
-								"z"
 							</dd>
 							</dl>
 						
@@ -1216,7 +911,7 @@ This object manages the labels and its appearances on each axis.
 					<div class="fixedFont">
 					
 					
-					<b>addAnnotationsLayer</b>(name, fontSize, fontColor, fontHover, markerSize, markerColor)
+					<b>addAnnotationsLayer</b>(layerName, modelName, fontSize, fontColor, fontHover, markerSize, markerColor)
 					
 					</div>
 					<div class="description">
@@ -1232,10 +927,16 @@ This object manages the labels and its appearances on each axis.
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>name</b>
+									<b>layerName</b>
 									
 								</dt>
 								<dd>- Name of the Layer. You need the name of a layer to add annotations to it.</dd>
+							
+								<dt>
+									<b>modelName</b>
+									
+								</dt>
+								<dd>- Name of the scene model to bind the layer to. Can be empty if no binding is intended.</dd>
 							
 								<dt>
 									<b>fontSize</b>
@@ -1278,6 +979,42 @@ This object manages the labels and its appearances on each axis.
 
 					<hr />
 				
+					<a name="addLightToScene"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>addLightToScene</b>(value)
+					
+					</div>
+					<div class="description">
+						Sets if a light is inserted into the scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- Boolean value.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="addModel"> </a>
 					<div class="fixedFont">
 					
@@ -1301,7 +1038,7 @@ This object manages the labels and its appearances on each axis.
 									<b>model</b>
 									
 								</dt>
-								<dd>Any type of scene model.</dd>
+								<dd>- Any type of scene model.</dd>
 							
 							</dl>
 						
@@ -1318,17 +1055,40 @@ This object manages the labels and its appearances on each axis.
 					<div class="fixedFont">
 					
 					
-					<b>createAxisLabels</b>()
+					<b>createAxisLabels</b>(xLabel, yLabel, zLabel)
 					
 					</div>
 					<div class="description">
-						
+						Creates the axis labels around the cube.
 						
 						
 					</div>
 					
 					
 					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>xLabel</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>yLabel</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>zLabel</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
 						
 						
 						
@@ -1368,13 +1128,11 @@ This object manages the labels and its appearances on each axis.
 					<div class="fixedFont">
 					
 					
-					<b>createScene</b>(x3dID, sceneID, cubeSizeX, cubeSizeY, cubeSizeZ)
+					<b>createScene</b>(x3dID, sceneID, SizeX, SizeY, SizeZ)
 					
 					</div>
 					<div class="description">
-						Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.
-The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
-Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
+						Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
 						
 						
 					</div>
@@ -1395,22 +1153,22 @@ Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth
 									<b>sceneID</b>
 									
 								</dt>
-								<dd>- ID of the scene element.</dd>
+								<dd>- ID of the x3dom scene element.</dd>
 							
 								<dt>
-									<b>cubeSizeX</b>
+									<b>SizeX</b>
 									
 								</dt>
 								<dd>- width of the cube.</dd>
 							
 								<dt>
-									<b>cubeSizeY</b>
+									<b>SizeY</b>
 									
 								</dt>
 								<dd>- height of the cube.</dd>
 							
 								<dt>
-									<b>cubeSizeZ</b>
+									<b>SizeZ</b>
 									
 								</dt>
 								<dd>- depth of the cube.</dd>
@@ -1673,8 +1431,7 @@ Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth
 					
 					</div>
 					<div class="description">
-						Returns the definition of the camera with the given index.
-Format: "CameraName:CameraID"
+						Returns the definition of the camera with the given index.Format: "CameraName:CameraID"CameraName is for the UI (show on a button or label)CameraID is the ID of the dom element
 						
 						
 					</div>
@@ -1689,7 +1446,7 @@ Format: "CameraName:CameraID"
 									<b>cameraIndex</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Index of the camera.</dd>
 							
 							</dl>
 						
@@ -1741,16 +1498,15 @@ Format: "CameraName:CameraID"
 
 					<hr />
 				
-					<a name="getMaxResolution"> </a>
+					<a name="getCubeSizeX"> </a>
 					<div class="fixedFont">
 					
-					<span class="light">{Number}</span>
-					<b>getMaxResolution</b>()
+					<span class="light">{number}</span>
+					<b>getCubeSizeX</b>()
 					
 					</div>
 					<div class="description">
-						Returns the maximum resolution per dimension of a scene model.
-This number depends on power templates (e.g. mobile device).
+						Return the size of the cube in the x axis
 						
 						
 					</div>
@@ -1765,7 +1521,135 @@ This number depends on power templates (e.g. mobile device).
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Number}</span> maximum Resolution</dd>
+								<dd><span class="light fixedFont">{number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getCubeSizeY"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getCubeSizeY</b>()
+					
+					</div>
+					<div class="description">
+						Return the size of the cube in the y axis
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getCubeSizeZ"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getCubeSizeZ</b>()
+					
+					</div>
+					<div class="description">
+						Return the size of the cube in the z axis
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getLightCount"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Number}</span>
+					<b>getLightCount</b>()
+					
+					</div>
+					<div class="description">
+						Returns the number of scene lights.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getMaxResolution"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{Number}</span>
+					<b>getMaxResolution</b>()
+					
+					</div>
+					<div class="description">
+						Returns the maximum resolution per dimension of a scene model.This number depends on power templates (e.g. mobile device).
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{Number}</span> </dd>
 							
 							</dl>
 						
@@ -1798,6 +1682,49 @@ This number depends on power templates (e.g. mobile device).
 							<dt class="heading">Returns:</dt>
 							
 								<dd><span class="light fixedFont">{Number}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getModelIndex"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getModelIndex</b>(modelName)
+					
+					</div>
+					<div class="description">
+						Returns the index of a scene model with a given name.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>modelName</b>
+									
+								</dt>
+								<dd>- Name of the model.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> - Index of the model or -1 if no model with the given name was found.</dd>
 							
 							</dl>
 						
@@ -2029,11 +1956,7 @@ This number depends on power templates (e.g. mobile device).
 					
 					</div>
 					<div class="description">
-						All Modules and Terrain shall report their loading progress.
-Modules when they receive data and terrains if they are done building the terrain.
-Every time this function is called 1 is added to the total progress. It is assumed that for every
-request a terrain is build thus 100% = model.requests*2
-If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
+						All Modules and Terrain shall report their loading progress.Modules when they receive data and terrains if they are done building the terrain.Every time this function is called 1 is added to the total progress. It is assumed that for everyrequest a terrain is build thus 100% = model.requests*2If a callback is registered the function is called, otherwise the progress is printed to the console or ignored.
 						
 						
 					</div>
@@ -2061,15 +1984,15 @@ If a callback is registered the function is called, otherwise the progress is pr
 
 					<hr />
 				
-					<a name="setAxisLabels"> </a>
+					<a name="setBackground"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>setAxisLabels</b>(LabelX, LabelY, LabelZ)
+					<b>setBackground</b>(skyColors, skyAngles, groundColors, groundAngles)
 					
 					</div>
 					<div class="description">
-						Sets the names of the axes to be displayed.
+						This function sets the background of the X3Dom render window. The Background is basically a spherewhere the user can sets colors and defines angles to which the colors float.Colors are RGB with floats [0-1] separated by whitespaces. ( "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9" )Angles are in [0-1.57] (1.57 is PI/2) and also separated by whitespaces. ( "0.9 1.57" )You need exactly one more color than angles like the examples.
 						
 						
 					</div>
@@ -2081,22 +2004,28 @@ If a callback is registered the function is called, otherwise the progress is pr
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>LabelX</b>
+									<b>skyColors</b>
 									
 								</dt>
-								<dd>- width</dd>
+								<dd>- Colors of the sky from top to horizon. Three RGB values for each color.</dd>
 							
 								<dt>
-									<b>LabelY</b>
+									<b>skyAngles</b>
 									
 								</dt>
-								<dd>- height</dd>
+								<dd>- Angles to where the sky colors are drawn. 1.57 for full sky.</dd>
 							
 								<dt>
-									<b>LabelZ</b>
+									<b>groundColors</b>
 									
 								</dt>
-								<dd>- depth</dd>
+								<dd>- Colors of the ground from bottom to horizon. Three RGB values for each color.</dd>
+							
+								<dt>
+									<b>groundAngles</b>
+									
+								</dt>
+								<dd>- Angles to where the ground colors are drawn. 1.57 for full ground.</dd>
 							
 							</dl>
 						
@@ -2117,9 +2046,7 @@ If a callback is registered the function is called, otherwise the progress is pr
 					
 					</div>
 					<div class="description">
-						Sets the callback function for the progress update. The progress function gives a parameter between 0-100.
-You can set callback = null for no progress update at all. If no callback is given at all the progress is
-printed to the console.
+						Sets the callback function for the progress update. The progress function gives a parameter between 0-100.You can set callback = null for no progress update at all. If no callback is given at all the progress isprinted to the console.
 						
 						
 					</div>
@@ -2375,6 +2302,138 @@ printed to the console.
 
 					<hr />
 				
+					<a name="updateLightIntensity"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateLightIntensity</b>(lightIndex, value)
+					
+					</div>
+					<div class="description">
+						Updates the intensity of the light with the given index.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>lightIndex</b>
+									
+								</dt>
+								<dd>- Index of the light.</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- New intensity.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateLightPosition"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateLightPosition</b>(lightIndex, which, value)
+					
+					</div>
+					<div class="description">
+						Updates the position of a light.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>lightIndex</b>
+									
+								</dt>
+								<dd>- Index of the light</dd>
+							
+								<dt>
+									<b>which</b>
+									
+								</dt>
+								<dd>- Which Axis will be changed (0:X 1:Y 2:Z)</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- the new position</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="updateLightRadius"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>updateLightRadius</b>(lightIndex, value)
+					
+					</div>
+					<div class="description">
+						Updates the radius of the light with the given index.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>lightIndex</b>
+									
+								</dt>
+								<dd>- Index of the light.</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- New radius.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="updateOffset"> </a>
 					<div class="fixedFont">
 					
@@ -2477,11 +2536,7 @@ printed to the console.
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-<<<<<<< HEAD
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
-=======
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
->>>>>>> SirSlaxalot/master
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

@@ -191,13 +191,21 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
+	<li><a href="../symbols/Array.html">Array</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AnnotationLayer.html">EarthServerGenericClient.AnnotationLayer</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.createProgressBar.html">EarthServerGenericClient.createProgressBar</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Light.html">EarthServerGenericClient.Light</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
@@ -214,6 +222,8 @@ ul.inheritsList
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
 	
 </ul>
 <hr />
@@ -232,10 +242,10 @@ ul.inheritsList
 				
 				
 			
+				Generic Server Response Data object. All requests store the response in an instance of this object.One instance can be given as parameter for different requests if all requests writes different fields.Example: One WMS request for the texture and one WCS request for the heightmap.
 				
 				
-				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 				
 			</p>
 
@@ -256,7 +266,7 @@ ul.inheritsList
 							<div class="fixedFont">
 								<b><a href="../symbols/EarthServerGenericClient.ServerResponseData.html#constructor">EarthServerGenericClient.ServerResponseData</a></b>()
 							</div>
-							<div class="description">Generic Server Response Data object.</div>
+							<div class="description"></div>
 						</td>
 					</tr>
 				</tbody>
@@ -267,6 +277,33 @@ ul.inheritsList
 			
 
 <!-- ============================== methods summary ======================== -->
+			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class EarthServerGenericClient.ServerResponseData.">
+					<caption>Method Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Method Attributes</th>
+							<th scope="col">Method Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.ServerResponseData.html#validate">validate</a></b>()
+								</div>
+								<div class="description">Validates if the response full successfully: Was an image and a height map received?</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
 			
 <!-- ============================== events summary ======================== -->
 			
@@ -283,7 +320,7 @@ ul.inheritsList
 				</div>
 				
 				<div class="description">
-					Generic Server Response Data object. All requests store the response in an instance of this object.One instance can be given as parameter for different requests if all requests writes different fields.Example: One WMS request for the texture and one WCS request for the heightmap.
+					
 					
 				</div>
 				
@@ -306,6 +343,43 @@ ul.inheritsList
 
 <!-- ============================== method details ========================= -->		
 			
+				<div class="sectionTitle">
+					Method Detail
+				</div>
+				
+					<a name="validate"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{boolean}</span>
+					<b>validate</b>()
+					
+					</div>
+					<div class="description">
+						Validates if the response full successfully: Was an image and a height map received?
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{boolean}</span> - True if both image and heightmap are present, false if not.</dd>
+							
+							</dl>
+						
+						
+						
+
+					
+				
+			
 			
 <!-- ============================== event details ========================= -->		
 			
@@ -317,11 +391,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-<<<<<<< HEAD
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
-=======
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
->>>>>>> SirSlaxalot/master
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

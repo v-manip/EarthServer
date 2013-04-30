@@ -21,10 +21,8 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
-     * @param texture
-     *      Texture to draw. Can be everything which can be rendered into a canvas.
-     * @param index
-     *      Index of the model using this canvas. Used to give the canvas a unique ID.
+     * @param texture - Texture to draw. Can be everything which can be rendered into a canvas.
+     * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
      * @returns {HTMLElement} The canvas element.
      */
     this.createCanvas = function(texture,index)
@@ -57,12 +55,9 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * Calcs the needed numbers of chunks for the terrain for a specific chunk size.
-     * @param width
-     *      Width of the entire terrain.
-     * @param height
-     *      Height of the entire terrain.
-     * @param chunkSize
-     *      The size of one chunk.
+     * @param width - Width of the entire terrain.
+     * @param height - Height of the entire terrain.
+     * @param chunkSize - The size of one chunk.
      * @returns {} numChunksX: number, numChunksY: number, numChunks: number
      */
     this.calcNumberOfChunks = function(width,height,chunkSize)
@@ -86,19 +81,13 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * This function calcs the needed information to build and place a chunk of a terrain.
-     * @param index
-     *      Index of the model using the terrain. Used for creating IDs.
-     * @param chunkSize
-     *      The desired size (count of values) of one chunk per axis.
-     * @param chunkInfo
-     *      This parameter uses an object that will be returned by calcNumberOfChunks().
+     * @param index - Index of the model using the terrain. Used for creating IDs.
+     * @param chunkSize - The desired size (count of values) of one chunk per axis.
+     * @param chunkInfo - This parameter uses an object that will be returned by calcNumberOfChunks().
      *      It contains the information about a terrain and its chunks (e.g. number of chunks on each axis).
-     * @param currentChunk
-     *      The index of the current chunk to be build.
-     * @param terrainWidth
-     *      Width of the whole terrain. Used to calc texture coordinates.
-     * @param terrainHeight
-     *      Height of the whole terrain. Used to calc texture coordinates.
+     * @param currentChunk - The index of the current chunk to be build.
+     * @param terrainWidth - Width of the whole terrain. Used to calc texture coordinates.
+     * @param terrainHeight - Height of the whole terrain. Used to calc texture coordinates.
      * @returns {}
      *      xpos: number, ypos: number, chunkWidth: number,
      *      chunkHeight: number, terrainWidth: number,
@@ -163,8 +152,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
     /**
      * Collects all material nodes of the terrain and changes each transparency attribute.
-     * @param value
-     *      Transparency value between 0 (full visible) and 1 (invisible).
+     * @param value - Transparency value between 0 (full visible) and 1 (invisible).
      */
     this.setTransparency = function(value)
     {
@@ -191,20 +179,13 @@ EarthServerGenericClient.AbstractTerrain = function()
     /**
      * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
      * It returns the amount of appearances specified. For every name only one appearance exits, every other uses it.
-     * @param AppearanceName
-     *      Name of the appearance. If this name is not set in the array, it will be registered.
+     * @param AppearanceName - Name of the appearance. If this name is not set in the array, it will be registered.
      *      In the case the name is already set, the existing one will be used.
-     * @param AppearanceCount
-     *      Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.
-     * @param modelIndex
-     *      Index of the model using this appearance.
-     * @param canvasTexture
-     *      Canvas element to be used in the appearance as texture.
-     * @param transparency
-     *      Transparency of the appearance.
-     * @returns {Array}
-     *      Array of appearance nodes.
-     *      If any error occurs, the function will return null.
+     * @param AppearanceCount - Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.
+     * @param modelIndex - Index of the model using this appearance.
+     * @param canvasTexture - Canvas element to be used in the appearance as texture.
+     * @param transparency - Transparency of the appearance.
+     * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
      */
     this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency) {
         try {
@@ -281,10 +262,8 @@ EarthServerGenericClient.AbstractTerrain = function()
  * @class This terrain should receive multiple insertLevel calls. It removes the old version
  * and replace it with the new data. It can be used for progressive loading.
  * Example: WCPSDemAlpha with progressive loading using the progressiveWCPSImageLoader.
- *
  * @augments EarthServerGenericClient.AbstractTerrain
- * @param index
- *      Index of the model using this terrain.
+ * @param index - Index of the model using this terrain.
  * @constructor
  */
 EarthServerGenericClient.ProgressiveTerrain = function(index)
@@ -313,10 +292,8 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
 
     /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
-     * @param root
-     *      Dom Element to append the terrain to.
-     * @param data
-     *      Received Data of the Server request.
+     * @param root - Dom Element to append the terrain to.
+     * @param data - Received Data of the Server request.
      */
     this.insertLevel = function(root,data)
     {
@@ -367,12 +344,9 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
 
 /**
  * @class This terrain build up a LOD with 3 levels of the received data.
- * @param root
- *      Dom Element to append the terrain to.
- * @param data
- *      Received Data of the Server request.
- * @param index
- *      Index of the model that uses this terrain.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */

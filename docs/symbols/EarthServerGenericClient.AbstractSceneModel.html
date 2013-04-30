@@ -191,13 +191,21 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
+	<li><a href="../symbols/Array.html">Array</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AnnotationLayer.html">EarthServerGenericClient.AnnotationLayer</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.createProgressBar.html">EarthServerGenericClient.createProgressBar</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Light.html">EarthServerGenericClient.Light</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
@@ -214,6 +222,8 @@ ul.inheritsList
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
 	
 </ul>
 <hr />
@@ -235,7 +245,7 @@ ul.inheritsList
 				Abstract base class for scene models.
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneManager.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_Module_Base.js.html">Module_Base.js</a>.
 				
 			</p>
 
@@ -276,6 +286,16 @@ ul.inheritsList
 						</tr>
 					</thead>
 					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#bindings">bindings</a></b>
+								</div>
+								<div class="description">All objects that are bound to the module.</div>
+							</td>
+						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
@@ -431,6 +451,15 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#addBinding">addBinding</a></b>(bindingObject)
+								</div>
+								<div class="description">Adds an Object that will be informed about movements and alterations of the model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#checkReceivedData">checkReceivedData</a></b>(data)
 								</div>
 								<div class="description">Validates the received data from the server request.</div>
@@ -458,6 +487,24 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#movementUpdate">movementUpdate</a></b>(movementType, value)
+								</div>
+								<div class="description">This function is called if the model is moved in the scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#removeBinding">removeBinding</a></b>(bindingObject)
+								</div>
+								<div class="description">Removes an Object that will be informed about movements and alterations of the model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#removePlaceHolder">removePlaceHolder</a></b>()
 								</div>
 								<div class="description">Removes the PlaceHolder created in createPlaceHolder().</div>
@@ -469,7 +516,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#reportProgress">reportProgress</a></b>()
 								</div>
-								<div class="description">Modules report their loading progress to this function which leads the information to the main scene.</div>
+								<div class="description">Modules report their loading progress with this function which reports to the main scene.</div>
 							</td>
 						</tr>
 					
@@ -478,7 +525,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setAreaOfInterest">setAreaOfInterest</a></b>(minx, miny, maxx, maxy)
 								</div>
-								<div class="description">Sets the area of interest for the model (Lower Corner, Upper Corner).</div>
+								<div class="description">Sets the area of interest for the model.</div>
 							</td>
 						</tr>
 					
@@ -598,6 +645,28 @@ ul.inheritsList
 				<div class="sectionTitle">
 					Field Detail
 				</div>
+				
+					<a name="bindings"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>bindings</b>
+					
+					</div>
+					<div class="description">
+						All objects that are bound to the module. The will be noticed if the models is moved or altered.Example: Annotation layers should be moved with the module and change the height when the elevation changes.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					<hr />
 				
 					<a name="imageFormat"> </a>
 					<div class="fixedFont">
@@ -984,6 +1053,42 @@ ul.inheritsList
 					Method Detail
 				</div>
 				
+					<a name="addBinding"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>addBinding</b>(bindingObject)
+					
+					</div>
+					<div class="description">
+						Adds an Object that will be informed about movements and alterations of the model.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>bindingObject</b>
+									
+								</dt>
+								<dd>- Object that will receive the notification.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="checkReceivedData"> </a>
 					<div class="fixedFont">
 					
@@ -992,8 +1097,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Validates the received data from the server request.
-Checks if a texture and a heightmap are available at the moment.
+						Validates the received data from the server request.Checks if a texture and a heightmap are available at the moment.
 						
 						
 					</div>
@@ -1036,8 +1140,7 @@ Checks if a texture and a heightmap are available at the moment.
 					
 					</div>
 					<div class="description">
-						This creates a placeholder Element for the model. It consists of an simple quad.
-Models that use this placeholder should remove it of course.
+						This creates a placeholder Element for the model. It consists of an simple quad.Models that use this placeholder should remove it of course.
 						
 						
 					</div>
@@ -1062,8 +1165,7 @@ Models that use this placeholder should remove it of course.
 					
 					</div>
 					<div class="description">
-						Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically by
-the scene model.
+						Creates the transform for the scene model to fit into the fishtank/cube. This is done automatically bythe scene model.
 						
 						
 					</div>
@@ -1078,25 +1180,25 @@ the scene model.
 									<b>xRes</b>
 									
 								</dt>
-								<dd>Size of the received data on the x-axis (e.g. the requested DEM )</dd>
+								<dd>- Size of the received data on the x-axis (e.g. the requested DEM )</dd>
 							
 								<dt>
 									<b>yRes</b>
 									
 								</dt>
-								<dd>Size of the received data on the y-axis</dd>
+								<dd>- Size of the received data on the y-axis</dd>
 							
 								<dt>
 									<b>zRes</b>
 									
 								</dt>
-								<dd>Size of the received data on the z-axis</dd>
+								<dd>- Size of the received data on the z-axis</dd>
 							
 								<dt>
 									<b>minvalue</b>
 									
 								</dt>
-								<dd>Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)</dd>
+								<dd>- Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)</dd>
 							
 							</dl>
 						
@@ -1110,6 +1212,84 @@ the scene model.
 								<dd><span class="light fixedFont">{Element}</span> </dd>
 							
 							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="movementUpdate"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>movementUpdate</b>(movementType, value)
+					
+					</div>
+					<div class="description">
+						This function is called if the model is moved in the scene.All bindings will also get the movement update.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>movementType</b>
+									
+								</dt>
+								<dd>- Type of the movement: xAxis,zAxis,elevation...</dd>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- Updated position</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="removeBinding"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>removeBinding</b>(bindingObject)
+					
+					</div>
+					<div class="description">
+						Removes an Object that will be informed about movements and alterations of the model.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>bindingObject</b>
+									
+								</dt>
+								<dd>- Object that will no longer receive the notification.</dd>
+							
+							</dl>
+						
+						
+						
+						
 						
 						
 						
@@ -1149,7 +1329,7 @@ the scene model.
 					
 					</div>
 					<div class="description">
-						Modules report their loading progress to this function which leads the information to the main scene.
+						Modules report their loading progress with this function which reports to the main scene.
 						
 						
 					</div>
@@ -1174,7 +1354,7 @@ the scene model.
 					
 					</div>
 					<div class="description">
-						Sets the area of interest for the model (Lower Corner, Upper Corner).
+						Sets the area of interest for the model. (Lower Corner, Upper Corner)
 						
 						
 					</div>
@@ -1189,25 +1369,25 @@ the scene model.
 									<b>minx</b>
 									
 								</dt>
-								<dd>Minimum of lower latitude</dd>
+								<dd>- Minimum/Lower Latitude</dd>
 							
 								<dt>
 									<b>miny</b>
 									
 								</dt>
-								<dd>Minimum of lower longitude</dd>
+								<dd>- Minimum/Lower Longitude</dd>
 							
 								<dt>
 									<b>maxx</b>
 									
 								</dt>
-								<dd>Maximum of upper latitude</dd>
+								<dd>- Maximum/Upper Latitude</dd>
 							
 								<dt>
 									<b>maxy</b>
 									
 								</dt>
-								<dd>Maximum of upper longitude</dd>
+								<dd>- Maximum/Upper Longitude</dd>
 							
 							</dl>
 						
@@ -1268,7 +1448,7 @@ the scene model.
 									<b>imageFormat</b>
 									
 								</dt>
-								<dd>Default format is "png".</dd>
+								<dd>- Default "png".</dd>
 							
 							</dl>
 						
@@ -1290,7 +1470,6 @@ the scene model.
 					</div>
 					<div class="description">
 						Sets the name of the scene model.
-The name is useful for the demo because it appears in the category "Modules".
 						
 						
 					</div>
@@ -1305,7 +1484,7 @@ The name is useful for the demo because it appears in the category "Modules".
 									<b>modelName</b>
 									
 								</dt>
-								<dd>Sets the name of model.</dd>
+								<dd>- Name of the model.</dd>
 							
 							</dl>
 						
@@ -1326,8 +1505,7 @@ The name is useful for the demo because it appears in the category "Modules".
 					
 					</div>
 					<div class="description">
-						Sets the position of the scene model within the fishtank/cube.
-The function accepts values in the range of 0 and 1 for each parameter.
+						Sets the position of the scene model within the fishtank/cube. Values between [0-1]
 						
 						
 					</div>
@@ -1342,19 +1520,19 @@ The function accepts values in the range of 0 and 1 for each parameter.
 									<b>xOffset</b>
 									
 								</dt>
-								<dd>Offset on the x-axis (width).</dd>
+								<dd>- Offset on the x-axis/width  Default:0</dd>
 							
 								<dt>
 									<b>yOffset</b>
 									
 								</dt>
-								<dd>Offset on the y-axis (height).</dd>
+								<dd>- Offset on the y-axis/height Default:0</dd>
 							
 								<dt>
 									<b>zOffset</b>
 									
 								</dt>
-								<dd>Offset on the z-axis (depth).</dd>
+								<dd>- Offset on the z-axis/depth  Default:0</dd>
 							
 							</dl>
 						
@@ -1390,13 +1568,13 @@ The function accepts values in the range of 0 and 1 for each parameter.
 									<b>xRes</b>
 									
 								</dt>
-								<dd>Resolution on the x-axis/Latitude</dd>
+								<dd>- Resolution on the x-axis/Latitude</dd>
 							
 								<dt>
 									<b>zRes</b>
 									
 								</dt>
-								<dd>Resolution on the z-axis/Longitude</dd>
+								<dd>- Resolution on the z-axis/Longitude</dd>
 							
 							</dl>
 						
@@ -1417,8 +1595,7 @@ The function accepts values in the range of 0 and 1 for each parameter.
 					
 					</div>
 					<div class="description">
-						Sets the size of the scene model compared to the fishtank/cube.
-The function accepts values in the range of 0 and 1 for each parameter.
+						Sets the size of the scene model compared to the fishtank/cube. Values between 0 - 1.
 						
 						
 					</div>
@@ -1433,19 +1610,19 @@ The function accepts values in the range of 0 and 1 for each parameter.
 									<b>xScale</b>
 									
 								</dt>
-								<dd>Size of the model on the x-axis (width).</dd>
+								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
 							
 								<dt>
 									<b>yScale</b>
 									
 								</dt>
-								<dd>Size of the model on the y-axis (height).</dd>
+								<dd>- Size of the model on the y-axis/height Default:0.3 (30% of the cube)</dd>
 							
 								<dt>
 									<b>zScale</b>
 									
 								</dt>
-								<dd>Size of the model on the x-axis (width).</dd>
+								<dd>- Size of the model on the x-axis/width  Default:1   (whole cube)</dd>
 							
 							</dl>
 						
@@ -1466,8 +1643,7 @@ The function accepts values in the range of 0 and 1 for each parameter.
 					
 					</div>
 					<div class="description">
-						Sets the initial transparency of the scene model.
-The function accepts a parameter value in the range of 0 (fully opaque) and 1(fully transparent).
+						Sets the initial transparency of the scene model.The function accepts a parameter value in the range of 0 (fully opaque) and 1(fully transparent).
 						
 						
 					</div>
@@ -1482,7 +1658,7 @@ The function accepts a parameter value in the range of 0 (fully opaque) and 1(fu
 									<b>transparency</b>
 									
 								</dt>
-								<dd>Value of visibility.</dd>
+								<dd>- Value of transparency.</dd>
 							
 							</dl>
 						
@@ -1503,8 +1679,7 @@ The function accepts a parameter value in the range of 0 (fully opaque) and 1(fu
 					
 					</div>
 					<div class="description">
-						Updates the transparency during runtime of the scene model.
-The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
+						Updates the transparency during runtime of the scene model.The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
 						
 						
 					</div>
@@ -1519,7 +1694,7 @@ The function accepts a value in the range of 0 (fully opaque) and 1(fully transp
 									<b>transparency</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Value of transparency.</dd>
 							
 							</dl>
 						
@@ -1544,11 +1719,7 @@ The function accepts a value in the range of 0 (fully opaque) and 1(fully transp
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-<<<<<<< HEAD
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
-=======
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
->>>>>>> SirSlaxalot/master
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

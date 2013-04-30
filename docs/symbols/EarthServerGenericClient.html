@@ -191,13 +191,21 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
+	<li><a href="../symbols/Array.html">Array</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractTerrain.html">EarthServerGenericClient.AbstractTerrain</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.AnnotationLayer.html">EarthServerGenericClient.AnnotationLayer</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.AxisLabels.html">EarthServerGenericClient.AxisLabels</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.createProgressBar.html">EarthServerGenericClient.createProgressBar</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Light.html">EarthServerGenericClient.Light</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.LODTerrain.html">EarthServerGenericClient.LODTerrain</a></li>
 	
@@ -214,6 +222,8 @@ ul.inheritsList
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
+	
+	<li><a href="../symbols/Function.html">Function</a></li>
 	
 </ul>
 <hr />
@@ -235,7 +245,7 @@ ul.inheritsList
 				Namespace for the Earth Server Generic Client
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/EarthServer_js__SceneModules.js.html">SceneManager.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/code_SceneManager.js.html">SceneManager.js</a>.
 				
 			</p>
 
@@ -283,6 +293,42 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.appendAlphaSlider">appendAlphaSlider</a></b>(domElement, moduleNumber)
+								</div>
+								<div class="description">Special slider for setting the transparency of scene models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.appendElevationSlider">appendElevationSlider</a></b>(domElement, moduleNumber)
+								</div>
+								<div class="description">Special slider for setting the elevation of scene models.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.appendGenericSlider">appendGenericSlider</a></b>(domElement, sliderID, label, elementID, min, max, startValue, callback)
+								</div>
+								<div class="description">Generic sliders are calling their callback function with an element ID and their value.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.appendXYZSlider">appendXYZSlider</a></b>(domElement, sliderID, label, elementID, axis, min, max, startValue, callback)
+								</div>
+								<div class="description">Appends a axis slider to a UI element.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.combinedCallBack">combinedCallBack</a></b>(callback, numberToCombine)
 								</div>
 								<div class="description">Small helper to synchronise multiple request callbacks.</div>
@@ -292,27 +338,15 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-<<<<<<< HEAD
-								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.createBasicUI">createBasicUI</a></b>(domElementID, cntModels)
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.createBasicUI">createBasicUI</a></b>(domElementID)
 								</div>
-								<div class="description"></div>
+								<div class="description">Creates the basic UI</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.createProgressBar">createProgressBar</a></b>(DivID)
-								</div>
-								<div class="description"></div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;static&gt; &nbsp;</td>
-							<td class="nameDescription">
-=======
->>>>>>> SirSlaxalot/master
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.getCoverageWCS">getCoverageWCS</a></b>(callback, responseData, WCSurl, WCScoverID, WCSBoundingBox, WCSVersion)
 								</div>
 								<div class="description">Requests a WCS coverage and stores is the heightmap field of the responseData.</div>
@@ -342,7 +376,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.isMobilePlatform">isMobilePlatform</a></b>()
 								</div>
-								<div class="description">This function checks if this code is running on a mobile platform.</div>
+								<div class="description">This function checks if this code is running is on a mobile platform.</div>
 							</td>
 						</tr>
 					
@@ -352,15 +386,6 @@ ul.inheritsList
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.progressiveWCPSImageLoader">progressiveWCPSImageLoader</a></b>(callback, WCPSurl, WCPSqueries, DemInAlpha)
 								</div>
 								<div class="description">The progressive WCPS loader initiate multiple queries consecutively.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;static&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">EarthServerGenericClient.<b>receiveData</b>(data)
-								</div>
-								<div class="description"></div>
 							</td>
 						</tr>
 					
@@ -378,7 +403,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImageWCSDem">requestWCPSImageWCSDem</a></b>(callback, WCPSurl, WCPSquery, WCSurl, WCScoverID, WCSBoundingBox, WCSVersion)
 								</div>
-								<div class="description">Requets an image via WCPS and a dem via WCS.</div>
+								<div class="description">Requests an image via WCPS and a dem via WCS.</div>
 							</td>
 						</tr>
 					
@@ -439,19 +464,18 @@ ul.inheritsList
 					Method Detail
 				</div>
 				
-<<<<<<< HEAD
-					<a name=".AnnotationLayer"> </a>
+					<a name=".appendAlphaSlider"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">EarthServerGenericClient.</span><b>AnnotationLayer</b>(Name, root, fontSize, fontColor, fontHover, markerSize, markerColor)
+					<span class="light">EarthServerGenericClient.</span><b>appendAlphaSlider</b>(domElement, moduleNumber)
 					
 					</div>
 					<div class="description">
-						
+						Special slider for setting the transparency of scene models.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_AnnotationLayer.js.html">AnnotationLayer.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_UI_jQueryUI.js.html">UI_jQueryUI.js</a>.
 						
 						
 					</div>
@@ -463,46 +487,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>Name</b>
+									<b>domElement</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Append the slider to this dom element.</dd>
 							
 								<dt>
-									<b>root</b>
+									<b>moduleNumber</b>
 									
 								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>fontSize</b>
-									
-								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>fontColor</b>
-									
-								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>fontHover</b>
-									
-								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>markerSize</b>
-									
-								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>markerColor</b>
-									
-								</dt>
-								<dd></dd>
+								<dd>- Index of the scene model.</dd>
 							
 							</dl>
 						
@@ -519,14 +513,14 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">EarthServerGenericClient.</span><b>appendElevationSlider</b>(element, moduleNumber)
+					<span class="light">EarthServerGenericClient.</span><b>appendElevationSlider</b>(domElement, moduleNumber)
 					
 					</div>
 					<div class="description">
-						
+						Special slider for setting the elevation of scene models.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_UI_v1.js.html">UI_v1.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_UI_jQueryUI.js.html">UI_jQueryUI.js</a>.
 						
 						
 					</div>
@@ -538,16 +532,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>element</b>
+									<b>domElement</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Append the slider to this dom element.</dd>
 							
 								<dt>
 									<b>moduleNumber</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Index of the scene model.</dd>
 							
 							</dl>
 						
@@ -560,18 +554,18 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name=".appendXYZASlider"> </a>
+					<a name=".appendGenericSlider"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">EarthServerGenericClient.</span><b>appendXYZASlider</b>(element, moduleNumber)
+					<span class="light">EarthServerGenericClient.</span><b>appendGenericSlider</b>(domElement, sliderID, label, elementID, min, max, startValue, callback)
 					
 					</div>
 					<div class="description">
-						
+						Generic sliders are calling their callback function with an element ID and their value.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_UI_v1.js.html">UI_v1.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_UI_jQueryUI.js.html">UI_jQueryUI.js</a>.
 						
 						
 					</div>
@@ -583,16 +577,52 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>element</b>
+									<b>domElement</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Append the slider to this dom element.</dd>
 							
 								<dt>
-									<b>moduleNumber</b>
+									<b>sliderID</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>- Dom ID for this slider.</dd>
+							
+								<dt>
+									<b>label</b>
+									
+								</dt>
+								<dd>- Label (displayed in the UI) for this slider</dd>
+							
+								<dt>
+									<b>elementID</b>
+									
+								</dt>
+								<dd>- First parameter for the callback function. Change the element with this ID.</dd>
+							
+								<dt>
+									<b>min</b>
+									
+								</dt>
+								<dd>- Minimum value of this slider.</dd>
+							
+								<dt>
+									<b>max</b>
+									
+								</dt>
+								<dd>- Maximum value of this slider.</dd>
+							
+								<dt>
+									<b>startValue</b>
+									
+								</dt>
+								<dd>- Start value of this slider.</dd>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Callback function, every time the slider is moved this function will be called.</dd>
 							
 							</dl>
 						
@@ -605,8 +635,93 @@ ul.inheritsList
 
 					<hr />
 				
-=======
->>>>>>> SirSlaxalot/master
+					<a name=".appendXYZSlider"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>appendXYZSlider</b>(domElement, sliderID, label, elementID, axis, min, max, startValue, callback)
+					
+					</div>
+					<div class="description">
+						Appends a axis slider to a UI element. Axis sliders call the callback function with an ID,axis and their value.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/code_UI_jQueryUI.js.html">UI_jQueryUI.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>domElement</b>
+									
+								</dt>
+								<dd>- Append the slider to this dom element.</dd>
+							
+								<dt>
+									<b>sliderID</b>
+									
+								</dt>
+								<dd>- Dom ID for this slider.</dd>
+							
+								<dt>
+									<b>label</b>
+									
+								</dt>
+								<dd>- Label (displayed in the UI) for this slider</dd>
+							
+								<dt>
+									<b>elementID</b>
+									
+								</dt>
+								<dd>- First parameter for the callback function. Change the element with this ID.</dd>
+							
+								<dt>
+									<b>axis</b>
+									
+								</dt>
+								<dd>- Axis this slider should effect. 0:x 1:y 2:z</dd>
+							
+								<dt>
+									<b>min</b>
+									
+								</dt>
+								<dd>- Minimum value of this slider.</dd>
+							
+								<dt>
+									<b>max</b>
+									
+								</dt>
+								<dd>- Maximum value of this slider.</dd>
+							
+								<dt>
+									<b>startValue</b>
+									
+								</dt>
+								<dd>- Start value of this slider.</dd>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Callback function, every time the slider is moved this function will be called.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name=".combinedCallBack"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
@@ -615,12 +730,10 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						Small helper to synchronise multiple request callbacks. After all callbacks to this helper
-are received the ResponseData object with all response data is send to the module.
-After each request is received a progress update is send to the module.
+						Small helper to synchronise multiple request callbacks. After all callbacks to this helperare received the ResponseData object with all response data is send to the module.After each request is received a progress update is send to the module.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -654,19 +767,18 @@ After each request is received a progress update is send to the module.
 
 					<hr />
 				
-<<<<<<< HEAD
 					<a name=".createBasicUI"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">EarthServerGenericClient.</span><b>createBasicUI</b>(domElementID, cntModels)
+					<span class="light">EarthServerGenericClient.</span><b>createBasicUI</b>(domElementID)
 					
 					</div>
 					<div class="description">
-						
+						Creates the basic UI
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_UI_v1.js.html">UI_v1.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_UI_jQueryUI.js.html">UI_jQueryUI.js</a>.
 						
 						
 					</div>
@@ -681,13 +793,7 @@ After each request is received a progress update is send to the module.
 									<b>domElementID</b>
 									
 								</dt>
-								<dd></dd>
-							
-								<dt>
-									<b>cntModels</b>
-									
-								</dt>
-								<dd></dd>
+								<dd>- Dom element to append the UI to.</dd>
 							
 							</dl>
 						
@@ -700,47 +806,6 @@ After each request is received a progress update is send to the module.
 
 					<hr />
 				
-					<a name=".createProgressBar"> </a>
-					<div class="fixedFont">&lt;static&gt; 
-					
-					
-					<span class="light">EarthServerGenericClient.</span><b>createProgressBar</b>(DivID)
-					
-					</div>
-					<div class="description">
-						
-						
-							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_UI_v1.js.html">UI_v1.js</a>.
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>DivID</b>
-									
-								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
-				
-=======
->>>>>>> SirSlaxalot/master
 					<a name=".getCoverageWCS"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
@@ -752,7 +817,7 @@ After each request is received a progress update is send to the module.
 						Requests a WCS coverage and stores is the heightmap field of the responseData.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -821,7 +886,7 @@ After each request is received a progress update is send to the module.
 						Requests a WMS image, stores it in the responseData and make the callback once it is loaded.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -911,11 +976,10 @@ After each request is received a progress update is send to the module.
 					
 					</div>
 					<div class="description">
-						Starts a WCPS query and stores the received image in the responseData.
-If a dem is encoded in the alpha channel it will be extracted and also stored. Set DemInAlpha Flag in this case.
+						Starts a WCPS query and stores the received image in the responseData.If a dem is encoded in the alpha channel it will be extracted and also stored. Set DemInAlpha Flag in this case.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -970,13 +1034,12 @@ If a dem is encoded in the alpha channel it will be extracted and also stored. S
 					<a name=".isMobilePlatform"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
-					<span class="light">{boolean}</span>
+					
 					<span class="light">EarthServerGenericClient.</span><b>isMobilePlatform</b>()
 					
 					</div>
 					<div class="description">
-						This function checks if this code is running on a mobile platform.
-The function returns true if it's a mobile platform, false if not.
+						This function checks if this code is running is on a mobile platform.
 						
 						
 					</div>
@@ -991,7 +1054,7 @@ The function returns true if it's a mobile platform, false if not.
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{boolean}</span> </dd>
+								<dd>true if mobile platform, false if not</dd>
 							
 							</dl>
 						
@@ -1008,12 +1071,10 @@ The function returns true if it's a mobile platform, false if not.
 					
 					</div>
 					<div class="description">
-						The progressive WCPS loader initiate multiple queries consecutively. As soon as one response is received the
-next query is executed. Every response is given to the given callback.
-Note: The WCPS loader starts with the last query in the array (LIFO).
+						The progressive WCPS loader initiate multiple queries consecutively. As soon as one response is received thenext query is executed. Every response is given to the given callback.Note: The WCPS loader starts with the last query in the array (LIFO).
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -1059,45 +1120,6 @@ Note: The WCPS loader starts with the last query in the array (LIFO).
 
 					<hr />
 				
-					<a name=".receiveData"> </a>
-					<div class="fixedFont">&lt;static&gt; 
-					
-					
-					<span class="light">EarthServerGenericClient.</span><b>receiveData</b>(data)
-					
-					</div>
-					<div class="description">
-						
-						
-							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>data</b>
-									
-								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
-				
 					<a name=".requestWCPSImageAlphaDem"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
@@ -1106,11 +1128,10 @@ Note: The WCPS loader starts with the last query in the array (LIFO).
 					
 					</div>
 					<div class="description">
-						Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
-If not the terrain is flat.
+						Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.If not the terrain is flat.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -1158,10 +1179,10 @@ If not the terrain is flat.
 					
 					</div>
 					<div class="description">
-						Requets an image via WCPS and a dem via WCS.
+						Requests an image via WCPS and a dem via WCS.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -1236,7 +1257,7 @@ If not the terrain is flat.
 						Requests an image via WMS and a dem via WCS.
 						
 							<br />
-							<i>Defined in: </i> <a href="../symbols/src/EarthServer_js__ServerRequest.js.html">ServerRequest.js</a>.
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
 						
 						
 					</div>
@@ -1328,48 +1349,6 @@ If not the terrain is flat.
 						
 						
 
-<<<<<<< HEAD
-					<hr />
-				
-					<a name=".updateValue"> </a>
-					<div class="fixedFont">&lt;static&gt; 
-					
-					
-					<span class="light">EarthServerGenericClient.</span><b>updateValue</b>(value)
-					
-					</div>
-					<div class="description">
-						
-						
-							<br />
-							<i>Defined in: </i> <a href="../symbols/src/code_UI_v1.js.html">UI_v1.js</a>.
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>value</b>
-									
-								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-=======
->>>>>>> SirSlaxalot/master
 					
 				
 			
@@ -1384,11 +1363,7 @@ If not the terrain is flat.
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-<<<<<<< HEAD
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Apr 10 2013 17:12:00 GMT+0200 (MESZ)
-=======
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Apr 08 2013 13:48:17 GMT+0200 (MESZ)
->>>>>>> SirSlaxalot/master
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>
