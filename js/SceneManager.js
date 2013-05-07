@@ -452,6 +452,7 @@ EarthServerGenericClient.SceneManager = function()
                 var modelIndex = this.getModelIndex(modelName);
                 if( modelIndex >= 0)
                 {
+                    layer.setBoundModuleIndex(modelIndex);
                     models[modelIndex].addBinding(layer);
                 }
             }
@@ -798,21 +799,17 @@ EarthServerGenericClient.SceneManager = function()
     this.updateOffset = function(modelIndex,which,value)
     {
         var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
-        var axis = "";
 
         if( trans )
         {
-            var offset;
+            var offset=0;
             switch(which)
             {
                 case 0: offset = cubeSizeX/2.0;
-                        axis = "xAxis";
                         break;
                 case 1: offset = cubeSizeY/2.0;
-                        axis = "yAxis";
                         break;
                 case 2: offset = cubeSizeZ/2.0;
-                        axis = "zAxis";
                         break;
             }
 
@@ -821,7 +818,7 @@ EarthServerGenericClient.SceneManager = function()
             var delta = oldTrans[which] - (value - offset);
             oldTrans[which] = value - offset;
             trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].movementUpdate(axis,delta);
+            models[modelIndex].movementUpdate(which,delta);
         }
     };
 
@@ -847,7 +844,26 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+            models[modelIndex].elevationUpdate();
         }
+    };
+
+    /**
+     * Returns the elevation value of a scene model at a specific point in the 3D scene.
+     * The point is checked in the current state of the scene with all transformations.
+     * @param modelIndex - Index of the model.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height on the y-axis.
+     */
+    this.getHeightAt3DPosition = function(modelIndex,xPos,zPos)
+    {
+        if(modelIndex >= 0 && modelIndex < models.length)
+        {
+            return models[modelIndex].getHeightAt3DPosition(xPos,zPos);
+        }
+        else
+        {   return 0;   }
     };
 
     /**

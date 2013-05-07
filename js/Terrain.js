@@ -246,12 +246,48 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.getHeightmapWidth = function()
     {   return this.data.width; };
+
     /**
      * Returns the Height of the Heightmap of the terrain.
-     * @returns {*|number}
+     * @returns {number}
      */
     this.getHeightmapHeight = function()
     {   return this.data.height; };
+
+
+    /**
+     * Returns the elevation value of the height map at a specific point in the 3D scene.
+     * All transformations and scales are considered.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height on the y-axis.
+     */
+    this.getHeightAt3DPosition = function(xPos,zPos)
+    {
+        var value = 0;
+        var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+        if(transform)
+        {
+            var translations = transform.getAttribute("translation");
+            translations = translations.split(" ");
+            var scales = transform.getAttribute("scale");
+            scales = scales.split(" ");
+
+            var xValue = (xPos - translations[0]) / scales[0];
+            var zValue = (zPos - translations[2]) / scales[2];
+
+            value = parseFloat( this.data.heightmap[ parseInt(xValue) ][ parseInt(zValue) ] * scales[1] ) + parseFloat(translations[1]);
+
+            //console.log("Pos: " + xPos + "/" + zPos);
+            //console.log("HM Values: " + xValue + "/" + zValue);
+            //console.log("Scales: " + scales[1] + "/" + " Trans: " + translations[1]);
+            //console.log("Height: " + value);
+        }
+        else
+        {   console.log("AbstractTerrain::getHeightAt3DPosition: Can't find model transform for index " + this.index); }
+
+        return value;
+    };
 };
 
 
@@ -268,6 +304,8 @@ EarthServerGenericClient.AbstractTerrain = function()
  */
 EarthServerGenericClient.ProgressiveTerrain = function(index)
 {
+    this.index = index;
+
     /**
      * General information about the amount of chunks needed to build the terrain.
      * @type {Object}
@@ -354,6 +392,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
+    this.index = index;
 
     /**
      * Distance to change between full and 1/2 resolution.

@@ -189,6 +189,33 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * This function calls every binding object that the elevation of the models was changed.
+     */
+    this.elevationUpdate = function()
+    {
+        for(var i=0; i<this.bindings.length;i++)
+        {
+            this.bindings[i].elevationUpdate();
+        }
+    };
+
+    /**
+     * Returns the elevation value of it's terrain at a specific point in the 3D scene.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height on the y-axis.
+     */
+    this.getHeightAt3DPosition = function(xPos,zPos)
+    {
+        if( this.terrain)
+        {
+            return this.terrain.getHeightAt3DPosition(xPos,zPos);
+        }
+        else
+        {   return 0; }
+    };
+
+    /**
      * This creates a placeholder Element for the model. It consists of an simple quad.
      * Models that use this placeholder should remove it of course.
      */

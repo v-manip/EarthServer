@@ -15,26 +15,30 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
 EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
 {
 
-    this.name = Name;   //Name of this layer
-    var annotationTransforms = []; //Array with all transform to switch rendering
-    var annotations = [];   //The text of the annotations (displayed in the UI)
+    this.name = Name;   // Name of this layer
+    var annotationTransforms = []; // Array with all annotation text transforms
+    var annotations = [];   // The text of the annotations (displayed in the UI)
+    var markerTransforms = []; // Array with all marker transforms
+    var modelIndex = -1;    // Index of the model this layer is bound to (-1 for unbound)
 
+    /**
+     * Sets the index of the scene model this annotation layer is bound to.
+     * @param index - Index of the scene model.
+     */
+    this.setBoundModuleIndex = function(index)
+    {
+        modelIndex = index;
+    };
 
     /**
      * If the annotation layer is bound to a module the annotations shall move when the module is moved.
      * This function shall receive the delta of the positions every time the module is moved.
-     * @param type - Type of the movement. ("xAxis","yAxis" or "zAxis").
+     * @param axis - Axis of the movement.
      * @param delta - Delta to the last position.
      */
-    this.movementUpdate = function(type,delta)
+    this.movementUpdate = function(axis,delta)
     {
-        var axis = -1;
-
-        if(type === "xAxis"){ axis = 0; }
-        if(type === "yAxis"){ axis = 1; }
-        if(type === "zAxis"){ axis = 2; }
-
-        if( axis !== -1)
+        if( axis >= 0 && axis < 3)
         {
             for(var i=0; i<annotationTransforms.length;i++)
             {
@@ -44,11 +48,63 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
                 if( transValue.length < 3)
                 { transValue = trans.split(",");}
 
-                transValue[axis] = parseInt(transValue[axis]) - parseInt(delta);
+                if(i%2 === 0 || axis === 1)
+                {   transValue[axis] = parseInt(transValue[axis]) - parseInt(delta); }
+                else
+                {   transValue[axis] = parseInt(transValue[axis]) + parseInt(delta); }
+
                 annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+            }
+            for( i=0; i<markerTransforms.length;i++)
+            {
+                trans = markerTransforms[i].getAttribute("translation");
+                transValue = trans.split(" ");
+
+                if( transValue.length < 3)
+                { transValue = trans.split(",");}
+
+                transValue[axis] = parseInt(transValue[axis]) - parseInt(delta);
+                markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
             }
         }
 
+
+    };
+
+    /**
+     * This function notifies the annotation layer that the scene model's elevation was changed.
+     * All annotation will be checked and altered in their position.
+     */
+    this.elevationUpdate = function()
+    {
+        for(var i=0; i<annotationTransforms.length;i++)
+        {
+            var trans = annotationTransforms[i].getAttribute("translation");
+            var transValue = trans.split(" ");
+            var mirror = 1;//We have to multiply the backside text positions with -1
+
+            if( transValue.length < 3)
+            { transValue = trans.split(",");}
+
+
+            if(i%2 === 1)
+            {   mirror = -1;    }
+
+            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0])*mirror,parseInt(transValue[2])*mirror) + fontHover;
+            annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+        }
+
+        for( i=0; i<markerTransforms.length;i++)
+        {
+            trans = markerTransforms[i].getAttribute("translation");
+            transValue = trans.split(" ");
+
+            if( transValue.length < 3)
+            { transValue = trans.split(",");}
+
+            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0]),parseInt(transValue[2]));
+            markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+        }
 
     };
 
@@ -104,7 +160,8 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
                 sphere_trans.appendChild(sphere_shape);
 
                 root.appendChild(sphere_trans);
-                annotationTransforms.push(sphere_trans);
+                //annotationTransforms.push(sphere_trans);
+                markerTransforms.push(sphere_trans);
 
                 sphere_trans = null;
                 sphere_shape = null;
@@ -130,7 +187,8 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
                 rootTransform.setAttribute('rotation', '0 1 0 3.14');
             }
 
-            annotationTransforms.push(rootTransform);//save the transform to toggle rendering
+            //annotationTransforms.push(rootTransform);//save the transform to toggle rendering
+            annotationTransforms.push(textTransform);
             rootTransform.appendChild(textTransform);
             root.appendChild( rootTransform );
         }
@@ -152,6 +210,10 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
         for(var i=0; i<annotationTransforms.length;i++)
         {
             annotationTransforms[i].setAttribute("render",value);
+        }
+        for(i=0; i<markerTransforms.length;i++)
+        {
+            markerTransforms[i].setAttribute("render",value);
         }
     };
 
