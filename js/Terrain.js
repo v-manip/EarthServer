@@ -23,9 +23,10 @@ EarthServerGenericClient.AbstractTerrain = function()
      * Creates a html canvas element out of the texture and removes the alpha values.
      * @param texture - Texture to draw. Can be everything which can be rendered into a canvas.
      * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
+     * @param noData - NoData sets all pixels with the RGB value that is the same NODATA to fully transparent.
      * @returns {HTMLElement} The canvas element.
      */
-    this.createCanvas = function(texture,index)
+    this.createCanvas = function(texture,index,noData)
     {
         var canvasTexture = null;
 
@@ -37,14 +38,33 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTexture.width = Math.pow(2, Math.round(Math.log(texture.width)/Math.log(2)));
             canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height)/Math.log(2)));
 
+            if( canvasTexture.width > 8192)canvasTexture.width = 8192;
+            if( canvasTexture.height > 8192) canvasTexture.height = 8192;
+
             var context = canvasTexture.getContext('2d');
             context.drawImage(texture, 0,0, canvasTexture.width, canvasTexture.height);
 
             var imageData = context.getImageData(0, 0, canvasTexture.width, canvasTexture.height);
-            for (var i=0;i<imageData.data.length;i+=4)
+
+            if(noData !== undefined && noData.length >2) // nodata RGB values are set:
             {
-                imageData.data[i+3]=255;
+                for (var k=0;k<imageData.data.length;k+=4)
+                {
+                    if(imageData.data[k] === noData[0] && imageData.data[k+1] === noData[1] && imageData.data[k+2] === noData[2])
+                    {
+                        imageData.data[k+3]=0;    } // nodata value, so set transparent
+                    else
+                    {   imageData.data[k+3]=255;    }// other value, so set fully opaque
+                }
             }
+            else // nodata is not defined: set the alpha value of all pixels to fully opaque.
+            {
+                for (var i=0;i<imageData.data.length;i+=4)
+                {
+                    imageData.data[i+3]=255;
+                }
+            }
+
             context.putImageData(imageData,0,0);
         }
         else
@@ -288,6 +308,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
         return value;
     };
+
 };
 
 
@@ -381,7 +402,7 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
 
 
 /**
- * @class This terrain build up a LOD with 3 levels of the received data.
+ * @class This terrain builds up a LOD with 3 levels of the received data.
  * @param root - Dom Element to append the terrain to.
  * @param data - Received Data of the Server request.
  * @param index - Index of the model that uses this terrain.
@@ -405,12 +426,12 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
      */
     var lodRange2       = 10000;
 
-
     /**
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
     var canvasTexture   = this.createCanvas( data.texture,index);
+
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
      * We want to build 3 chunks for the LOD with different resolution but the same size on the screen.
@@ -427,7 +448,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
     var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
     /**
-     * Builds the terrain and appends into the scene.
+     * Builds the terrain and appends it into the scene.
      */
     this.createTerrain= function()
     {
@@ -471,3 +492,72 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
     };
 };
 EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
+/**
+ * @class This terrain builds a plane with sharad data.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @paramm noData - Array with RGB value to be considered NODATA and shall be transparent.
+ * @augments EarthServerGenericClient.AbstractTerrain
+ * @constructor
+ */
+
+EarthServerGenericClient.SharadTerrain = function(root, data,index,noData)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.data = data;
+    this.index = index;
+
+    /**
+     * The canvas that holds the received image.
+     * @type {HTMLElement}
+     */
+    var canvasTexture   = this.createCanvas( data.texture,index,noData);
+
+    /**
+     * Builds the terrain and appends it into the scene.
+     */
+    this.createTerrain= function()
+    {
+        var appearance = this.getAppearances("TerrainApp_"+index,1,index,canvasTexture,data.transparency);
+        var shape = document.createElement("shape");
+
+        var triangleset = document.createElement('IndexedFaceSet');
+        triangleset.setAttribute("colorPerVertex", "false");
+        triangleset.setAttribute("coordindex","0 1 2 3 -1");
+        triangleset.setAttribute("solid","false");
+
+        var coords = document.createElement('Coordinate');
+
+        var sizeX = canvasTexture.width;
+        var sizeZ = canvasTexture.height;
+
+        var p = {};
+        p[0] = "0 0 0 ";
+        p[1] = "0 0 "+ sizeZ + " ";
+        p[2] = ""+ sizeX    + " 0 " + sizeZ + " ";
+        p[3] = ""+ sizeX    + " 0 0";
+
+        var points="";
+        for(var i=0; i<4;i++)
+        {   points = points+p[i];   }
+        coords.setAttribute("point", points);
+
+        triangleset.appendChild(coords);
+        shape.appendChild(appearance[0]);
+        shape.appendChild(triangleset);
+
+        root.appendChild(shape);
+
+        shape = null;
+        triangleset = null;
+        appearance = null;
+        coords = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+
+};
+EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);

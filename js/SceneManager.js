@@ -100,22 +100,24 @@ EarthServerGenericClient.Light = function(domElement,index,position,radius,color
  */
 EarthServerGenericClient.SceneManager = function()
 {
-    var models = [];               //Array of scene models
-    var modelLoadingProgress = []; //Array to store the models loading progress
-    var totalLoadingProgress = 0;  //Value for the loading progress bar (all model loading combined)
-    var baseElevation = [];        //Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
-    var progressCallback = undefined;//Callback function for the progress update.
-    var annotationLayers = [];      //Array of AnnotationsLayer to display annotations in the cube
-    var cameraDefs = [];            //Name and ID of the specified cameras. Format: "NAME:ID"
-    var lights = [];                //Array of (Point)lights
-    var lightInScene = false;       //Flag if a light should be added to the scene
+    var models = [];               // Array of scene models
+    var modelLoadingProgress = []; // Array to store the models loading progress
+    var totalLoadingProgress = 0;  // Value for the loading progress bar (all model loading combined)
+    var baseElevation = [];        // Every Model has it's base elevation on the Y-Axis. Needed to change and restore the elevation.
+    var baseWidth = [];            // Every Model has it's base width on the X-Axis. Needed to change and restore the width.
+    var baseLength = [];            // Every Model has it's base length on the Z-Axis. Needed to change and restore the length.
+    var progressCallback = undefined;// Callback function for the progress update.
+    var annotationLayers = [];      // Array of AnnotationsLayer to display annotations in the cube
+    var cameraDefs = [];            // Name and ID of the specified cameras. Format: "NAME:ID"
+    var lights = [];                // Array of (Point)lights
+    var lightInScene = false;       // Flag if a light should be added to the scene
 
-    //Default cube sizes
+    // Default cube sizes
     var cubeSizeX = 1000;
     var cubeSizeY = 1000;
     var cubeSizeZ = 1000;
 
-    //Background
+    // Background
     var Background_groundAngle = "0.9 1.5 1.57";
     var Background_groundColor = "0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85";
     var Background_skyAngle    = "0.9 1.5 1.57";
@@ -485,6 +487,55 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Adds an annotation to an existing annotation layer.
+     * The position is given in latitude/longitude and has to be in the bounding box of
+     * the model the annotation layer is bound to. The annotation is automatically positioned
+     * above the model as soon as it's loaded.
+     * @param AnnotationLayerName - Name of the annotation layer to add the annotation to.
+     * @param latitude - Position in latitude of the annotation.
+     * @param longitude - Position in longitude of the annotation.
+     * @param Text - Text of the annotation.
+     */
+    this.addAnnotationAtPosition = function(AnnotationLayerName,latitude,longitude,Text)
+    {
+        var layerIndex = this.getAnnotationLayerIndex(AnnotationLayerName);
+        if( layerIndex >= 0)
+        {
+            // Check if layer is bound to a model
+            var modelIndex = annotationLayers[layerIndex].getBoundModuleIndex();
+            if( modelIndex >= 0)// is bound
+            {
+                // Get model's local area and calc the position in the fishtank
+                var area = models[modelIndex].getAreaOfInterest();
+                var xPercent = (latitude  - area.minx) / (area.maxx - area.minx);
+                var zPercent = (longitude - area.miny) / (area.maxy - area.miny);
+
+                // Check bounds
+                if( xPercent <0 || xPercent > 1 || zPercent <0 || zPercent >1)
+                {   console.log("Annotation " + Text + " is not in the module's " + models[modelIndex].getName() + " boundaries."); }
+                else
+                {
+                    var xPos = (-cubeSizeX/2.0) + xPercent*cubeSizeX;
+                    // We can't tell the real y position unless the model is fully loaded
+                    var yPos = (-cubeSizeY/2.0) + this.getModelOffsetY(modelIndex) * cubeSizeY;
+                    var zPos = (-cubeSizeZ/2.0) + zPercent*cubeSizeZ;
+
+                    annotationLayers[layerIndex].addAnnotation(xPos,yPos,zPos,Text);
+                }
+            }
+            else// unbound: can't get lat/long positions so can't insert this annotation.
+            {
+                console.log("AnnotationLayer with name: "+ AnnotationLayerName + " is not bound to a model.");
+                console.log("Can't insert annotation " + Text + " at latitude/longitude position.");
+            }
+        }
+        else
+        {
+            console.log("Could not found a AnnotationLayer with name: " + AnnotationLayerName);
+        }
+    };
+
+    /**
      * Sets the callback function for the progress update. The progress function gives a parameter between 0-100.
      * You can set callback = null for no progress update at all. If no callback is given at all the progress is
      * printed to the console.
@@ -827,7 +878,7 @@ EarthServerGenericClient.SceneManager = function()
      * @param modelIndex - Index of the model that should be altered
      * @param value - The base elevation is multiplied by this value
      */
-    this.updateElevation =function(modelIndex,value)
+    this.updateElevation = function(modelIndex,value)
     {
         var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
 
@@ -842,6 +893,58 @@ EarthServerGenericClient.SceneManager = function()
             }
 
             oldTrans[1] = value*baseElevation[modelIndex]/10;
+
+            trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+            models[modelIndex].elevationUpdate();
+        }
+    };
+
+    /**
+     * This changes the scaling on the X-Axis(Width).
+     * @param modelIndex - Index of the model that should be altered
+     * @param value - The base elevation is multiplied by this value
+     */
+    this.updateWidth = function(modelIndex,value)
+    {
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
+
+        if( trans )
+        {
+            var oldTrans = trans.getAttribute("scale");
+            oldTrans = oldTrans.split(" ");
+
+            if( baseWidth[modelIndex] === undefined)
+            {
+                baseWidth[modelIndex] = oldTrans[0];
+            }
+
+            oldTrans[0] = value*baseWidth[modelIndex]/10;
+
+            trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+            models[modelIndex].elevationUpdate();
+        }
+    };
+
+    /**
+     * This changes the scaling on the Z-Axis(Length).
+     * @param modelIndex - Index of the model that should be altered
+     * @param value - The base elevation is multiplied by this value
+     */
+    this.updateLength = function(modelIndex,value)
+    {
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
+
+        if( trans )
+        {
+            var oldTrans = trans.getAttribute("scale");
+            oldTrans = oldTrans.split(" ");
+
+            if( baseLength[modelIndex] === undefined)
+            {
+                baseLength[modelIndex] = oldTrans[2];
+            }
+
+            oldTrans[2] = value*baseLength[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
             models[modelIndex].elevationUpdate();

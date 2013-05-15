@@ -31,6 +31,15 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
     };
 
     /**
+     * Returns the index of the model this layer is bound to.
+     * @returns {number} - Index of the model or -1 if unbound.
+     */
+    this.getBoundModuleIndex = function()
+    {
+        return modelIndex;
+    };
+
+    /**
      * If the annotation layer is bound to a module the annotations shall move when the module is moved.
      * This function shall receive the delta of the positions every time the module is moved.
      * @param axis - Axis of the movement.

@@ -7,18 +7,19 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  * Example: One WMS request for the texture and one WCS request for the heightmap.
  */
 EarthServerGenericClient.ServerResponseData = function () {
-    this.heightmap = null;          //Heightmap
-    this.heightmapUrl = "";         //If available, you can use the link as alternative.
-    this.texture = new Image();     //Texture as image object
-    this.texture.crossOrigin = '';  //Enable Texture to be edited (for alpha values for example)
-    this.textureUrl = "";           //If available, you can use the link as alternative.
-    this.width = 0;                 //Heightmap width
-    this.height = 0;                //Heightmap height
-    //The information about the heightmap are used to position a module correctly in the fishtank.
-    //The minimum value as offset and the difference between minimum and maximum for scaling.
-    this.minHMvalue =  Number.MAX_VALUE;//Lowest value in the heightmap
-    this.maxHMvalue = -Number.MAX_VALUE;//Highest value in the heigtmap
-    this.averageHMvalue = 0;        //Average value of the heightmap
+    this.heightmap = null;          // Heightmap
+    this.heightmapUrl = "";         // If available, you can use the link as alternative.
+    this.texture = new Image();     // Texture as image object
+    this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
+    this.textureUrl = "";           // If available, you can use the link as alternative.
+    this.width = 0;                 // Heightmap width
+    this.height = 0;                // Heightmap height
+    // The information about the heightmap are used to position a module correctly in the fishtank.
+    // The minimum value as offset and the difference between minimum and maximum for scaling.
+    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap
+    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap
+    this.averageHMvalue = 0;        // Average value of the heightmap
+    this.validateHeightMap = true;  // Flag if heightmap should be checked in validate().
 
     /**
      * Validates if the response full successfully: Was an image and a height map received?
@@ -31,9 +32,12 @@ EarthServerGenericClient.ServerResponseData = function () {
         if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
 
         //Heightmap
-        if( this.heightmap === null){    return false;   }
-        if( this.width === null || this.height === null){    return false;   }
-        if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        if( this.validateHeightMap )
+        {
+            if( this.heightmap === null){    return false;   }
+            if( this.width === null || this.height === null){    return false;   }
+            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        }
 
         //Everything OK
         return true;
@@ -274,6 +278,20 @@ EarthServerGenericClient.requestWCPSImageAlphaDem = function(callback,WCPSurl,WC
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
+};
+
+/**
+ * Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
+ * If not the terrain is flat.
+ * @param callback - Module that requests the image.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - The WCPS query.
+ */
+EarthServerGenericClient.requestWCPSImage = function(callback,WCPSurl,WCPSquery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    responseData.validateHeightMap = false; // No heightmap in this response intended so don't check it in validate()
+    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,false);
 };
 
 /**

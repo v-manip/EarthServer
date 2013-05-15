@@ -12,6 +12,16 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     this.setName = function(modelName){
         this.name = String(modelName);
     };
+
+    /**
+     * Returns the name of the model.
+     * @returns {String}
+     */
+    this.getName = function()
+    {
+        return this.name;
+    };
+
     /**
      * Sets the area of interest for the model. (Lower Corner, Upper Corner)
      * @param minx - Minimum/Lower Latitude
@@ -25,6 +35,22 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.maxx = maxx;
         this.maxy = maxy;
     };
+
+    /**
+     * Returns object with the area of interest of the model. (minx,miny,maxx,maxy)
+     * @returns {{}}
+     */
+    this.getAreaOfInterest = function()
+    {
+        var aoi = {};
+        aoi.minx = this.minx;
+        aoi.miny = this.miny;
+        aoi.maxx = this.maxx;
+        aoi.maxy = this.maxy;
+
+        return aoi;
+    };
+
     /**
      * Sets the resolution of the scene model (if possible).
      * @param xRes - Resolution on the x-axis/Latitude

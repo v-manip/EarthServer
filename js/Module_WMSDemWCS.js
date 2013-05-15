@@ -151,7 +151,9 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdate();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
 
         transform = null;
     }

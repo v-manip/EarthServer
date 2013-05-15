@@ -193,7 +193,7 @@ EarthServerGenericClient.appendXYZSlider = function(domElement,sliderID,label,el
  * @param domElement - Append the slider to this dom element.
  * @param sliderID - Dom ID for this slider.
  * @param label - Label (displayed in the UI) for this slider
- * @param elementID - First parameter for the callback function. Change the element with this ID.
+ * @param elementID - First parameter for the callback function. Change the module with this ID.
  * @param min - Minimum value of this slider.
  * @param max - Maximum value of this slider.
  * @param startValue - Start value of this slider.
