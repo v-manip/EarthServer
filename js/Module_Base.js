@@ -109,6 +109,15 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets if side panels should be added to the model.
+     * @param value
+     */
+    this.setSidePanels = function( value )
+    {
+        this.sidePanels = value;
+    };
+
+    /**
      * Updates the transparency during runtime of the scene model.
      * The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
      * @param transparency - Value of transparency.
@@ -437,5 +446,12 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {Number}
          */
         this.transparency = 0;
+
+        /**
+         * Flag if side panels should be added to the terrain.
+         * @default false
+         * @type {boolean}
+         */
+        this.sidePanels = false;
     };
 };

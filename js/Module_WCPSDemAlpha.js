@@ -236,6 +236,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             this.terrain.createTerrain();
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
             this.elevationUpdate();
+            if(this.sidePanels)
+            {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
         }
         else
@@ -248,6 +250,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain.insertLevel(this.transformNode,data);
             this.elevationUpdate();
+            if(this.sidePanels)
+            {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
 
             if( this.receivedDataCount === this.requests)

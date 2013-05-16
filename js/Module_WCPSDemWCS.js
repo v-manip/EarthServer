@@ -174,6 +174,10 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdate();
+
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(transform,1); }
+
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;

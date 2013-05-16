@@ -35,10 +35,11 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";
             canvasTexture.setAttribute("id", "EarthServerGenericClient_Canvas"+index);
-            canvasTexture.width = Math.pow(2, Math.round(Math.log(texture.width)/Math.log(2)));
-            canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height)/Math.log(2)));
+            canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
+            canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height) / Math.log(2)));
 
-            if( canvasTexture.width > 8192)canvasTexture.width = 8192;
+            // TODO: Check in X3DOM/WEBGl and/or setting in SceneManager?
+            if( canvasTexture.width  > 8192) canvasTexture.width  = 8192;
             if( canvasTexture.height > 8192) canvasTexture.height = 8192;
 
             var context = canvasTexture.getContext('2d');
@@ -73,8 +74,68 @@ EarthServerGenericClient.AbstractTerrain = function()
         return canvasTexture;
     };
 
+    this.createOneSidePanel = function (domElement,width,height,xPos,yPos,spacing,modelTrans,modelScale)
+    {
+        var trans = document.createElement("transform");
+        trans.setAttribute("scale","" + spacing + " 1 " + spacing);
+        var shape = document.createElement('shape');
+        var faceSet = document.createElement('IndexedFaceSet');
+        faceSet.setAttribute("colorPerVertex", "false");
+        faceSet.setAttribute("solid","false");
+
+        var info = {};
+        info.chunkWidth = width;
+        info.chunkHeight = height;
+        info.xpos = xPos;
+        info.ypos = yPos;
+
+        var coords = document.createElement('Coordinate');
+        var index = "0 1 3 2 -1 "; // vertex index for the first quad
+        var points="";
+        var bottom = ((-EarthServerGenericClient.MainScene.getCubeSizeY()/2.0) - parseFloat(modelTrans) ) / parseFloat(modelScale);
+        var heightData = this.getHeightMap(info);
+
+        // add vertices and indices for the quads
+        for(var y=0; y<height;y++)
+        {
+            for(var x=0; x<width;x++)
+            {
+                points = points + (xPos+x) + " " + heightData[y][x] + " " + (yPos+y) +" ";
+                points = points + (xPos+x) + " " + bottom + " " + (yPos+y) + " ";
+                if(y+x!==0 && y+x< height+width -2)
+                {
+                    var mult = (x+y)*2;
+                    index = index + (mult+1) + " " + mult + " " + (mult+2) + " " + (mult+3) + " -1 ";
+                }
+            }
+        }
+
+        faceSet.setAttribute("coordindex",index);
+        coords.setAttribute("point", points);
+
+        faceSet.appendChild(coords);
+        shape.appendChild(faceSet);
+        trans.appendChild(shape);
+        domElement.appendChild(trans);
+    };
+
+    this.createSidePanels = function(domElement,spacing)
+    {
+        var modelScale = domElement.getAttribute("scale");
+        modelScale = modelScale.split(" ");
+        modelScale = modelScale[1];
+        var modelTrans = domElement.getAttribute("translation");
+        modelTrans = modelTrans.split(" ");
+        modelTrans = modelTrans[1];
+
+        this.createOneSidePanel(domElement,1,this.data.height,0,0,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,this.data.width,1,0,0,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,this.data.width,1,0,this.data.height-1,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,1,this.data.height,this.data.width-1,0,spacing,modelTrans,modelScale);
+    };
+
     /**
-     * Calcs the needed numbers of chunks for the terrain for a specific chunk size.
+     * Calculates the needed numbers of chunks for the terrain for a specific chunk size.
      * @param width - Width of the entire terrain.
      * @param height - Height of the entire terrain.
      * @param chunkSize - The size of one chunk.
@@ -127,12 +188,12 @@ EarthServerGenericClient.AbstractTerrain = function()
         };
 
         if( currentChunk%chunkInfo.numChunksX === (chunkInfo.numChunksX-1) )
-        {   info.chunkWidth = terrainWidth - parseInt((chunkInfo.numChunksX-1)*chunkSize);   }
+        {   info.chunkWidth = terrainWidth - parseInt((chunkInfo.numChunksX-1)*(chunkSize-1));   }
         else
         {   info.chunkWidth = chunkSize;   }
 
         if( currentChunk >= chunkInfo.numChunks - chunkInfo.numChunksX)
-        {   info.chunkHeight = terrainHeight - parseInt((chunkInfo.numChunksY-1)*chunkSize); }
+        {   info.chunkHeight = terrainHeight - parseInt((chunkInfo.numChunksY-1)*(chunkSize-1)); }
         else
         {   info.chunkHeight = chunkSize  }
 
@@ -142,6 +203,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     /**
      * Returns a height map part from the given height map specified in the info parameter.
      * @param info - Which part of the heightmap should be returned.
+     *      info.chunkHeight, info.chunkWidth, info.xpos & info.ypos
      * @returns {*}
      */
     this.getHeightMap = function(info)
