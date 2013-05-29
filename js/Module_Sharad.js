@@ -9,6 +9,7 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
 EarthServerGenericClient.Model_Sharad = function()
 {
     this.setDefaults();
+    this.modelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
     this.name = "Sharad Underground";
 };
 EarthServerGenericClient.Model_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
@@ -63,7 +64,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setNoDataValue = function(red,gr
  */
 EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
-    {   alert("root is not defined")    };
+    {   alert("root is not defined");    }
 
     this.cubeSizeX = cubeSizeX;
     this.cubeSizeY = cubeSizeY;
@@ -127,11 +128,14 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData= function( data)
 
         trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
+        //TODO: calc position of both ends in the cube
+
         var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
         var yoff = (this.cubeSizeY * this.yOffset) + (height*scaleY) - (this.cubeSizeY/2.0);
         var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
         trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
 
+        //TODO: calc rotation
         // turn upright
         trans.setAttribute("rotation","1 0 0 1.57");
         this.root.appendChild( trans);
@@ -144,6 +148,61 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData= function( data)
         this.terrain.createTerrain();
     }
 };
+
+/**
+ * Sets the index of the scene model the sharad module is bound to.
+ * @param index - Index of the scene model.
+ */
+EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(index)
+{
+    if(index === this.index)//prevent to bind this module to itself
+    {
+        console.log("Module_Sharad: Can't bind module to itself.");
+    }
+    else
+    {
+        console.log("Modeule_Sharad: Bound to model: " + index);
+        this.modelIndex = index;
+    }
+};
+
+/**
+ * Returns the index of the model sharad module is bound to.
+ * @returns {number} - Index of the model or -1 if unbound.
+ */
+EarthServerGenericClient.Model_Sharad.prototype.getBoundModuleIndex = function()
+{
+    return this.modelIndex;
+};
+
+/**
+ * Resets the modelIndex sharad module is bound to back to -1 and marks it as unbound.
+ */
+EarthServerGenericClient.Model_Sharad.prototype.releaseBinding = function()
+{
+    this.modelIndex = -1;
+};
+
+/**
+ * If sharad module is bound to another module the sharad module shall move when the other module is moved.
+ * This function shall receive the delta of the positions every time the module is moved.
+ * @param axis - Axis of the movement.
+ * @param delta - Delta to the last position.
+ */
+EarthServerGenericClient.Model_Sharad.prototype.movementUpdate = function(axis,delta)
+{
+   EarthServerGenericClient.MainScene.updateOffsetByDelta(this.index,axis,delta);
+};
+
+/**
+ * This function notifies sharad module that the bound module's elevation was changed.
+ * All annotation will be checked and altered in their position.
+ */
+EarthServerGenericClient.Model_Sharad.prototype.elevationUpdate = function()
+{
+    //TODO: implement
+};
+
 
 
 /**

@@ -40,6 +40,14 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
     };
 
     /**
+     * Resets the modelIndex this annotation layer is bound to back to -1 and marks it as unbound.
+     */
+    this.releaseBinding = function()
+    {
+        modelIndex = -1;
+    };
+
+    /**
      * If the annotation layer is bound to a module the annotations shall move when the module is moved.
      * This function shall receive the delta of the positions every time the module is moved.
      * @param axis - Axis of the movement.

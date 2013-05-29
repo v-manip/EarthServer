@@ -9,8 +9,6 @@
  */
 function ElevationGrid(parentNode,info, hf,appearances)
 {
-    "use strict";
-
     /**
      * Creates and inserts elevation grid (terrain chunk) into the DOM.
      */
@@ -142,13 +140,10 @@ function ElevationGrid(parentNode,info, hf,appearances)
      */
     function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
     {
-        var tc, tcnode,i,k, offsetx, offsety, partx, party, tmpx, tmpy,smallx,smally;
-        offsetx = xpos/terrainWidth;
-        offsety = ypos/terrainHeight;
-        partx   = parseFloat( (sizex/terrainWidth)*(1/sizex)*shrinkfactor );
-        party   = parseFloat( (sizey/terrainHeight)*(1/sizey)*shrinkfactor );
-        smallx = parseInt(sizex/shrinkfactor);
-        smally = parseInt(sizey/shrinkfactor);
+        var tmpx, tmpy;
+
+        var smallx = parseInt(sizex/shrinkfactor);
+        var smally = parseInt(sizey/shrinkfactor);
 
         if( shrinkfactor !== 1)
         {
@@ -158,21 +153,21 @@ function ElevationGrid(parentNode,info, hf,appearances)
 
         var buffer = [];
         //Create Node
-        tcnode = document.createElement("TextureCoordinate");
+        var tcnode = document.createElement("TextureCoordinate");
 
         //File string
-        for (i = 0; i < smally; i++)
+        for (var i = 0; i < smally; i++)
         {
-            for (k = 0; k < smallx; k++)
+            for (var k = 0; k < smallx; k++)
             {
-                tmpx = offsetx + (k*partx);
-                tmpy = offsety + (i*party);
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight));
 
                 buffer.push(tmpx + " ");
                 buffer.push(tmpy + " ");
             }
         }
-        tc = buffer.join("");
+        var tc = buffer.join("");
 
         tcnode.setAttribute("point", tc);
 

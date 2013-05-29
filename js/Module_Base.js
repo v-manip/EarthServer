@@ -191,6 +191,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
             }
         }
         this.bindings.push(bindingObject);
+        bindingObject.setBoundModuleIndex(this.index);
     };
 
     /**
@@ -203,6 +204,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         {
             if( this.bindings[i] === bindingObject)
             {
+                this.bindings[i].releaseBinding();
                 this.bindings.remove(i);
                 return;
             }
@@ -215,7 +217,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param movementType - Type of the movement: xAxis,zAxis,elevation...
      * @param value - Updated position
      */
-    this.movementUpdate = function(movementType,value)
+    this.movementUpdateBindings = function(movementType,value)
     {
         for(var i=0; i<this.bindings.length;i++)
         {

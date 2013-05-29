@@ -305,7 +305,7 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
-     * @default 1000 / 200 on a mobile platform
+     * @default 2000 / 200 on a mobile platform
      * @type {Number}
      */
     if( EarthServerGenericClient.isMobilePlatform())  //and for mobile Clients
@@ -454,7 +454,7 @@ EarthServerGenericClient.SceneManager = function()
                 var modelIndex = this.getModelIndex(modelName);
                 if( modelIndex >= 0)
                 {
-                    layer.setBoundModuleIndex(modelIndex);
+                    //layer.setBoundModuleIndex(modelIndex);
                     models[modelIndex].addBinding(layer);
                 }
             }
@@ -599,6 +599,8 @@ EarthServerGenericClient.SceneManager = function()
         models.push(model);
         //Initialize it's loading progress to 0
         modelLoadingProgress[model.index] = 0;
+
+        console.log("EarthServerClient::SceneManager: Added " + model.name + " with index " + model.index);
     };
 
     /**
@@ -842,7 +844,7 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
-     * Update Offset changes the position of the current selected SceneModel on the x-,y- or z-Axis.
+     * Update Offset changes the position selected SceneModel on the x-,y- or z-Axis.
      * @param modelIndex - Index of the model that should be altered
      * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
      * @param value - The new position
@@ -869,8 +871,30 @@ EarthServerGenericClient.SceneManager = function()
             var delta = oldTrans[which] - (value - offset);
             oldTrans[which] = value - offset;
             trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].movementUpdate(which,delta);
+            models[modelIndex].movementUpdateBindings(which,delta);
         }
+    };
+
+    /**
+     * Changes the position of the selected SceneModel on the x-,y- or z-Axis by the given delta.
+     * @param modelIndex - Index of the model that should be altered
+     * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
+     * @param delta - Delta to change the current position.
+     */
+    this.updateOffsetByDelta = function(modelIndex,which,delta)
+    {
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+modelIndex);
+
+        if( trans )
+        {
+            var oldTrans = trans.getAttribute("translation");
+            oldTrans = oldTrans.split(" ");
+            oldTrans[which] = parseFloat(oldTrans[which]) - parseFloat(delta);
+            trans.setAttribute("translation",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+            models[modelIndex].movementUpdateBindings(which,delta);
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find transformation for model with index " + modelIndex);}
     };
 
     /**

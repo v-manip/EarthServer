@@ -38,9 +38,10 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
             canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height) / Math.log(2)));
 
-            // TODO: Check in X3DOM/WEBGl and/or setting in SceneManager?
-            if( canvasTexture.width  > 8192) canvasTexture.width  = 8192;
-            if( canvasTexture.height > 8192) canvasTexture.height = 8192;
+            // Check max texture size
+            var maxTextureSize = x3dom.caps.MAX_TEXTURE_SIZE;
+            if( canvasTexture.width  > maxTextureSize) canvasTexture.width  = maxTextureSize;
+            if( canvasTexture.height > maxTextureSize) canvasTexture.height = maxTextureSize;
 
             var context = canvasTexture.getContext('2d');
             context.drawImage(texture, 0,0, canvasTexture.width, canvasTexture.height);
@@ -74,14 +75,91 @@ EarthServerGenericClient.AbstractTerrain = function()
         return canvasTexture;
     };
 
-    this.createOneSidePanel = function (domElement,width,height,xPos,yPos,spacing,modelTrans,modelScale)
+    /**
+     * Returns a string with the color values in RGBA of one side.
+     * @param side - Which side.
+     * @param width - Desired with.
+     * @param height - Desired height.
+     * @returns {string} - String with RGBA color values.
+     */
+    this.getColorSlide = function(side,width,height)
+    {
+        var slide = "";
+        var xPos = 0;
+        var yPos = 0;
+        var xSize = 1;
+        var ySize = 1;
+
+        switch(side)
+        {
+            case 0: ySize = this.data.texture.height;
+                    break;
+            case 1: xSize = this.data.texture.width;
+                    break;
+            case 2: xSize = this.data.texture.width;
+                    yPos = this.data.texture.height -1;
+                    break;
+            case 3: ySize = this.data.texture.height;
+                    xPos = this.data.texture.width -1;
+        }
+
+        if(this.data.texture === undefined)
+        {
+            console.log("EarthServerGenericClient.AbstractTerrain: No texture.")
+        }
+        else
+        {
+
+            var newCanvas = document.createElement("canvas");
+            newCanvas.style.display = "none";
+            newCanvas.width  = this.data.texture.width;
+            newCanvas.height = this.data.texture.height;
+            var context = newCanvas.getContext('2d');
+            context.drawImage(this.data.texture, 0,0, newCanvas.width, newCanvas.height);
+
+            var data = context.getImageData(xPos,yPos,xSize,ySize);
+            var length = data.data.length;
+
+            for(var k=0; k< length; k=k+4)
+            {
+                slide = slide + (data.data[k]/255) + " ";
+                slide = slide + (data.data[k+1]/255) + " ";
+                slide = slide + (data.data[k+2]/255) + " ";
+                slide = slide + (1) + " ";
+
+                slide = slide + (data.data[k]/255) + " ";
+                slide = slide + (data.data[k+1]/255) + " ";
+                slide = slide + (data.data[k+2]/255) + " ";
+                slide = slide + (1) + " ";
+            }
+        }
+
+        return slide;
+    };
+
+    /**
+     * Function to create one side panel. Normally called by the createSidePanels():
+     * @param domElement - Transform node of the model.
+     * @param side - Side of the panel.
+     * @param width - Number of vertices of the side panel on the x axis.
+     * @param height - Number of vertices of the side panel on the z axis.
+     * @param xPos - Starting position of the side panel on the x axis.
+     * @param yPos - Starting position of the side panel on the z axis.
+     * @param spacing - Spacing of the model's shapes.
+     * @param modelTrans - Model transformation on the y axis
+     * @param modelScale - Models scale on the y axis
+     */
+    this.createOneSidePanel = function (domElement,side,width,height,xPos,yPos,spacing,modelTrans,modelScale)
     {
         var trans = document.createElement("transform");
         trans.setAttribute("scale","" + spacing + " 1 " + spacing);
         var shape = document.createElement('shape');
         var faceSet = document.createElement('IndexedFaceSet');
-        faceSet.setAttribute("colorPerVertex", "false");
         faceSet.setAttribute("solid","false");
+
+        //Color
+        var color = document.createElement("colorRGBA");
+        color.setAttribute("color", this.getColorSlide(side,width,height) );
 
         var info = {};
         info.chunkWidth = width;
@@ -114,11 +192,26 @@ EarthServerGenericClient.AbstractTerrain = function()
         coords.setAttribute("point", points);
 
         faceSet.appendChild(coords);
+        faceSet.appendChild(color);
         shape.appendChild(faceSet);
         trans.appendChild(shape);
         domElement.appendChild(trans);
+
+
+        trans = null;
+        shape = null;
+        faceSet = null;
+        color = null;
+        coords = null;
+        index = null;
+        points = null;
     };
 
+    /**
+     * Creates side panels for a models's terrain.
+     * @param domElement - Transform node of the model.
+     * @param spacing - The terrain's shapes spacing value.
+     */
     this.createSidePanels = function(domElement,spacing)
     {
         var modelScale = domElement.getAttribute("scale");
@@ -128,10 +221,11 @@ EarthServerGenericClient.AbstractTerrain = function()
         modelTrans = modelTrans.split(" ");
         modelTrans = modelTrans[1];
 
-        this.createOneSidePanel(domElement,1,this.data.height,0,0,spacing,modelTrans,modelScale);
-        this.createOneSidePanel(domElement,this.data.width,1,0,0,spacing,modelTrans,modelScale);
-        this.createOneSidePanel(domElement,this.data.width,1,0,this.data.height-1,spacing,modelTrans,modelScale);
-        this.createOneSidePanel(domElement,1,this.data.height,this.data.width-1,0,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,0,1,this.data.height,0,0,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,1,this.data.width,1,0,0,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,2,this.data.width,1,0,this.data.height-1,spacing,modelTrans,modelScale);
+        this.createOneSidePanel(domElement,3,1,this.data.height,this.data.width-1,0,spacing,modelTrans,modelScale);
+
     };
 
     /**
@@ -359,11 +453,6 @@ EarthServerGenericClient.AbstractTerrain = function()
             var zValue = (zPos - translations[2]) / scales[2];
 
             value = parseFloat( this.data.heightmap[ parseInt(xValue) ][ parseInt(zValue) ] * scales[1] ) + parseFloat(translations[1]);
-
-            //console.log("Pos: " + xPos + "/" + zPos);
-            //console.log("HM Values: " + xValue + "/" + zValue);
-            //console.log("Scales: " + scales[1] + "/" + " Trans: " + translations[1]);
-            //console.log("Height: " + value);
         }
         else
         {   console.log("AbstractTerrain::getHeightAt3DPosition: Can't find model transform for index " + this.index); }
@@ -404,7 +493,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    var canvasTexture;
+    this.canvasTexture;
     /**
      * Counter of the inserted levels.
      * @type {number}
@@ -419,7 +508,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     this.insertLevel = function(root,data)
     {
         this.data = data;
-        canvasTexture = this.createCanvas(data.texture,index);
+        this.canvasTexture = this.createCanvas(data.texture,index);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
         //Remove old Materials of the deleted children
@@ -432,7 +521,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
                 //Build all necessary information and values to create a chunk
                 var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
                 var hm = this.getHeightMap(info);
-                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,canvasTexture,data.transparency);
+                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,this.canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
                 transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -454,7 +543,6 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             }
         }
         currentData++;
-        canvasTexture = null;
         chunkInfo = null;
 
         EarthServerGenericClient.MainScene.reportProgress(index);
@@ -492,7 +580,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    var canvasTexture   = this.createCanvas( data.texture,index);
+    this.canvasTexture   = this.createCanvas( data.texture,index);
 
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
@@ -521,7 +609,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
                 //Build all necessary information and values to create a chunk
                 var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
                 var hm = this.getHeightMap(info);
-                var appearance = this.getAppearances("TerrainApp_"+index,3,index,canvasTexture,data.transparency);
+                var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,data.transparency);
 
                 var transform = document.createElement('Transform');
                 transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -547,7 +635,6 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
                 alert('Terrain::CreateNewChunk(): ' + error);
             }
         }
-        canvasTexture = null;
         chunkInfo = null;
 
         EarthServerGenericClient.MainScene.reportProgress(index);
@@ -575,14 +662,14 @@ EarthServerGenericClient.SharadTerrain = function(root, data,index,noData)
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    var canvasTexture   = this.createCanvas( data.texture,index,noData);
+   this.canvasTexture   = this.createCanvas( data.texture,index,noData);
 
     /**
      * Builds the terrain and appends it into the scene.
      */
     this.createTerrain= function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+index,1,index,canvasTexture,data.transparency);
+        var appearance = this.getAppearances("TerrainApp_"+index,1,index,this.canvasTexture,data.transparency);
         var shape = document.createElement("shape");
 
         var triangleset = document.createElement('IndexedFaceSet');
@@ -592,8 +679,8 @@ EarthServerGenericClient.SharadTerrain = function(root, data,index,noData)
 
         var coords = document.createElement('Coordinate');
 
-        var sizeX = canvasTexture.width;
-        var sizeZ = canvasTexture.height;
+        var sizeX = this.canvasTexture.width;
+        var sizeZ = this.canvasTexture.height;
 
         var p = {};
         p[0] = "0 0 0 ";

@@ -14,11 +14,15 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.textureUrl = "";           // If available, you can use the link as alternative.
     this.width = 0;                 // Heightmap width
     this.height = 0;                // Heightmap height
+
     // The information about the heightmap are used to position a module correctly in the fishtank.
     // The minimum value as offset and the difference between minimum and maximum for scaling.
     this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap
     this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap
     this.averageHMvalue = 0;        // Average value of the heightmap
+
+    // Flags to customize the server response
+    this.heightmapAsString = false; // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;  // Flag if heightmap should be checked in validate().
 
     /**
@@ -171,7 +175,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
             callback.receiveData(responseData);
         };
 
-        responseData.textureUrl = url + "?query=" + encodeURI(query);
+        responseData.textureUrl = url + "?query=" + encodeURIComponent(query);
         EarthServerGenericClient.MainScene.timeLogStart("WCPS: " + callback.name);
         responseData.texture.src = responseData.textureUrl;
     }
