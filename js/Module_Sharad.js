@@ -98,53 +98,94 @@ EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSi
     EarthServerGenericClient.requestWCPSImage(this,this.serviceURL,this.WCPSQuery);
 };
 
+EarthServerGenericClient.Model_Sharad.prototype.setMetaData = function( link )
+{
+
+    function getBinary(file)
+    {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", file, false);
+        xhr.overrideMimeType("text/plain; charset=x-user-defined");
+        xhr.send(null);
+        return xhr.responseText;
+    }
+
+    var descov = getBinary(link);
+    descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/)[0];
+    descov = descov.replace('coords','"coords"');
+    descov = '' + descov.substring(16,descov.length - 18);
+    var metadata = JSON.parse(descov);
+
+    if( metadata.coords.length > 0)
+    {   this.coords = metadata.coords; }
+};
+
 /**
  * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-EarthServerGenericClient.Model_Sharad.prototype.receiveData= function( data)
+EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
 {
     if( this.checkReceivedData(data))
     {
         // Remove the placeHolder
         this.removePlaceHolder();
 
-        var width = Math.pow(2, Math.round(Math.log(data.texture.width)/Math.log(2)));
-        var height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
-
-        if( width > 8192) width = 8192;
-        if( height > 8192) height = 8192;
-
         // This modules creates it's own transformation.
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
 
-        this.YResolution = 1000;
+        if(this.coords === undefined)
+        {
+            var width = Math.pow(2, Math.round(Math.log(data.texture.width)/Math.log(2)));
+            var height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
 
-        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(width)-1);
-        var scaleY = (this.cubeSizeY*this.yScale)/1000;
-        var scaleZ = (this.cubeSizeY*this.yScale)/(parseInt(height)-1);
+            if( width  > x3dom.caps.MAX_TEXTURE_SIZE) width  = x3dom.caps.MAX_TEXTURE_SIZE;
+            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
 
-        trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
+            this.YResolution = 1000;
 
-        //TODO: calc position of both ends in the cube
+            var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(width)-1);
+            var scaleY = (this.cubeSizeY*this.yScale)/1000;
+            var scaleZ = (this.cubeSizeY*this.yScale)/(parseInt(height)-1);
 
-        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
-        var yoff = (this.cubeSizeY * this.yOffset) + (height*scaleY) - (this.cubeSizeY/2.0);
-        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
-        trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
+            trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
-        //TODO: calc rotation
-        // turn upright
-        trans.setAttribute("rotation","1 0 0 1.57");
+            var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
+            var yoff = (this.cubeSizeY * this.yOffset) + (height*scaleY) - (this.cubeSizeY/2.0);
+            var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
+            trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
+
+            // turn upright
+            trans.setAttribute("rotation","1 0 0 1.57");
+        }
+        else
+        {
+            height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
+            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
+
+            scaleY = (this.cubeSizeY*this.yScale)/height;
+            trans.setAttribute("scale", "1 " + scaleY + " 1");
+
+            var min = (-this.cubeSizeY/2.0) + EarthServerGenericClient.MainScene.getModelOffsetY(this.index) * this.cubeSizeY;
+            yoff = (this.cubeSizeY * this.yOffset) - (min*scaleY) - (this.cubeSizeY/2.0);
+            trans.setAttribute("translation", "0 " + yoff  + " 0");
+        }
+
+
         this.root.appendChild( trans);
 
         // Set transparency
         data.transparency = this.transparency;
 
         // Create terrain
-        this.terrain = new EarthServerGenericClient.SharadTerrain(trans, data, this.index,this.noData);
+        var area = {};
+        area.minx = this.minx;
+        area.miny = this.miny;
+        area.maxx = this.maxx;
+        area.maxy = this.maxy;
+        this.terrain = new EarthServerGenericClient.SharadTerrain(trans, data, this.index,this.noData,this.coords,area);
         this.terrain.createTerrain();
     }
 };
@@ -161,7 +202,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(i
     }
     else
     {
-        console.log("Modeule_Sharad: Bound to model: " + index);
+        console.log("Module_Sharad: Bound to model: " + index);
         this.modelIndex = index;
     }
 };
@@ -213,6 +254,11 @@ EarthServerGenericClient.Model_Sharad.prototype.setSpecificElement= function(ele
 {
     // updateLength() is called for elevation because the model is rotated. Scaling it's length
     // scales the size on the y-axis in fact.
-    EarthServerGenericClient.appendGenericSlider(element,"EarthServerGenericClient_Slider_E_"+this.index,"Elevation",
+    if(this.coords === undefined)
+    {
+        EarthServerGenericClient.appendGenericSlider(element,"EarthServerGenericClient_Slider_E_"+this.index,"Elevation",
                                                 this.index,0,100,10,EarthServerGenericClient.MainScene.updateLength);
+    }
+    else//normal elevation
+    {   EarthServerGenericClient.appendElevationSlider(element,this.index); }
 };

@@ -118,6 +118,22 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets the queries for the four side panels' textures.
+     * @param links - Array with four image links.
+     */
+    this.setSidePanelsImageLinks = function( links )
+    {
+        if( links.length !== 4)
+        {
+            console.log("EarthServerClient::ModuleBase: Links array for side panels needs exact 4 queries.");
+        }
+        else
+        {
+            this.sidePanelsLinks = links;
+        }
+    };
+
+    /**
      * Updates the transparency during runtime of the scene model.
      * The function accepts a value in the range of 0 (fully opaque) and 1(fully transparent).
      * @param transparency - Value of transparency.
@@ -131,10 +147,10 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.reportProgress = function()
     {
-        //The total progress of this module depends on the number of requests it does.
-        //The progress parameter is the progress of ONE request.
-        //ReceivedDataCount is the number of already received responses.
-        //it is doubled because for each request one terrain will be build.
+        // The total progress of this module depends on the number of requests it does.
+        // The progress parameter is the progress of ONE request.
+        // ReceivedDataCount is the number of already received responses.
+        // it is doubled because for each request one terrain will be build.
         var totalProgress = ((this.receivedDataCount) / (this.requests * 2))*100;
         EarthServerGenericClient.MainScene.reportProgress(this.index,totalProgress);
     };

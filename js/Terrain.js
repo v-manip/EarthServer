@@ -389,6 +389,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var imageTransform = document.createElement('TextureTransform');
                     imageTransform.setAttribute("scale", "1,-1");
+                    imageTransform.setAttribute("rotation", "-1.57");
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
@@ -647,12 +648,13 @@ EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.Abstr
  * @param root - Dom Element to append the terrain to.
  * @param data - Received Data of the Server request.
  * @param index - Index of the model that uses this terrain.
- * @paramm noData - Array with RGB value to be considered NODATA and shall be transparent.
+ * @param noData - Array with RGB value to be considered NODATA and shall be transparent.
+ * @param coordinates - Coordinates of the single data points.
+ * @param area - Area of interest in which the sharad data points are inserted.
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */
-
-EarthServerGenericClient.SharadTerrain = function(root, data,index,noData)
+EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordinates,area)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
@@ -667,44 +669,80 @@ EarthServerGenericClient.SharadTerrain = function(root, data,index,noData)
     /**
      * Builds the terrain and appends it into the scene.
      */
-    this.createTerrain= function()
+    this.createTerrain = function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+index,1,index,this.canvasTexture,data.transparency);
+        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency);
         var shape = document.createElement("shape");
 
-        var triangleset = document.createElement('IndexedFaceSet');
-        triangleset.setAttribute("colorPerVertex", "false");
-        triangleset.setAttribute("coordindex","0 1 2 3 -1");
-        triangleset.setAttribute("solid","false");
+        var indexedFaceSet = document.createElement('IndexedFaceSet');
+        indexedFaceSet.setAttribute("colorPerVertex", "false");
 
+        indexedFaceSet.setAttribute("solid","false");
         var coords = document.createElement('Coordinate');
+        var points= "";
+        var index = "";
 
-        var sizeX = this.canvasTexture.width;
-        var sizeZ = this.canvasTexture.height;
+        // No coordinates specified. Create simple plane
+        if(coordinates === undefined || area.minx === undefined || area.miny === undefined || area.maxx === undefined || area.maxy === undefined)
+        {
+            var sizeX = this.canvasTexture.width;
+            var sizeZ = this.canvasTexture.height;
 
-        var p = {};
-        p[0] = "0 0 0 ";
-        p[1] = "0 0 "+ sizeZ + " ";
-        p[2] = ""+ sizeX    + " 0 " + sizeZ + " ";
-        p[3] = ""+ sizeX    + " 0 0";
+            index = "0 1 2 3 -1";
+            var p = {};
+            p[0] = "0 0 0 ";
+            p[1] = "0 0 "+ sizeZ + " ";
+            p[2] = ""+ sizeX    + " 0 " + sizeZ + " ";
+            p[3] = ""+ sizeX    + " 0 0";
 
-        var points="";
-        for(var i=0; i<4;i++)
-        {   points = points+p[i];   }
+            for(var i=0; i<4;i++)
+            {   points = points+p[i];   }
+        }
+        else // Coordinates are specified. Build one face for every data point
+        {
+            // Set first quad index
+            index = "0 1 3 2 -1 ";
+            var height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
+            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
+
+            // add vertices and indices for the quads
+            for(var k=0; k<coordinates.length;k++)
+            {
+                // Get geo position of the data point
+                var x = coordinates[k][0];
+                var y = coordinates[k][1];
+                // Transform them into cube coordinates
+                var pos   = EarthServerGenericClient.MainScene.getCubePositionForPoint(this.index,x,y,area);
+
+
+                if(pos.valid)
+                {
+                    // Add position to points
+                    points = points + (pos.x) + " " + (pos.y+height) + " " + (pos.z) +" ";
+                    points = points + (pos.x) + " " + (pos.y) + " " + (pos.z) + " ";
+                    if(k!==0 && k<coordinates.length-1)
+                    {
+                        var mult = k*2;
+                        index = index + (mult+1) + " " + mult + " " + (mult+2) + " " + (mult+3) + " -1 ";
+                    }
+                }
+            }
+        }
+
         coords.setAttribute("point", points);
-
-        triangleset.appendChild(coords);
+        indexedFaceSet.setAttribute("coordindex",index);
+        indexedFaceSet.appendChild(coords);
         shape.appendChild(appearance[0]);
-        shape.appendChild(triangleset);
+        shape.appendChild(indexedFaceSet);
 
         root.appendChild(shape);
 
         shape = null;
-        triangleset = null;
+        indexedFaceSet = null;
         appearance = null;
         coords = null;
 
-        EarthServerGenericClient.MainScene.reportProgress(index);
+        EarthServerGenericClient.MainScene.reportProgress(this.index);
     };
 
 

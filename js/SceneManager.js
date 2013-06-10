@@ -357,6 +357,38 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * This function returns the position within the cube for a specific point, if the cube represents the given area.
+     * Returned object has "x","y","z" members and "valid" as a flag whether the point is within the area or not.
+     * IF valid is false, "x","y" and "z" are not set and undefined.
+     * @param modelIndex - Index of the model the point is used for. Used to determine the height on the y-axis.
+     * @param latitude - Latitude coordinate of the point.
+     * @param longitude - Longitude coordinate of the point.
+     * @param area - Area of the cube.
+     * @returns {{}} - Coordinates in scene space of the point.
+     */
+    this.getCubePositionForPoint = function(modelIndex,latitude,longitude,area)
+    {
+        var position = {};
+        position.valid = false;
+
+        var xPercent = (latitude  - area.minx) / (area.maxx - area.minx);
+        var zPercent = (longitude - area.miny) / (area.maxy - area.miny);
+
+        // Check bounds
+        if( xPercent <0 || xPercent > 1 || zPercent <0 || zPercent >1)
+        {   console.log("EarthServerGenericClient::SceneMangager::getCubePositionForPoint: Point is not in the given area"); }
+        else
+        {
+            position.x = (-cubeSizeX/2.0) + xPercent*cubeSizeX;
+            position.y = (-cubeSizeY/2.0) + this.getModelOffsetY(modelIndex) * cubeSizeY;
+            position.z = (-cubeSizeZ/2.0) + zPercent*cubeSizeZ;
+            position.valid = true;
+        }
+
+        return position;
+    };
+
+    /**
      * Determines if an annotation layer will be drawn.
      * @param layerName - Name of the annotation layer.
      * @param drawValue - boolean value.
@@ -599,8 +631,6 @@ EarthServerGenericClient.SceneManager = function()
         models.push(model);
         //Initialize it's loading progress to 0
         modelLoadingProgress[model.index] = 0;
-
-        console.log("EarthServerClient::SceneManager: Added " + model.name + " with index " + model.index);
     };
 
     /**
