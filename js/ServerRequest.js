@@ -133,7 +133,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
                 var canvas = document.createElement('canvas');
                 canvas.width = responseData.texture.width;
                 canvas.height = responseData.texture.height;
-                //console.log("Image: " + responseData.texture.width +"x"+ responseData.texture.height);
+
                 var context = canvas.getContext('2d');
                 context.drawImage(responseData.texture, 0, 0);
 

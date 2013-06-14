@@ -32,21 +32,32 @@ EarthServerGenericClient.AbstractTerrain = function()
 
         if( texture !== undefined)
         {
-            canvasTexture = document.createElement('canvas');
-            canvasTexture.style.display = "none";
-            canvasTexture.setAttribute("id", "EarthServerGenericClient_Canvas"+index);
-            canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
-            canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height) / Math.log(2)));
+            var canvasTmp = document.createElement('canvas');
+            canvasTmp.style.display = "none";
+            canvasTmp.width  = texture.width;
+            canvasTmp.height = texture.height;
 
-            // Check max texture size
-            var maxTextureSize = x3dom.caps.MAX_TEXTURE_SIZE;
-            if( canvasTexture.width  > maxTextureSize) canvasTexture.width  = maxTextureSize;
-            if( canvasTexture.height > maxTextureSize) canvasTexture.height = maxTextureSize;
+            console.log("TEX: " + texture.width + "/" + texture.height);
+            console.log("CAN: " + canvasTmp.width + "/" + canvasTmp.height);
 
-            var context = canvasTexture.getContext('2d');
-            context.drawImage(texture, 0,0, canvasTexture.width, canvasTexture.height);
+            var context = canvasTmp.getContext('2d');//,{premultipliedAlpha: false});
+            context.globalCompositeOperation="copy";
+            var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
+            for (var i=0;i<imageData.data.length;i+=4)
+            {
+                imageData.data[i]=127;
+                imageData.data[(i+1)]=127;
+                imageData.data[(i+2)]=127;
+                imageData.data[(i+3)]=1;
+            }
+            context.putImageData(imageData,0,0);
+            console.log(context.getImageData(0, 0, canvasTmp.width, canvasTmp.height).data );
 
-            var imageData = context.getImageData(0, 0, canvasTexture.width, canvasTexture.height);
+            context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
+
+
+
+            var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
 
             if(noData !== undefined && noData.length >2) // nodata RGB values are set:
             {
@@ -61,13 +72,32 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
             else // nodata is not defined: set the alpha value of all pixels to fully opaque.
             {
+                console.log(imageData.data);
                 for (var i=0;i<imageData.data.length;i+=4)
                 {
+                    /*console.log(255/imageData.data[i+3]);
+                    imageData.data[i]= (255/imageData.data[i+3])*imageData.data[i];
+                    imageData.data[i+1]= (255/imageData.data[i+3])*imageData.data[i+1];
+                    imageData.data[i+2]= (255/imageData.data[i+3])*imageData.data[i+2];*/
                     imageData.data[i+3]=255;
                 }
             }
 
             context.putImageData(imageData,0,0);
+
+            canvasTexture = document.createElement('canvas');
+            canvasTexture.style.display = "none";
+            canvasTexture.setAttribute("id", "EarthServerGenericClient_Canvas"+index);
+            canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
+            canvasTexture.height = Math.pow(2, Math.round(Math.log(texture.height) / Math.log(2)));
+
+            // Check max texture size
+            var maxTextureSize = x3dom.caps.MAX_TEXTURE_SIZE;
+            if( canvasTexture.width  > maxTextureSize) canvasTexture.width  = maxTextureSize;
+            if( canvasTexture.height > maxTextureSize) canvasTexture.height = maxTextureSize;
+
+            var canvasContext = canvasTexture.getContext('2d');
+            canvasContext.drawImage(canvasTmp,0,0,canvasTexture.width,canvasTexture.height);
         }
         else
         {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
@@ -389,7 +419,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var imageTransform = document.createElement('TextureTransform');
                     imageTransform.setAttribute("scale", "1,-1");
-                    imageTransform.setAttribute("rotation", "-1.57");
+                    //imageTransform.setAttribute("rotation", "-1.57");
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
