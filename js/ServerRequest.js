@@ -22,8 +22,9 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.averageHMvalue = 0;        // Average value of the heightmap
 
     // Flags to customize the server response
-    this.heightmapAsString = false; // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
-    this.validateHeightMap = true;  // Flag if heightmap should be checked in validate().
+    this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
+    this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
+    this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
      * Validates if the response full successfully: Was an image and a height map received?
@@ -281,12 +282,12 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
 EarthServerGenericClient.requestWCPSImageAlphaDem = function(callback,WCPSurl,WCPSquery)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
+    responseData.removeAlphaChannel = true; // Remove the alpha channel for the final texture
     EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
 };
 
 /**
- * Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
- * If not the terrain is flat.
+ * Requests one image via WCSPS.
  * @param callback - Module that requests the image.
  * @param WCPSurl - URL of the WCPS service.
  * @param WCPSquery - The WCPS query.
@@ -316,7 +317,10 @@ EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,
     this.name = "Progressive WCPS Loader: " + callback.name;
 
     for(var i=0;i<WCPSqueries.length;i++)
-    {   responseData[i] = new EarthServerGenericClient.ServerResponseData();    }
+    {
+        responseData[i] = new EarthServerGenericClient.ServerResponseData();
+        responseData[i].removeAlphaChannel = DemInAlpha; // Should the alpha channel be removed for the final texture?
+    }
 
     /**
      * @ignore

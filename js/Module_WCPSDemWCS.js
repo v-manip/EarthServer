@@ -170,7 +170,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdate();

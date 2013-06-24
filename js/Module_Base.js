@@ -156,6 +156,20 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
+     * @param red - Value for the red channel.
+     * @param green - Value for the green channel.
+     * @param blue - Value for the blue channel.
+     */
+    this.setNoDataValue = function(red,green,blue)
+    {
+        this.noData = [];
+        this.noData[0] = parseInt(red);
+        this.noData[1] = parseInt(green);
+        this.noData[2] = parseInt(blue);
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.

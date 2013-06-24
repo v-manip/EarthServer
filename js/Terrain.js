@@ -24,9 +24,10 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param texture - Texture to draw. Can be everything which can be rendered into a canvas.
      * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
      * @param noData - NoData sets all pixels with the RGB value that is the same NODATA to fully transparent.
+     * @param removeAlphaChannel - Flag if the alpha channel of the image should be set to be fully opaque.
      * @returns {HTMLElement} The canvas element.
      */
-    this.createCanvas = function(texture,index,noData)
+    this.createCanvas = function(texture,index,noData,removeAlphaChannel)
     {
         var canvasTexture = null;
 
@@ -37,24 +38,23 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTmp.width  = texture.width;
             canvasTmp.height = texture.height;
 
-            console.log("TEX: " + texture.width + "/" + texture.height);
-            console.log("CAN: " + canvasTmp.width + "/" + canvasTmp.height);
+            var context = canvasTmp.getContext('2d',{premultipliedAlpha: false});
+            var imageData = context.createImageData(texture.width,texture.height);
 
-            var context = canvasTmp.getContext('2d');//,{premultipliedAlpha: false});
-            context.globalCompositeOperation="copy";
-            var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
+            //var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
             for (var i=0;i<imageData.data.length;i+=4)
             {
-                imageData.data[i]=127;
-                imageData.data[(i+1)]=127;
-                imageData.data[(i+2)]=127;
-                imageData.data[(i+3)]=1;
+                imageData.data[i]=255;
+                imageData.data[(i+1)]=255;
+                imageData.data[(i+2)]=255;
+                imageData.data[(i+3)]=255;
             }
             context.putImageData(imageData,0,0);
             console.log(context.getImageData(0, 0, canvasTmp.width, canvasTmp.height).data );
 
+            //context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
+            context.globalCompositeOperation = "copy";
             context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
-
 
 
             var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
@@ -64,26 +64,23 @@ EarthServerGenericClient.AbstractTerrain = function()
                 for (var k=0;k<imageData.data.length;k+=4)
                 {
                     if(imageData.data[k] === noData[0] && imageData.data[k+1] === noData[1] && imageData.data[k+2] === noData[2])
-                    {
-                        imageData.data[k+3]=0;    } // nodata value, so set transparent
+                    {   imageData.data[k+3]=0;    } // nodata value, so set transparent
                     else
                     {   imageData.data[k+3]=255;    }// other value, so set fully opaque
                 }
+                context.putImageData(imageData,0,0);
             }
-            else // nodata is not defined: set the alpha value of all pixels to fully opaque.
+            if( removeAlphaChannel) // nodata is not defined: set the alpha value of all pixels to fully opaque.
             {
                 console.log(imageData.data);
                 for (var i=0;i<imageData.data.length;i+=4)
                 {
-                    /*console.log(255/imageData.data[i+3]);
-                    imageData.data[i]= (255/imageData.data[i+3])*imageData.data[i];
-                    imageData.data[i+1]= (255/imageData.data[i+3])*imageData.data[i+1];
-                    imageData.data[i+2]= (255/imageData.data[i+3])*imageData.data[i+2];*/
                     imageData.data[i+3]=255;
                 }
+                context.putImageData(imageData,0,0);
             }
 
-            context.putImageData(imageData,0,0);
+            //context.putImageData(imageData,0,0);
 
             canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";
@@ -534,12 +531,13 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
      * @param root - Dom Element to append the terrain to.
+     * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
      * @param data - Received Data of the Server request.
      */
-    this.insertLevel = function(root,data)
+    this.insertLevel = function(root,data,noDataValue)
     {
         this.data = data;
-        this.canvasTexture = this.createCanvas(data.texture,index);
+        this.canvasTexture = this.createCanvas(data.texture,index,noDataValue,data.removeAlphaChannel);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
         //Remove old Materials of the deleted children
@@ -587,10 +585,11 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  * @param root - Dom Element to append the terrain to.
  * @param data - Received Data of the Server request.
  * @param index - Index of the model that uses this terrain.
+ * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */
-EarthServerGenericClient.LODTerrain = function(root, data,index)
+EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
@@ -611,7 +610,7 @@ EarthServerGenericClient.LODTerrain = function(root, data,index)
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    this.canvasTexture   = this.createCanvas( data.texture,index);
+    this.canvasTexture   = this.createCanvas( data.texture,index,noDataValue,data.removeAlphaChannel);
 
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
@@ -694,7 +693,7 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-   this.canvasTexture   = this.createCanvas( data.texture,index,noData);
+   this.canvasTexture   = this.createCanvas( data.texture,index,noData,data.removeAlphaChannel);
 
     /**
      * Builds the terrain and appends it into the scene.

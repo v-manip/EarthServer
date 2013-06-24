@@ -42,20 +42,6 @@ EarthServerGenericClient.Model_Sharad.prototype.setWCPSQuery = function(querystr
 };
 
 /**
- * Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
- * @param red - Value for the red channel.
- * @param green - Value for the green channel.
- * @param blue - Value for the blue channel.
- */
-EarthServerGenericClient.Model_Sharad.prototype.setNoDataValue = function(red,green,blue)
-{
-    this.noData = [];
-    this.noData[0] = parseInt(red);
-    this.noData[1] = parseInt(green);
-    this.noData[2] = parseInt(blue);
-};
-
-/**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
