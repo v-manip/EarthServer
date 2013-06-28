@@ -188,6 +188,82 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
 };
 
 /**
+ * This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WCPSurl - URl of the WCPS service.
+ * @param WCPSquery - The WCPS request query.
+ */
+EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCPSurl,WCPSquery)
+{
+    EarthServerGenericClient.MainScene.timeLogStart("WCPS DEM Coverage: " + callback.name );
+    var query = "query=" + encodeURIComponent(WCPSquery);
+
+    $.ajax(
+        {
+            url: WCPSurl,
+            type: 'GET',
+            dataType: 'text',
+            data: query,
+            success: function(receivedData)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                //The received data is a list of tuples: {value,value},{value,value},.....
+                var tuples = receivedData.split('},');
+
+                var sizeX = tuples.length;
+                if( sizeX === 0)
+                {
+                    console.log("EarthServerGenericClient::getWCPSDemCoverage: Received Data is invalid.");
+                    return;
+                }
+
+                var hm = new Array(sizeX);
+                for(var o=0; o<sizeX;o++)
+                {   hm[o] = []; }
+
+                for (var i = 0; i < tuples.length; i++)
+                {
+                    var tmp = tuples[i].substr(1);
+                    var valuesList = tmp.split(",");
+
+                    for (var k = 0; k < valuesList.length; k++)
+                    {
+                        tmp = parseFloat(valuesList[k]);
+                        hm[i][k] = tmp;
+
+                        if (responseData.maxHMvalue < tmp)
+                        {
+                            responseData.maxHMvalue = parseFloat(tmp);
+                        }
+                        if (responseData.minHMvalue > tmp)
+                        {
+                            responseData.minHMvalue = parseFloat(tmp);
+                        }
+                    }
+                }
+                if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
+                {
+                    responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
+                }
+                tuples = null;
+
+                responseData.width = hm.length;
+                responseData.height = hm[0].length;
+
+                responseData.heightmap = hm;
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
  * Requests a WCS coverage and stores is the heightmap field of the responseData.
  * @param callback - Object to do the callback.
  * @param responseData - Instance of the ServerResponseData.
@@ -245,11 +321,11 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
 
                             if (responseData.maxHMvalue < tmp)
                             {
-                                responseData.maxHMvalue = parseInt(tmp);
+                                responseData.maxHMvalue = parseFloat(tmp);
                             }
                             if (responseData.minHMvalue > tmp)
                             {
-                                responseData.minHMvalue = parseInt(tmp);
+                                responseData.minHMvalue = parseFloat(tmp);
                             }
                         }
                     }
@@ -367,6 +443,16 @@ EarthServerGenericClient.requestWCPSImageWCSDem = function(callback,WCPSurl,WCPS
 
     EarthServerGenericClient.getWCPSImage(combine,responseData,WCPSurl,WCPSquery,false);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
+};
+
+
+EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,imageQuery,demURL,demQuery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getWCPSImage(combine,responseData,imageURL,imageQuery,false);
+    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
 };
 
 /**

@@ -338,8 +338,11 @@ EarthServerGenericClient.AbstractTerrain = function()
                 for(var j=0; j<info.chunkWidth; j++)
                 {
                     //If the requested position is out of bounce return the min value of the hm.
-                    if(i > this.data.width || j > this.data.height || info.xpos+j < 0 || info.ypos+i <0)
-                    {   heightmapPart[i][j] = this.data.minHMvalue;    }
+                    if(i > this.data.height || j > this.data.width || info.xpos+j < 0 || info.ypos+i <0)
+                    {
+                        //console.log("HM acces: ", i,j,this.data.width,this.data.height);
+                        heightmapPart[i][j] = this.data.minHMvalue;
+                    }
                     else
                     {   heightmapPart[i][j] = this.data.heightmap[info.xpos+j][info.ypos+i];    }
                 }
@@ -388,9 +391,10 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param modelIndex - Index of the model using this appearance.
      * @param canvasTexture - Canvas element to be used in the appearance as texture.
      * @param transparency - Transparency of the appearance.
+     * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
      * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
      */
-    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency) {
+    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,upright) {
         try {
             var appearances = [AppearanceCount];
             for (var i = 0; i < AppearanceCount; i++) {
@@ -416,7 +420,8 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var imageTransform = document.createElement('TextureTransform');
                     imageTransform.setAttribute("scale", "1,-1");
-                    //imageTransform.setAttribute("rotation", "-1.57");
+                    if(upright)
+                    {   imageTransform.setAttribute("rotation", "-1.57");   }
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
@@ -700,7 +705,7 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
      */
     this.createTerrain = function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency);
+        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency,true);
         var shape = document.createElement("shape");
 
         var indexedFaceSet = document.createElement('IndexedFaceSet');

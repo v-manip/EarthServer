@@ -1218,6 +1218,26 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Replaces all $xx symbols with the value-
+     * @param inputString - Input WCPS query string.
+     * @returns {String} - String with symbols replaced by values.
+     */
+    this.replaceSymbolsInString = function(inputString)
+    {
+        inputString = inputString.replace("$CI",this.coverageImage);
+        inputString = inputString.replace("$MINX",this.minx);
+        inputString = inputString.replace("$MINY",this.miny);
+        inputString = inputString.replace("$MAXX",this.maxx);
+        inputString = inputString.replace("$MAXY",this.maxy);
+        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
+        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
+        inputString = inputString.replace("$RESX",this.XResolution);
+        inputString = inputString.replace("$RESZ",this.ZResolution);
+
+        return inputString;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.
@@ -1573,8 +1593,8 @@ function ElevationGrid(parentNode,info, hf,appearances)
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
-                elevationGrid.setAttribute("xSpacing", String(Math.pow(2,i)));//To keep the same size with fewer elements increase the space of one element
-                elevationGrid.setAttribute("zSpacing", String(Math.pow(2,i)));
+                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));//To keep the same size with fewer elements increase the space of one element
+                elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
                 elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));//fewer elements in every step
                 elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
                 elevationGrid.setAttribute("height", shf );
@@ -2051,8 +2071,11 @@ EarthServerGenericClient.AbstractTerrain = function()
                 for(var j=0; j<info.chunkWidth; j++)
                 {
                     //If the requested position is out of bounce return the min value of the hm.
-                    if(i > this.data.width || j > this.data.height || info.xpos+j < 0 || info.ypos+i <0)
-                    {   heightmapPart[i][j] = this.data.minHMvalue;    }
+                    if(i > this.data.height || j > this.data.width || info.xpos+j < 0 || info.ypos+i <0)
+                    {
+                        //console.log("HM acces: ", i,j,this.data.width,this.data.height);
+                        heightmapPart[i][j] = this.data.minHMvalue;
+                    }
                     else
                     {   heightmapPart[i][j] = this.data.heightmap[info.xpos+j][info.ypos+i];    }
                 }
@@ -2101,9 +2124,10 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param modelIndex - Index of the model using this appearance.
      * @param canvasTexture - Canvas element to be used in the appearance as texture.
      * @param transparency - Transparency of the appearance.
+     * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
      * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
      */
-    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency) {
+    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,upright) {
         try {
             var appearances = [AppearanceCount];
             for (var i = 0; i < AppearanceCount; i++) {
@@ -2129,7 +2153,8 @@ EarthServerGenericClient.AbstractTerrain = function()
 
                     var imageTransform = document.createElement('TextureTransform');
                     imageTransform.setAttribute("scale", "1,-1");
-                    //imageTransform.setAttribute("rotation", "-1.57");
+                    if(upright)
+                    {   imageTransform.setAttribute("rotation", "-1.57");   }
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", "0.25,0.25,0.25");
@@ -2413,7 +2438,7 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
      */
     this.createTerrain = function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency);
+        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency,true);
         var shape = document.createElement("shape");
 
         var indexedFaceSet = document.createElement('IndexedFaceSet');
@@ -2679,6 +2704,82 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
 };
 
 /**
+ * This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WCPSurl - URl of the WCPS service.
+ * @param WCPSquery - The WCPS request query.
+ */
+EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCPSurl,WCPSquery)
+{
+    EarthServerGenericClient.MainScene.timeLogStart("WCPS DEM Coverage: " + callback.name );
+    var query = "query=" + encodeURIComponent(WCPSquery);
+
+    $.ajax(
+        {
+            url: WCPSurl,
+            type: 'GET',
+            dataType: 'text',
+            data: query,
+            success: function(receivedData)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                //The received data is a list of tuples: {value,value},{value,value},.....
+                var tuples = receivedData.split('},');
+
+                var sizeX = tuples.length;
+                if( sizeX === 0)
+                {
+                    console.log("EarthServerGenericClient::getWCPSDemCoverage: Received Data is invalid.");
+                    return;
+                }
+
+                var hm = new Array(sizeX);
+                for(var o=0; o<sizeX;o++)
+                {   hm[o] = []; }
+
+                for (var i = 0; i < tuples.length; i++)
+                {
+                    var tmp = tuples[i].substr(1);
+                    var valuesList = tmp.split(",");
+
+                    for (var k = 0; k < valuesList.length; k++)
+                    {
+                        tmp = parseFloat(valuesList[k]);
+                        hm[i][k] = tmp;
+
+                        if (responseData.maxHMvalue < tmp)
+                        {
+                            responseData.maxHMvalue = parseFloat(tmp);
+                        }
+                        if (responseData.minHMvalue > tmp)
+                        {
+                            responseData.minHMvalue = parseFloat(tmp);
+                        }
+                    }
+                }
+                if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
+                {
+                    responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
+                }
+                tuples = null;
+
+                responseData.width = hm.length;
+                responseData.height = hm[0].length;
+
+                responseData.heightmap = hm;
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
  * Requests a WCS coverage and stores is the heightmap field of the responseData.
  * @param callback - Object to do the callback.
  * @param responseData - Instance of the ServerResponseData.
@@ -2736,11 +2837,11 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
 
                             if (responseData.maxHMvalue < tmp)
                             {
-                                responseData.maxHMvalue = parseInt(tmp);
+                                responseData.maxHMvalue = parseFloat(tmp);
                             }
                             if (responseData.minHMvalue > tmp)
                             {
-                                responseData.minHMvalue = parseInt(tmp);
+                                responseData.minHMvalue = parseFloat(tmp);
                             }
                         }
                     }
@@ -2858,6 +2959,16 @@ EarthServerGenericClient.requestWCPSImageWCSDem = function(callback,WCPSurl,WCPS
 
     EarthServerGenericClient.getWCPSImage(combine,responseData,WCPSurl,WCPSquery,false);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
+};
+
+
+EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,imageQuery,demURL,demQuery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getWCPSImage(combine,responseData,imageURL,imageQuery,false);
+    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
 };
 
 /**
@@ -3805,14 +3916,20 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
             EarthServerGenericClient.MainScene.getModelOffsetX(i) * EarthServerGenericClient.MainScene.getCubeSizeX(),
             EarthServerGenericClient.MainScene.updateOffset);
 
-        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Y","Y Translation",i,1,
-            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),
-            EarthServerGenericClient.MainScene.getModelOffsetY(i) * EarthServerGenericClient.MainScene.getCubeSizeY(),
-            EarthServerGenericClient.MainScene.updateOffset);
+        /*
+        Note about the sliders: The cube is using X and Z axis is base and Y as height.
+        While this is standard in computer graphics it can confuse users.
+        Because of this the labels on Y and Z are switched.
+         */
 
-        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Z","Z Translation",i,2,
+        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Z","Y Translation",i,2,
             -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),
             EarthServerGenericClient.MainScene.getModelOffsetZ(i) * EarthServerGenericClient.MainScene.getCubeSizeZ(),
+            EarthServerGenericClient.MainScene.updateOffset);
+
+        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Y","Z Translation",i,1,
+            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),
+            EarthServerGenericClient.MainScene.getModelOffsetY(i) * EarthServerGenericClient.MainScene.getCubeSizeY(),
             EarthServerGenericClient.MainScene.updateOffset);
 
         EarthServerGenericClient.appendAlphaSlider(div,i);

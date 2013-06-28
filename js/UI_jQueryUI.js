@@ -32,14 +32,20 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
             EarthServerGenericClient.MainScene.getModelOffsetX(i) * EarthServerGenericClient.MainScene.getCubeSizeX(),
             EarthServerGenericClient.MainScene.updateOffset);
 
-        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Y","Y Translation",i,1,
-            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),
-            EarthServerGenericClient.MainScene.getModelOffsetY(i) * EarthServerGenericClient.MainScene.getCubeSizeY(),
-            EarthServerGenericClient.MainScene.updateOffset);
+        /*
+        Note about the sliders: The cube is using X and Z axis is base and Y as height.
+        While this is standard in computer graphics it can confuse users.
+        Because of this the labels on Y and Z are switched.
+         */
 
-        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Z","Z Translation",i,2,
+        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Z","Y Translation",i,2,
             -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),
             EarthServerGenericClient.MainScene.getModelOffsetZ(i) * EarthServerGenericClient.MainScene.getCubeSizeZ(),
+            EarthServerGenericClient.MainScene.updateOffset);
+
+        EarthServerGenericClient.appendXYZSlider(div,"Model"+i+"Y","Z Translation",i,1,
+            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),
+            EarthServerGenericClient.MainScene.getModelOffsetY(i) * EarthServerGenericClient.MainScene.getCubeSizeY(),
             EarthServerGenericClient.MainScene.updateOffset);
 
         EarthServerGenericClient.appendAlphaSlider(div,i);

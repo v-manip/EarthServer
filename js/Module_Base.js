@@ -170,6 +170,26 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Replaces all $xx symbols with the value-
+     * @param inputString - Input WCPS query string.
+     * @returns {String} - String with symbols replaced by values.
+     */
+    this.replaceSymbolsInString = function(inputString)
+    {
+        inputString = inputString.replace("$CI",this.coverageImage);
+        inputString = inputString.replace("$MINX",this.minx);
+        inputString = inputString.replace("$MINY",this.miny);
+        inputString = inputString.replace("$MAXX",this.maxx);
+        inputString = inputString.replace("$MAXY",this.maxy);
+        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
+        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
+        inputString = inputString.replace("$RESX",this.XResolution);
+        inputString = inputString.replace("$RESZ",this.ZResolution);
+
+        return inputString;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.

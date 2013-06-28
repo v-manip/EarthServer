@@ -37,8 +37,8 @@ function ElevationGrid(parentNode,info, hf,appearances)
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
-                elevationGrid.setAttribute("xSpacing", String(Math.pow(2,i)));//To keep the same size with fewer elements increase the space of one element
-                elevationGrid.setAttribute("zSpacing", String(Math.pow(2,i)));
+                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));//To keep the same size with fewer elements increase the space of one element
+                elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
                 elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));//fewer elements in every step
                 elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
                 elevationGrid.setAttribute("height", shf );
