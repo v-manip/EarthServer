@@ -89,16 +89,22 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         UI_DIV.appendChild(lightHeader);
         UI_DIV.appendChild(lightDiv);
 
+        /*
+         Note about the sliders: The cube is using X and Z axis is base and Y as height.
+         While this is standard in computer graphics it can confuse users.
+         Because of this the labels on Y and Z are switched.
+         */
+
         EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"X","X Translation",i,0,
             -EarthServerGenericClient.MainScene.getCubeSizeX(),EarthServerGenericClient.MainScene.getCubeSizeX(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
-        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Y","Y Translation",i,1,
-            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),0,
+        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Z","Y Translation",i,2,
+            -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
-        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Z","Z Translation",i,2,
-            -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),0,
+        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Y","Z Translation",i,1,
+            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
         EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"R","Radius",i,0,5000,500,
@@ -111,7 +117,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         lightHeader=null;
     }
 
-    //Create Div for the Annotations
+    // Create Div for the Annotations
     if( EarthServerGenericClient.MainScene.getAnnotationLayerCount() )
     {
         var Anno = document.createElement("h3");

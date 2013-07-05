@@ -53,7 +53,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
      * @param axis - Axis of the movement.
      * @param delta - Delta to the last position.
      */
-    this.movementUpdate = function(axis,delta)
+    this.movementUpdateBoundModule = function(axis,delta)
     {
         if( axis >= 0 && axis < 3)
         {
@@ -92,7 +92,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
      * This function notifies the annotation layer that the scene model's elevation was changed.
      * All annotation will be checked and altered in their position.
      */
-    this.elevationUpdate = function()
+    this.elevationUpdateBoundModule = function()
     {
         for(var i=0; i<annotationTransforms.length;i++)
         {

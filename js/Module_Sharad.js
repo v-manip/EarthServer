@@ -6,22 +6,22 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  * One service URL, one coverage
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-EarthServerGenericClient.Model_Sharad = function()
+EarthServerGenericClient.Module_Sharad = function()
 {
     this.setDefaults();
-    this.modelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
+    this.boundModelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
     this.name = "Sharad Underground";
 };
-EarthServerGenericClient.Model_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+EarthServerGenericClient.Module_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 
 
-EarthServerGenericClient.Model_Sharad.prototype.setURL=function(serviceURL)
+EarthServerGenericClient.Module_Sharad.prototype.setURL=function(serviceURL)
 {
     this.serviceURL = serviceURL;
 };
 
 
-EarthServerGenericClient.Model_Sharad.prototype.setCoverages = function (coverage)
+EarthServerGenericClient.Module_Sharad.prototype.setCoverages = function (coverage)
 {
     this.coverage = coverage;
 };
@@ -32,7 +32,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setCoverages = function (coverag
  * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
  * Examples: $CI.red , x($MINX:$MINY)
  */
-EarthServerGenericClient.Model_Sharad.prototype.setWCPSQuery = function(querystring)
+EarthServerGenericClient.Module_Sharad.prototype.setWCPSQuery = function(querystring)
 {
     /**
      * The custom query.
@@ -48,7 +48,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setWCPSQuery = function(querystr
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
+EarthServerGenericClient.Module_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
     {   alert("root is not defined");    }
 
@@ -84,7 +84,7 @@ EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSi
     EarthServerGenericClient.requestWCPSImage(this,this.serviceURL,this.WCPSQuery);
 };
 
-EarthServerGenericClient.Model_Sharad.prototype.setMetaData = function( link )
+EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
 {
 
     function getBinary(file)
@@ -111,7 +111,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setMetaData = function( link )
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
+EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
 {
     if( this.checkReceivedData(data))
     {
@@ -154,6 +154,8 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
             scaleY = (this.cubeSizeY*this.yScale)/height;
             trans.setAttribute("scale", "1 " + scaleY + " 1");
 
+            this.YResolution = height;
+
             var min = (-this.cubeSizeY/2.0) + EarthServerGenericClient.MainScene.getModelOffsetY(this.index) * this.cubeSizeY;
             yoff = (this.cubeSizeY * this.yOffset) - (min*scaleY) - (this.cubeSizeY/2.0);
             trans.setAttribute("translation", "0 " + yoff  + " 0");
@@ -180,7 +182,7 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
  * Sets the index of the scene model the sharad module is bound to.
  * @param index - Index of the scene model.
  */
-EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(index)
+EarthServerGenericClient.Module_Sharad.prototype.setBoundModuleIndex = function(index)
 {
     if(index === this.index)//prevent to bind this module to itself
     {
@@ -189,7 +191,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(i
     else
     {
         console.log("Module_Sharad: Bound to model: " + index);
-        this.modelIndex = index;
+        this.boundModelIndex = index;
     }
 };
 
@@ -197,17 +199,17 @@ EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(i
  * Returns the index of the model sharad module is bound to.
  * @returns {number} - Index of the model or -1 if unbound.
  */
-EarthServerGenericClient.Model_Sharad.prototype.getBoundModuleIndex = function()
+EarthServerGenericClient.Module_Sharad.prototype.getBoundModuleIndex = function()
 {
-    return this.modelIndex;
+    return this.boundModelIndex;
 };
 
 /**
  * Resets the modelIndex sharad module is bound to back to -1 and marks it as unbound.
  */
-EarthServerGenericClient.Model_Sharad.prototype.releaseBinding = function()
+EarthServerGenericClient.Module_Sharad.prototype.releaseBinding = function()
 {
-    this.modelIndex = -1;
+    this.boundModelIndex = -1;
 };
 
 /**
@@ -216,7 +218,7 @@ EarthServerGenericClient.Model_Sharad.prototype.releaseBinding = function()
  * @param axis - Axis of the movement.
  * @param delta - Delta to the last position.
  */
-EarthServerGenericClient.Model_Sharad.prototype.movementUpdate = function(axis,delta)
+EarthServerGenericClient.Module_Sharad.prototype.movementUpdateBoundModule = function(axis,delta)
 {
    EarthServerGenericClient.MainScene.updateOffsetByDelta(this.index,axis,delta);
 };
@@ -225,9 +227,36 @@ EarthServerGenericClient.Model_Sharad.prototype.movementUpdate = function(axis,d
  * This function notifies sharad module that the bound module's elevation was changed.
  * All annotation will be checked and altered in their position.
  */
-EarthServerGenericClient.Model_Sharad.prototype.elevationUpdate = function()
+EarthServerGenericClient.Module_Sharad.prototype.elevationUpdateBoundModule = function(value)
 {
-    //TODO: implement
+    if(this.boundModelIndex >= 0)
+    {
+        var x = 0;
+        var z = 0;
+
+        // call elevation update to it self
+        EarthServerGenericClient.MainScene.updateElevation(this.index,value);
+        // get height of the bound module. (for now at the center of the cube
+        var value = EarthServerGenericClient.MainScene.getHeightAt3DPosition(this.boundModelIndex,x,z);
+        console.log(value);
+        // get own transformation by name "EarthServerGenericClient_modelTransform"+this.index);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+        if( trans)
+        {
+            var scale = trans.getAttribute("scale");
+            scale = scale.split(" ");
+            // determine exact value
+            value = value + (this.cubeSizeY/2) - ( this.YResolution * scale[1] * this.yScale );
+            //update offset
+            EarthServerGenericClient.MainScene.updateOffset(this.index,1,value);
+        }
+        else
+        {   console.log("EarthServerClient::Module_Sharad not able to find transform.");    }
+
+        trans = null;
+    }
+    else
+    {   console.log("EarthServerClient::Module_Sharad not bound to a model.");  }
 };
 
 
@@ -236,7 +265,7 @@ EarthServerGenericClient.Model_Sharad.prototype.elevationUpdate = function()
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model
  */
-EarthServerGenericClient.Model_Sharad.prototype.setSpecificElement= function(element)
+EarthServerGenericClient.Module_Sharad.prototype.setSpecificElement= function(element)
 {
     // updateLength() is called for elevation because the model is rotated. Scaling it's length
     // scales the size on the y-axis in fact.

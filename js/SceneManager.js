@@ -949,7 +949,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding(value);
         }
     };
 
@@ -975,7 +975,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[0] = value*baseWidth[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding();
         }
     };
 
@@ -1001,7 +1001,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[2] = value*baseLength[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding();
         }
     };
 

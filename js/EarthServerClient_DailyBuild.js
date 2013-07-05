@@ -949,7 +949,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding(value);
         }
     };
 
@@ -975,7 +975,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[0] = value*baseWidth[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding();
         }
     };
 
@@ -1001,7 +1001,7 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[2] = value*baseLength[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
-            models[modelIndex].elevationUpdate();
+            models[modelIndex].elevationUpdateBinding();
         }
     };
 
@@ -1319,18 +1319,22 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     {
         for(var i=0; i<this.bindings.length;i++)
         {
-            this.bindings[i].movementUpdate(movementType,value);
+            this.bindings[i].movementUpdateBoundModule(movementType,value);
         }
     };
 
     /**
      * This function calls every binding object that the elevation of the models was changed.
+     * @param value - This is the value the that was given to SceneManager::updateElevation().
      */
-    this.elevationUpdate = function()
+    this.elevationUpdateBinding = function(value)
     {
+        if(value === undefined)
+        {   value = 10; }//TODO DEFINE some basic start values for UI etc.
+
         for(var i=0; i<this.bindings.length;i++)
         {
-            this.bindings[i].elevationUpdate();
+            this.bindings[i].elevationUpdateBoundModule(value);
         }
     };
 
@@ -1771,24 +1775,8 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTmp.width  = texture.width;
             canvasTmp.height = texture.height;
 
-            var context = canvasTmp.getContext('2d',{premultipliedAlpha: false});
-            var imageData = context.createImageData(texture.width,texture.height);
-
-            //var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
-            for (var i=0;i<imageData.data.length;i+=4)
-            {
-                imageData.data[i]=255;
-                imageData.data[(i+1)]=255;
-                imageData.data[(i+2)]=255;
-                imageData.data[(i+3)]=255;
-            }
-            context.putImageData(imageData,0,0);
-            console.log(context.getImageData(0, 0, canvasTmp.width, canvasTmp.height).data );
-
-            //context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
-            context.globalCompositeOperation = "copy";
+            var context = canvasTmp.getContext('2d');
             context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
-
 
             var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
 
@@ -1805,15 +1793,12 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
             if( removeAlphaChannel) // nodata is not defined: set the alpha value of all pixels to fully opaque.
             {
-                console.log(imageData.data);
                 for (var i=0;i<imageData.data.length;i+=4)
                 {
                     imageData.data[i+3]=255;
                 }
                 context.putImageData(imageData,0,0);
             }
-
-            //context.putImageData(imageData,0,0);
 
             canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";
@@ -3001,22 +2986,22 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  * One service URL, one coverage
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-EarthServerGenericClient.Model_Sharad = function()
+EarthServerGenericClient.Module_Sharad = function()
 {
     this.setDefaults();
-    this.modelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
+    this.boundModelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
     this.name = "Sharad Underground";
 };
-EarthServerGenericClient.Model_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+EarthServerGenericClient.Module_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 
 
-EarthServerGenericClient.Model_Sharad.prototype.setURL=function(serviceURL)
+EarthServerGenericClient.Module_Sharad.prototype.setURL=function(serviceURL)
 {
     this.serviceURL = serviceURL;
 };
 
 
-EarthServerGenericClient.Model_Sharad.prototype.setCoverages = function (coverage)
+EarthServerGenericClient.Module_Sharad.prototype.setCoverages = function (coverage)
 {
     this.coverage = coverage;
 };
@@ -3027,7 +3012,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setCoverages = function (coverag
  * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
  * Examples: $CI.red , x($MINX:$MINY)
  */
-EarthServerGenericClient.Model_Sharad.prototype.setWCPSQuery = function(querystring)
+EarthServerGenericClient.Module_Sharad.prototype.setWCPSQuery = function(querystring)
 {
     /**
      * The custom query.
@@ -3043,7 +3028,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setWCPSQuery = function(querystr
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
+EarthServerGenericClient.Module_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
     {   alert("root is not defined");    }
 
@@ -3079,7 +3064,7 @@ EarthServerGenericClient.Model_Sharad.prototype.createModel=function(root,cubeSi
     EarthServerGenericClient.requestWCPSImage(this,this.serviceURL,this.WCPSQuery);
 };
 
-EarthServerGenericClient.Model_Sharad.prototype.setMetaData = function( link )
+EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
 {
 
     function getBinary(file)
@@ -3106,7 +3091,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setMetaData = function( link )
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
+EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
 {
     if( this.checkReceivedData(data))
     {
@@ -3149,6 +3134,8 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
             scaleY = (this.cubeSizeY*this.yScale)/height;
             trans.setAttribute("scale", "1 " + scaleY + " 1");
 
+            this.YResolution = height;
+
             var min = (-this.cubeSizeY/2.0) + EarthServerGenericClient.MainScene.getModelOffsetY(this.index) * this.cubeSizeY;
             yoff = (this.cubeSizeY * this.yOffset) - (min*scaleY) - (this.cubeSizeY/2.0);
             trans.setAttribute("translation", "0 " + yoff  + " 0");
@@ -3175,7 +3162,7 @@ EarthServerGenericClient.Model_Sharad.prototype.receiveData = function(data)
  * Sets the index of the scene model the sharad module is bound to.
  * @param index - Index of the scene model.
  */
-EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(index)
+EarthServerGenericClient.Module_Sharad.prototype.setBoundModuleIndex = function(index)
 {
     if(index === this.index)//prevent to bind this module to itself
     {
@@ -3184,7 +3171,7 @@ EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(i
     else
     {
         console.log("Module_Sharad: Bound to model: " + index);
-        this.modelIndex = index;
+        this.boundModelIndex = index;
     }
 };
 
@@ -3192,17 +3179,17 @@ EarthServerGenericClient.Model_Sharad.prototype.setBoundModuleIndex = function(i
  * Returns the index of the model sharad module is bound to.
  * @returns {number} - Index of the model or -1 if unbound.
  */
-EarthServerGenericClient.Model_Sharad.prototype.getBoundModuleIndex = function()
+EarthServerGenericClient.Module_Sharad.prototype.getBoundModuleIndex = function()
 {
-    return this.modelIndex;
+    return this.boundModelIndex;
 };
 
 /**
  * Resets the modelIndex sharad module is bound to back to -1 and marks it as unbound.
  */
-EarthServerGenericClient.Model_Sharad.prototype.releaseBinding = function()
+EarthServerGenericClient.Module_Sharad.prototype.releaseBinding = function()
 {
-    this.modelIndex = -1;
+    this.boundModelIndex = -1;
 };
 
 /**
@@ -3211,7 +3198,7 @@ EarthServerGenericClient.Model_Sharad.prototype.releaseBinding = function()
  * @param axis - Axis of the movement.
  * @param delta - Delta to the last position.
  */
-EarthServerGenericClient.Model_Sharad.prototype.movementUpdate = function(axis,delta)
+EarthServerGenericClient.Module_Sharad.prototype.movementUpdateBoundModule = function(axis,delta)
 {
    EarthServerGenericClient.MainScene.updateOffsetByDelta(this.index,axis,delta);
 };
@@ -3220,9 +3207,36 @@ EarthServerGenericClient.Model_Sharad.prototype.movementUpdate = function(axis,d
  * This function notifies sharad module that the bound module's elevation was changed.
  * All annotation will be checked and altered in their position.
  */
-EarthServerGenericClient.Model_Sharad.prototype.elevationUpdate = function()
+EarthServerGenericClient.Module_Sharad.prototype.elevationUpdateBoundModule = function(value)
 {
-    //TODO: implement
+    if(this.boundModelIndex >= 0)
+    {
+        var x = 0;
+        var z = 0;
+
+        // call elevation update to it self
+        EarthServerGenericClient.MainScene.updateElevation(this.index,value);
+        // get height of the bound module. (for now at the center of the cube
+        var value = EarthServerGenericClient.MainScene.getHeightAt3DPosition(this.boundModelIndex,x,z);
+        console.log(value);
+        // get own transformation by name "EarthServerGenericClient_modelTransform"+this.index);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+        if( trans)
+        {
+            var scale = trans.getAttribute("scale");
+            scale = scale.split(" ");
+            // determine exact value
+            value = value + (this.cubeSizeY/2) - ( this.YResolution * scale[1] * this.yScale );
+            //update offset
+            EarthServerGenericClient.MainScene.updateOffset(this.index,1,value);
+        }
+        else
+        {   console.log("EarthServerClient::Module_Sharad not able to find transform.");    }
+
+        trans = null;
+    }
+    else
+    {   console.log("EarthServerClient::Module_Sharad not bound to a model.");  }
 };
 
 
@@ -3231,7 +3245,7 @@ EarthServerGenericClient.Model_Sharad.prototype.elevationUpdate = function()
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model
  */
-EarthServerGenericClient.Model_Sharad.prototype.setSpecificElement= function(element)
+EarthServerGenericClient.Module_Sharad.prototype.setSpecificElement= function(element)
 {
     // updateLength() is called for elevation because the model is rotated. Scaling it's length
     // scales the size on the y-axis in fact.
@@ -3480,7 +3494,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index);
             this.terrain.createTerrain();
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-            this.elevationUpdate();
+            this.elevationUpdateBinding();
             if(this.sidePanels)
             {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
@@ -3494,7 +3508,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             //Add new data (with higher resolution) to the terrain
             EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain.insertLevel(this.transformNode,data);
-            this.elevationUpdate();
+            this.elevationUpdateBinding();
             if(this.sidePanels)
             {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
@@ -3692,7 +3706,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdate();
+        this.elevationUpdateBinding();
 
         if(this.sidePanels)
         {   this.terrain.createSidePanels(transform,1); }
@@ -3712,6 +3726,203 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.setSpecificElement= function
 {
     EarthServerGenericClient.appendElevationSlider(element,this.index);
 };//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCPS Image with DEM from second WCPS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS = function()
+{
+    this.setDefaults();
+    this.name = "WCPS Image with DEM from second WCPS Query.";
+};
+EarthServerGenericClient.Model_WCPSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the urls for both WCPS Queries. If only one url is given it is used for both requests.
+ * @param imageURL - Service URL for the WCPS Image Request
+ * @param demURL - Service URL for the WCPS Dem Request
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setURLs=function(imageURL, demURL){
+    /**
+     * URL for the WCPS image service.
+     * @type {String}
+     */
+    this.imageURL = String(imageURL);
+    /**
+     * URL for the WCPS Dem service.
+     * @type {String}
+     */
+    this.demURL;
+    if(demURL === undefined) // if demURL is not defined use imageURL
+    {   this.demURL = String(imageURL); }
+    else
+    {   this.demURL  = String(demURL);  }
+};
+/**
+ * Sets both coveragenames
+ * @param coverageImage - Coverage name for the image dataset.
+ * @param coverageDem   - Coverage name for the dem dataset.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets a complete custom querystring.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSImageQuery = function(querystring)
+{
+    /**
+     * The custom WCPS image query.
+     * @type {String}
+     */
+    this.WCPSImageQuery = String(querystring);
+};
+
+/**
+ * Sets a custom query for the WCPS Dem request.
+ * @param querystring - WCPS as a string.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
+{
+    /**
+     * The custom WCPS Dem query.
+     * @type {String}
+     */
+    this.WCPSDemQuery = String(querystring);
+};
+
+
+/**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
+    {
+        alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
+        console.log(this);
+        return;
+    }
+
+    //2: create wcps queries
+    //If no query was defined use standard query.
+    if( this.WCPSImageQuery === undefined)
+    {
+        this.WCPSImageQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
+        this.WCPSImageQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSImageQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSImageQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
+        this.WCPSImageQuery += '}, "' + this.imageFormat +'" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
+    }
+
+    if( this.WCPSDemQuery === undefined)
+    {
+        var currentXRes = this.XResolution;
+        var currentZRes = this.ZResolution;
+        this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
+        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
+        this.WCPSDemQuery += ', "csv" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
+    }
+
+    EarthServerGenericClient.requestWCPSImageWCPSDem(this,this.imageURL,this.WCPSImageQuery,this.demURL,this.WCPSDemQuery);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        this.root.appendChild( transform);
+
+        //Set transparency
+        data.transparency = this.transparency;
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
+
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(transform,1); }
+
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -3864,7 +4075,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdate();
+        this.elevationUpdateBinding();
         if(this.sidePanels)
         {   this.terrain.createSidePanels(this.transformNode,1);    }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
@@ -3973,16 +4184,22 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         UI_DIV.appendChild(lightHeader);
         UI_DIV.appendChild(lightDiv);
 
+        /*
+         Note about the sliders: The cube is using X and Z axis is base and Y as height.
+         While this is standard in computer graphics it can confuse users.
+         Because of this the labels on Y and Z are switched.
+         */
+
         EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"X","X Translation",i,0,
             -EarthServerGenericClient.MainScene.getCubeSizeX(),EarthServerGenericClient.MainScene.getCubeSizeX(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
-        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Y","Y Translation",i,1,
-            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),0,
+        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Z","Y Translation",i,2,
+            -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
-        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Z","Z Translation",i,2,
-            -EarthServerGenericClient.MainScene.getCubeSizeZ(),EarthServerGenericClient.MainScene.getCubeSizeZ(),0,
+        EarthServerGenericClient.appendXYZSlider(lightDiv,"Light"+i+"Y","Z Translation",i,1,
+            -EarthServerGenericClient.MainScene.getCubeSizeY(),EarthServerGenericClient.MainScene.getCubeSizeY(),0,
             EarthServerGenericClient.MainScene.updateLightPosition);
 
         EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"R","Radius",i,0,5000,500,
@@ -3995,7 +4212,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         lightHeader=null;
     }
 
-    //Create Div for the Annotations
+    // Create Div for the Annotations
     if( EarthServerGenericClient.MainScene.getAnnotationLayerCount() )
     {
         var Anno = document.createElement("h3");
@@ -4245,7 +4462,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
      * @param axis - Axis of the movement.
      * @param delta - Delta to the last position.
      */
-    this.movementUpdate = function(axis,delta)
+    this.movementUpdateBoundModule = function(axis,delta)
     {
         if( axis >= 0 && axis < 3)
         {
@@ -4284,7 +4501,7 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
      * This function notifies the annotation layer that the scene model's elevation was changed.
      * All annotation will be checked and altered in their position.
      */
-    this.elevationUpdate = function()
+    this.elevationUpdateBoundModule = function()
     {
         for(var i=0; i<annotationTransforms.length;i++)
         {

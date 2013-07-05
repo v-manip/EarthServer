@@ -38,24 +38,8 @@ EarthServerGenericClient.AbstractTerrain = function()
             canvasTmp.width  = texture.width;
             canvasTmp.height = texture.height;
 
-            var context = canvasTmp.getContext('2d',{premultipliedAlpha: false});
-            var imageData = context.createImageData(texture.width,texture.height);
-
-            //var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
-            for (var i=0;i<imageData.data.length;i+=4)
-            {
-                imageData.data[i]=255;
-                imageData.data[(i+1)]=255;
-                imageData.data[(i+2)]=255;
-                imageData.data[(i+3)]=255;
-            }
-            context.putImageData(imageData,0,0);
-            console.log(context.getImageData(0, 0, canvasTmp.width, canvasTmp.height).data );
-
-            //context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
-            context.globalCompositeOperation = "copy";
+            var context = canvasTmp.getContext('2d');
             context.drawImage(texture, 0,0, canvasTmp.width, canvasTmp.height);
-
 
             var imageData = context.getImageData(0, 0, canvasTmp.width, canvasTmp.height);
 
@@ -72,15 +56,12 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
             if( removeAlphaChannel) // nodata is not defined: set the alpha value of all pixels to fully opaque.
             {
-                console.log(imageData.data);
                 for (var i=0;i<imageData.data.length;i+=4)
                 {
                     imageData.data[i+3]=255;
                 }
                 context.putImageData(imageData,0,0);
             }
-
-            //context.putImageData(imageData,0,0);
 
             canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";

@@ -235,7 +235,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index);
             this.terrain.createTerrain();
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-            this.elevationUpdate();
+            this.elevationUpdateBinding();
             if(this.sidePanels)
             {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
@@ -249,7 +249,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
             //Add new data (with higher resolution) to the terrain
             EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
             this.terrain.insertLevel(this.transformNode,data);
-            this.elevationUpdate();
+            this.elevationUpdateBinding();
             if(this.sidePanels)
             {   this.terrain.createSidePanels(this.transformNode,1);    }
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);

@@ -271,18 +271,22 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     {
         for(var i=0; i<this.bindings.length;i++)
         {
-            this.bindings[i].movementUpdate(movementType,value);
+            this.bindings[i].movementUpdateBoundModule(movementType,value);
         }
     };
 
     /**
      * This function calls every binding object that the elevation of the models was changed.
+     * @param value - This is the value the that was given to SceneManager::updateElevation().
      */
-    this.elevationUpdate = function()
+    this.elevationUpdateBinding = function(value)
     {
+        if(value === undefined)
+        {   value = 10; }//TODO DEFINE some basic start values for UI etc.
+
         for(var i=0; i<this.bindings.length;i++)
         {
-            this.bindings[i].elevationUpdate();
+            this.bindings[i].elevationUpdateBoundModule(value);
         }
     };
 
