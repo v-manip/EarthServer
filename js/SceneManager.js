@@ -111,6 +111,8 @@ EarthServerGenericClient.SceneManager = function()
     var cameraDefs = [];            // Name and ID of the specified cameras. Format: "NAME:ID"
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
+    var nextFrameCallback = [];     // Array of callbacks that should be done in any next frame.
+    var lastFrameInsert = 0;
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -811,10 +813,34 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
+
+        var element = document.getElementById("x3d");
+        element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
+
         for(var i=0; i< models.length; i++)
         {
             models[i].createModel(this.trans,cubeSizeX,cubeSizeY,cubeSizeZ);
         }
+    };
+
+    //TODO: Comment
+    this.nextFrame = function()
+    {
+        if( nextFrameCallback.length !== 0)
+        {   lastFrameInsert++ }
+
+        if( nextFrameCallback.length !== 0 && lastFrameInsert > 10)
+        {
+            var callbackIndex = nextFrameCallback.shift();
+            models[callbackIndex].terrain.nextFrame();
+            lastFrameInsert = 0;
+        }
+
+    };
+
+    this.enterCallbackForNextFrame = function( modelIndex )
+    {
+        nextFrameCallback.push( modelIndex );
     };
 
     /**

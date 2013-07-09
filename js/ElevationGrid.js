@@ -2,8 +2,8 @@
  * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
  * For every appearance in the appearances parameter one level is built with 25% size of the last level.
  * @param parentNode - Dom element to append the elevation grids to.
- * @param info - Information about the ID,position of the chunk, the heightmap's size and the modelIndex.
- * @param hf - The heightmap to be used for the elevation grid.
+ * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
+ * @param hf - The height map to be used for the elevation grid.
  * @param appearances - Array of appearances. For every appearance one level for LOD is built. 1 Level = no LOD.
  * @constructor
  */

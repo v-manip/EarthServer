@@ -111,6 +111,8 @@ EarthServerGenericClient.SceneManager = function()
     var cameraDefs = [];            // Name and ID of the specified cameras. Format: "NAME:ID"
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
+    var nextFrameCallback = [];     // Array of callbacks that should be done in any next frame.
+    var lastFrameInsert = 0;
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -811,10 +813,34 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
+
+        var element = document.getElementById("x3d");
+        element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
+
         for(var i=0; i< models.length; i++)
         {
             models[i].createModel(this.trans,cubeSizeX,cubeSizeY,cubeSizeZ);
         }
+    };
+
+    //TODO: Comment
+    this.nextFrame = function()
+    {
+        if( nextFrameCallback.length !== 0)
+        {   lastFrameInsert++ }
+
+        if( nextFrameCallback.length !== 0 && lastFrameInsert > 10)
+        {
+            var callbackIndex = nextFrameCallback.shift();
+            models[callbackIndex].terrain.nextFrame();
+            lastFrameInsert = 0;
+        }
+
+    };
+
+    this.enterCallbackForNextFrame = function( modelIndex )
+    {
+        nextFrameCallback.push( modelIndex );
     };
 
     /**
@@ -1562,8 +1588,8 @@ EarthServerGenericClient.AbstractSceneModel = function(){
  * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
  * For every appearance in the appearances parameter one level is built with 25% size of the last level.
  * @param parentNode - Dom element to append the elevation grids to.
- * @param info - Information about the ID,position of the chunk, the heightmap's size and the modelIndex.
- * @param hf - The heightmap to be used for the elevation grid.
+ * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
+ * @param hf - The height map to be used for the elevation grid.
  * @param appearances - Array of appearances. For every appearance one level for LOD is built. 1 Level = no LOD.
  * @constructor
  */
@@ -2239,7 +2265,7 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
      * 256*256 (2^16) is the max size because of only 16 bit indices.
      * @type {number}
      */
-    var chunkSize = 256;
+    var chunkSize = 121;
     /**
      * The canvas that holds the received image.
      * @type {HTMLElement}
@@ -2252,6 +2278,12 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     var currentData = 0;
 
     /**
+     * Counter for the insertion of chunks.
+     * @type {number}
+     */
+    var currentChunk =0;
+
+    /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
      * @param root - Dom Element to append the terrain to.
      * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
@@ -2260,44 +2292,55 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     this.insertLevel = function(root,data,noDataValue)
     {
         this.data = data;
+        this.root = root;
         this.canvasTexture = this.createCanvas(data.texture,index,noDataValue,data.removeAlphaChannel);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
         //Remove old Materials of the deleted children
         this.clearMaterials();
 
-        for(var currentChunk=0; currentChunk< chunkInfo.numChunks; currentChunk++)
+        for(currentChunk=0; currentChunk< chunkInfo.numChunks; currentChunk++)
         {
-            try
-            {
-                //Build all necessary information and values to create a chunk
-                var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
-                var hm = this.getHeightMap(info);
-                var appearance = this.getAppearances("TerrainApp_"+index+"_"+currentData,1,index,this.canvasTexture,data.transparency);
-
-                var transform = document.createElement('Transform');
-                transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
-                transform.setAttribute("scale", "1.0 1.0 1.0");
-
-                new ElevationGrid(transform,info, hm, appearance);
-
-                root.appendChild(transform);
-
-                //Delete vars avoid circular references
-                info = null;
-                hm = null;
-                appearance = null;
-                transform = null;
-            }
-            catch(error)
-            {
-                alert('Terrain::CreateNewChunk(): ' + error);
-            }
+            EarthServerGenericClient.MainScene.enterCallbackForNextFrame( this.index );
         }
+        currentChunk =0;
         currentData++;
-        chunkInfo = null;
+        //chunkInfo = null;
 
         EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    /**
+     * The Scene Manager calls this function after a few frames since the last insertion of a chunk.
+     */
+    this.nextFrame = function()
+    {
+        try
+        {
+            //Build all necessary information and values to create a chunk
+            var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,this.data.width,this.data.height);
+            var hm = this.getHeightMap(info);
+            var appearance = this.getAppearances("TerrainApp_"+this.index+"_"+currentData,1,this.index,this.canvasTexture,this.data.transparency);
+
+            var transform = document.createElement('Transform');
+            transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
+            transform.setAttribute("scale", "1.0 1.0 1.0");
+
+            new ElevationGrid(transform,info, hm, appearance);
+
+            this.root.appendChild(transform);
+
+            currentChunk++;
+            //Delete vars avoid circular references
+            info = null;
+            hm = null;
+            appearance = null;
+            transform = null;
+        }
+        catch(error)
+        {
+            alert('Terrain::CreateNewChunk(): ' + error);
+        }
     };
 };
 EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
@@ -2338,12 +2381,12 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
      * We want to build 3 chunks for the LOD with different resolution but the same size on the screen.
-     * With 253 values the length of the most detailed chunk is 252.
-     * The second chunk has 127 values and the length of 126. With a scale of 2 it's back to the size of 252.
-     * The third chunk has 64 values and the length if 63. With a scale of 4 it's also back to the size 252.
+     * With 121 values the length of the most detailed chunk is 120.
+     * The second chunk has 61 values and the length of 60. With a scale of 2 it's back to the size of 120.
+     * The third chunk has 31 values and the length if 30. With a scale of 4 it's also back to the size 120.
      * @type {number}
      */
-    var chunkSize = 253;
+    var chunkSize = 121;
     /**
      * General information about the number of chunks needed to build the terrain.
      * @type {number}
@@ -2351,46 +2394,62 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
     var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
     /**
+     * Counter for the insertion of chunks.
+     * @type {number}
+     */
+    var currentChunk    = 0;
+
+    /**
      * Builds the terrain and appends it into the scene.
      */
     this.createTerrain= function()
     {
-        for(var currentChunk=0; currentChunk< chunkInfo.numChunks;currentChunk++)
+        for(currentChunk=0; currentChunk< chunkInfo.numChunks;currentChunk++)
         {
-            try
-            {
-                //Build all necessary information and values to create a chunk
-                var info = this.createChunkInfo(index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
-                var hm = this.getHeightMap(info);
-                var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,data.transparency);
-
-                var transform = document.createElement('Transform');
-                transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
-                transform.setAttribute("scale", "1.0 1.0 1.0");
-
-                var lodNode = document.createElement('LOD');
-                lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
-                lodNode.setAttribute("id", 'lod' + info.ID);
-
-                new ElevationGrid(lodNode,info, hm, appearance);
-                transform.appendChild(lodNode);
-                root.appendChild(transform);
-
-                //Delete vars avoid circular references
-                info = null;
-                hm = null;
-                appearance = null;
-                transform = null;
-                lodNode = null;
-            }
-            catch(error)
-            {
-                alert('Terrain::CreateNewChunk(): ' + error);
-            }
+            EarthServerGenericClient.MainScene.enterCallbackForNextFrame( this.index );
         }
-        chunkInfo = null;
+        currentChunk=0;
+        //chunkInfo = null;
 
         EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    /**
+     * The Scene Manager calls this function after a few frames since the last insertion of a chunk.
+     */
+    this.nextFrame = function()
+    {
+        try
+        {
+            //Build all necessary information and values to create a chunk
+            var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
+            var hm = this.getHeightMap(info);
+            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,data.transparency);
+
+            var transform = document.createElement('Transform');
+            transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
+            transform.setAttribute("scale", "1.0 1.0 1.0");
+
+            var lodNode = document.createElement('LOD');
+            lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
+            lodNode.setAttribute("id", 'lod' + info.ID);
+
+            new ElevationGrid(lodNode,info, hm, appearance);
+            transform.appendChild(lodNode);
+            root.appendChild(transform);
+
+            currentChunk++;
+            //Delete vars avoid circular references
+            info = null;
+            hm = null;
+            appearance = null;
+            transform = null;
+            lodNode = null;
+        }
+        catch(error)
+        {
+            alert('Terrain::CreateNewChunk(): ' + error);
+        }
     };
 };
 EarthServerGenericClient.LODTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
@@ -3077,13 +3136,29 @@ EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
     }
 
     var descov = getBinary(link);
-    descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/)[0];
-    descov = descov.replace('coords','"coords"');
-    descov = '' + descov.substring(16,descov.length - 18);
-    var metadata = JSON.parse(descov);
 
-    if( metadata.coords.length > 0)
-    {   this.coords = metadata.coords; }
+    if(descov)
+    {
+        descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/);
+        if(descov !== null)
+        {
+            descov = descov[0];
+            descov = descov.replace('coords','"coords"');
+            descov = '' + descov.substring(16,descov.length - 18);
+            var metadata = JSON.parse(descov);
+
+            if( metadata.coords.length > 0)
+            {   this.coords = metadata.coords; }
+        }
+        else
+        {
+            console.log("EarthServerGenericClient::Module_Sharad: Error in meta data response.") ;
+        }
+    }
+    else
+    {
+        console.log("EarthServerGenericClient::Module_Sharad: Can't access meta data.") ;
+    }
 };
 
 /**

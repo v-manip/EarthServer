@@ -97,13 +97,29 @@ EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
     }
 
     var descov = getBinary(link);
-    descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/)[0];
-    descov = descov.replace('coords','"coords"');
-    descov = '' + descov.substring(16,descov.length - 18);
-    var metadata = JSON.parse(descov);
 
-    if( metadata.coords.length > 0)
-    {   this.coords = metadata.coords; }
+    if(descov)
+    {
+        descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/);
+        if(descov !== null)
+        {
+            descov = descov[0];
+            descov = descov.replace('coords','"coords"');
+            descov = '' + descov.substring(16,descov.length - 18);
+            var metadata = JSON.parse(descov);
+
+            if( metadata.coords.length > 0)
+            {   this.coords = metadata.coords; }
+        }
+        else
+        {
+            console.log("EarthServerGenericClient::Module_Sharad: Error in meta data response.") ;
+        }
+    }
+    else
+    {
+        console.log("EarthServerGenericClient::Module_Sharad: Can't access meta data.") ;
+    }
 };
 
 /**
