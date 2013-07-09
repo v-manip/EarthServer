@@ -823,7 +823,11 @@ EarthServerGenericClient.SceneManager = function()
         }
     };
 
-    //TODO: Comment
+    /**
+     * This function is executed every frame. If a terrain whats to add a chunk
+     * it has registered the request and this function let one terrain add a single
+     * chunk and wait for a few frames afterwards.
+     */
     this.nextFrame = function()
     {
         if( nextFrameCallback.length !== 0)
@@ -838,6 +842,10 @@ EarthServerGenericClient.SceneManager = function()
 
     };
 
+    /**
+     * This function lets terrains register their request to add a chunk to the scene.
+     * @param modelIndex - Index of the model that uses the terrain.
+     */
     this.enterCallbackForNextFrame = function( modelIndex )
     {
         nextFrameCallback.push( modelIndex );
