@@ -112,7 +112,8 @@ EarthServerGenericClient.SceneManager = function()
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
     var nextFrameCallback = [];     // Array of callbacks that should be done in any next frame.
-    var lastFrameInsert = 0;
+    var lastFrameInsert = Number.MAX_VALUE; // Frame counter since the last insertion of data into the dom
+    var FramesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -813,13 +814,31 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
-
+        // overwrite the enterFrame and exitFrame methods of the x3dom runtime (see doc below).
         var element = document.getElementById("x3d");
         element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
+        element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;
 
         for(var i=0; i< models.length; i++)
         {
             models[i].createModel(this.trans,cubeSizeX,cubeSizeY,cubeSizeZ);
+        }
+    };
+
+    /**
+     * This function forces the x3dom runtime to render a next frame even if no change to the scene or any
+     * movement to from the user occurred. This is needed during the building process of the scene.
+     * Data is inserted into the dom with a few frames between them to prevent stalls.
+     * If the user does not move the mouse no new frame is drawn and no new data in inserted.
+     *
+     * This function forces new frames and therefor the insertion of new data.
+     */
+    this.exitFrame = function()
+    {
+        if( nextFrameCallback.length !== 0)
+        {
+            var element = document.getElementById("x3d");
+            element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
         }
     };
 
@@ -831,15 +850,14 @@ EarthServerGenericClient.SceneManager = function()
     this.nextFrame = function()
     {
         if( nextFrameCallback.length !== 0)
-        {   lastFrameInsert++ }
+        {   lastFrameInsert++;  }
 
-        if( nextFrameCallback.length !== 0 && lastFrameInsert > 10)
+        if( nextFrameCallback.length !== 0 && lastFrameInsert >= FramesBetweenDomInsertion)
         {
             var callbackIndex = nextFrameCallback.shift();
             models[callbackIndex].terrain.nextFrame();
             lastFrameInsert = 0;
         }
-
     };
 
     /**
@@ -2373,12 +2391,12 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
      * Distance to change between full and 1/2 resolution.
      * @type {number}
      */
-    var lodRange1       = 2000;
+    var lodRange1       = 5000;
     /**
      * Distance to change between 1/2 and 1/4 resolution.
      * @type {number}
      */
-    var lodRange2       = 10000;
+    var lodRange2       = 17000;
 
     /**
      * The canvas that holds the received image.
@@ -2775,16 +2793,15 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
             data: query,
             success: function(receivedData)
             {
+                try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
                 //The received data is a list of tuples: {value,value},{value,value},.....
                 var tuples = receivedData.split('},');
 
                 var sizeX = tuples.length;
-                if( sizeX === 0)
-                {
-                    console.log("EarthServerGenericClient::getWCPSDemCoverage: Received Data is invalid.");
-                    return;
-                }
+                if( sizeX <=0 || isNaN(sizeX)  )
+                {   throw "getCoverageWCS: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
+
 
                 var hm = new Array(sizeX);
                 for(var o=0; o<sizeX;o++)
@@ -2820,6 +2837,10 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
                 responseData.height = hm[0].length;
 
                 responseData.heightmap = hm;
+                }
+                catch(err)
+                {   alert(err); }
+
                 callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
@@ -2855,6 +2876,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             data: request,
             success: function(receivedData)
             {
+                try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 var Grid = $(receivedData).find('GridEnvelope');
                 var low  = $(Grid).find('low').text().split(" ");
@@ -2863,11 +2885,13 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 var sizeX = high[0] - low[0] + 1;
                 var sizeY = high[1] - low[1] + 1;
 
-                if( sizeX <=0 || sizeY <=0)
+                if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
                 {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
 
                 responseData.height = sizeX;
                 responseData.width  = sizeY;
+
+                console.log(sizeX,sizeY);
 
                 var hm = new Array(sizeX);
                 for(var index=0; index<hm.length; index++)
@@ -2905,6 +2929,10 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 });
                 DataBlocks = null;
                 responseData.heightmap = hm;
+                }
+                catch(err)
+                {   alert(err); }
+
                 callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)

@@ -207,16 +207,15 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
             data: query,
             success: function(receivedData)
             {
+                try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
                 //The received data is a list of tuples: {value,value},{value,value},.....
                 var tuples = receivedData.split('},');
 
                 var sizeX = tuples.length;
-                if( sizeX === 0)
-                {
-                    console.log("EarthServerGenericClient::getWCPSDemCoverage: Received Data is invalid.");
-                    return;
-                }
+                if( sizeX <=0 || isNaN(sizeX)  )
+                {   throw "getCoverageWCS: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
+
 
                 var hm = new Array(sizeX);
                 for(var o=0; o<sizeX;o++)
@@ -252,6 +251,10 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
                 responseData.height = hm[0].length;
 
                 responseData.heightmap = hm;
+                }
+                catch(err)
+                {   alert(err); }
+
                 callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
@@ -287,6 +290,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             data: request,
             success: function(receivedData)
             {
+                try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
                 var Grid = $(receivedData).find('GridEnvelope');
                 var low  = $(Grid).find('low').text().split(" ");
@@ -295,11 +299,13 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 var sizeX = high[0] - low[0] + 1;
                 var sizeY = high[1] - low[1] + 1;
 
-                if( sizeX <=0 || sizeY <=0)
+                if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
                 {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
 
                 responseData.height = sizeX;
                 responseData.width  = sizeY;
+
+                console.log(sizeX,sizeY);
 
                 var hm = new Array(sizeX);
                 for(var index=0; index<hm.length; index++)
@@ -337,6 +343,10 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                 });
                 DataBlocks = null;
                 responseData.heightmap = hm;
+                }
+                catch(err)
+                {   alert(err); }
+
                 callback.receiveData(responseData);
             },
             error: function(xhr, ajaxOptions, thrownError)
