@@ -112,7 +112,8 @@ EarthServerGenericClient.SceneManager = function()
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
     var nextFrameCallback = [];     // Array of callbacks that should be done in any next frame.
-    var lastFrameInsert = 0;
+    var lastFrameInsert = Number.MAX_VALUE; // Frame counter since the last insertion of data into the dom
+    var FramesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -813,13 +814,31 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createModels = function()
     {
-
+        // overwrite the enterFrame and exitFrame methods of the x3dom runtime (see doc below).
         var element = document.getElementById("x3d");
         element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
+        element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;
 
         for(var i=0; i< models.length; i++)
         {
             models[i].createModel(this.trans,cubeSizeX,cubeSizeY,cubeSizeZ);
+        }
+    };
+
+    /**
+     * This function forces the x3dom runtime to render a next frame even if no change to the scene or any
+     * movement to from the user occurred. This is needed during the building process of the scene.
+     * Data is inserted into the dom with a few frames between them to prevent stalls.
+     * If the user does not move the mouse no new frame is drawn and no new data in inserted.
+     *
+     * This function forces new frames and therefor the insertion of new data.
+     */
+    this.exitFrame = function()
+    {
+        if( nextFrameCallback.length !== 0)
+        {
+            var element = document.getElementById("x3d");
+            element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
         }
     };
 
@@ -831,15 +850,14 @@ EarthServerGenericClient.SceneManager = function()
     this.nextFrame = function()
     {
         if( nextFrameCallback.length !== 0)
-        {   lastFrameInsert++ }
+        {   lastFrameInsert++;  }
 
-        if( nextFrameCallback.length !== 0 && lastFrameInsert > 10)
+        if( nextFrameCallback.length !== 0 && lastFrameInsert >= FramesBetweenDomInsertion)
         {
             var callbackIndex = nextFrameCallback.shift();
             models[callbackIndex].terrain.nextFrame();
             lastFrameInsert = 0;
         }
-
     };
 
     /**

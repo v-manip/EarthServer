@@ -602,12 +602,12 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
      * Distance to change between full and 1/2 resolution.
      * @type {number}
      */
-    var lodRange1       = 2000;
+    var lodRange1       = 5000;
     /**
      * Distance to change between 1/2 and 1/4 resolution.
      * @type {number}
      */
-    var lodRange2       = 10000;
+    var lodRange2       = 17000;
 
     /**
      * The canvas that holds the received image.
