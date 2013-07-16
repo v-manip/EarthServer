@@ -255,7 +255,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
             if( this.bindings[i] === bindingObject)
             {
                 this.bindings[i].releaseBinding();
-                this.bindings.remove(i);
+                this.bindings = EarthServerGenericClient.arrayRemove(this.bindings,i,i);
                 return;
             }
         }

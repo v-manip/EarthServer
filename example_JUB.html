@@ -31,6 +31,7 @@
         JUB.setCoverages("FRT0000C51807L","galehrscdtm");
         JUB.setAreaOfInterest(137,-6,138,-5);
         JUB.setResolution(1000,1000);
+        JUB.setCoordinateReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/27700");
         JUB.setOffset(0,0.4,0);// model has a 40% offset in height of the cube
         JUB.setTransparency(0);// initial transparency of the model
 
@@ -45,7 +46,7 @@
         EarthServerGenericClient.MainScene.addModel(JUB);
 
         // create the scene: Cube has 50% height compared to width and length
-        EarthServerGenericClient.MainScene.createScene('x3d','x3dScene',1,0.5,1 );
+        EarthServerGenericClient.MainScene.createScene('x3dScene','theScene',1,0.5,1 );
 
         // add annotation layers and annotation (after creating the scene)
         EarthServerGenericClient.MainScene.addAnnotationsLayer("Layer1","JUB",50,"1 1 1",25,6,"1 1 1");
@@ -78,7 +79,11 @@
     <div id="x3dom">
         <div id="progressbar"></div>
         <X3D id="x3d" showlog="false" showstat="false">
-            <scene id="x3dScene"></scene>
+            <scene id="x3dScene">
+                <group id="root">
+                    <group id="theScene" DEF='theScene'></group>
+                </group>
+            </scene>
         </X3D>
 
         <div id='x3domUI'></div>

@@ -24,15 +24,16 @@
         // create the models:
         $(document).ready(function()
         {
-            var BGS = new EarthServerGenericClient.Model_WCPSDemAlpha();
-            BGS.setName("BGS");
-            BGS.setURL("http://earthserver.bgs.ac.uk/petascope");
+            var BGS = new EarthServerGenericClient.Model_WCPSDemWCPS();
+            BGS.setName("BGS 2x WCPS");
+            BGS.setURLs("http://earthserver.bgs.ac.uk/petascope");
             BGS.setCoverages("bgs_rs", "os_dtm");
             BGS.setAreaOfInterest(400000,500000,450000,550000);
+            BGS.setResolution(500,500);
+            BGS.setOffset(0,0.2,0);
+            BGS.setScale(1,0.3,1);
             BGS.setCoordinateReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/27700");
-            BGS.setScale(1.0,0.3,1.0);//Size within the cube 100%width, 30%height and 100%length
-            BGS.setResolution(1000,1000);//Resolution of the model
-            BGS.setProgressiveLoading(false);//Progressive Loading in three steps.
+            BGS.setSidePanels(true);
 
 
             var BGS_LOW = new EarthServerGenericClient.Model_WCPSDemAlpha();
@@ -42,7 +43,7 @@
             BGS_LOW.setAreaOfInterest(400000,500000,450000,550000);
             BGS_LOW.setCoordinateReferenceSystem("http://www.opengis.net/def/crs/EPSG/0/27700");
             BGS_LOW.setScale(1.0,0.2,1.0);
-            BGS_LOW.setOffset(0,0.4,0);
+            BGS_LOW.setOffset(0,0.5,0);
             BGS_LOW.setResolution(200,200);
             BGS_LOW.setWCPSForChannelRED('scale(trim($CI.red, {x:$CRS($MINX:$MAXX), y:$CRS($MINY:$MAXY) }), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {});');
             BGS_LOW.setWCPSForChannelGREEN('scale(trim($CI.green, {x:$CRS($MINX:$MAXX), y:$CRS($MINY:$MAXY) }), {x:"CRS:1"(0:$RESX), y:"CRS:1"(0:$RESZ)}, {});');
@@ -54,7 +55,7 @@
             EarthServerGenericClient.MainScene.addModel(BGS_LOW);
 
             // create the scene: Cube has 50% height compared to width and length
-            EarthServerGenericClient.MainScene.createScene('x3d','x3dScene',1,0.5,1 );
+            EarthServerGenericClient.MainScene.createScene('x3dScene','theScene',1,0.6,1 );
 
             // create the UI and axis labels
             EarthServerGenericClient.MainScene.createUI('x3domUI');
@@ -82,7 +83,11 @@
 <div id="x3dom">
     <div id="progressbar"></div>
     <X3D id="x3d" showlog="false" showstat="false">
-        <scene id="x3dScene"></scene>
+        <scene id="x3dScene">
+            <group id="root">
+                <group id="theScene" DEF='theScene'></group>
+            </group>
+        </scene>
     </X3D>
 
     <div id='x3domUI'></div>

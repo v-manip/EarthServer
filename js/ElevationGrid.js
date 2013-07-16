@@ -160,8 +160,8 @@ function ElevationGrid(parentNode,info, hf,appearances)
         {
             for (var k = 0; k < smallx; k++)
             {
-                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth));
-                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight));
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
 
                 buffer.push(tmpx + " ");
                 buffer.push(tmpy + " ");

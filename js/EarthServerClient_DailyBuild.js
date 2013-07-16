@@ -26,12 +26,12 @@ Function.prototype.inheritsFrom = function( parentClassOrObject )
 };
 
 /**
- * @ignore remove function for arrays
+ * @ignore remove function for arrays - By John Resig
  */
-Array.prototype.remove = function(from, to) {
-    var rest = this.slice((to || from) + 1 || this.length);
-    this.length = from < 0 ? this.length + from : from;
-    return this.push.apply(this, rest);
+EarthServerGenericClient.arrayRemove = function(array, from, to) {
+    var rest = array.slice((to || from) + 1 || array.length);
+    array.length = from < 0 ? array.length + from : from;
+    return array.push.apply(array, rest);
 };
 
 /**
@@ -113,7 +113,9 @@ EarthServerGenericClient.SceneManager = function()
     var lightInScene = false;       // Flag if a light should be added to the scene
     var nextFrameCallback = [];     // Array of callbacks that should be done in any next frame.
     var lastFrameInsert = Number.MAX_VALUE; // Frame counter since the last insertion of data into the dom
-    var FramesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
+    var framesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
+    var oculusRift = false;         // Flag if the scene is rendered for the oculus rift.
+    var InstantIOPort = undefined; // Port to Instant IO to connect the oculus rift.
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -147,6 +149,17 @@ EarthServerGenericClient.SceneManager = function()
      * @type {Object}
      */
     var axisLabels = null;
+
+    /**
+     * Sets if the x3dom oculus rift mode shall be enabled.
+     * @param value - True/False
+     * @param port - Instant IO Port
+     */
+    this.setOculusRift = function( value, port )
+    {
+        oculusRift = value;
+        InstantIOPort = port;
+    };
 
     /**
      * Return the size of the cube in the x axis
@@ -681,7 +694,7 @@ EarthServerGenericClient.SceneManager = function()
      * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
      * @param x3dID - ID of the x3d dom element.
-     * @param sceneID - ID of the x3dom scene element.
+     * @param sceneID - ID of the x3dom root element.
      * @param SizeX - width of the cube.
      * @param SizeY - height of the cube.
      * @param SizeZ - depth of the cube.
@@ -696,8 +709,9 @@ EarthServerGenericClient.SceneManager = function()
         cubeSizeY = (parseFloat(SizeY) * 1000);
         cubeSizeZ = (parseFloat(SizeZ) * 1000);
 
+        var x3d = document.getElementById(x3dID);
         var scene = document.getElementById(sceneID);
-        if( !scene)
+        if( !scene || !x3d)
         {
             alert("No X3D Scene found with id " + sceneID);
             return;
@@ -710,38 +724,46 @@ EarthServerGenericClient.SceneManager = function()
             lightTransform.setAttribute("id","EarthServerGenericClient_lightTransform0");
             lightTransform.setAttribute("translation","0 0 0");
             lights.push(new EarthServerGenericClient.Light(lightTransform,0, "0 0 0"));
-            scene.appendChild(lightTransform);
+            x3d.appendChild(lightTransform);
         }
 
         // Background
+        if( !oculusRift ) // in oculus mode the background is the rendertextures and declared in this.appendVRShader()
+        {
         var background = document.createElement("Background");
         background.setAttribute("groundAngle",Background_groundAngle);
         background.setAttribute("groundColor",Background_groundColor);
         background.setAttribute("skyAngle",Background_skyAngle);
         background.setAttribute("skyColor",Background_skyColor);
-        scene.appendChild(background);
+        x3d.appendChild(background);
+        }
 
         // Cameras
-        var cam1 = document.createElement('Viewpoint');
-        cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
-        cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
-        cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
+        if( !oculusRift ) // the oculus handles the navigation
+        {
+            var cam1 = document.createElement('Viewpoint');
+            cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
+            cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
+            cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
 
-        var cam2 = document.createElement('Viewpoint');
-        cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
-        cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
-        cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
-        cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
+            var cam2 = document.createElement('Viewpoint');
+            cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
+            cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
+            cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
+            cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
 
-        var cam3 = document.createElement('Viewpoint');
-        cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
-        cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
-        cam3.setAttribute("orientation", "0 1 0 -1.55");
-        cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
+            var cam3 = document.createElement('Viewpoint');
+            cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
+            cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
+            cam3.setAttribute("orientation", "0 1 0 -1.55");
+            cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
 
-        scene.appendChild(cam1);
-        scene.appendChild(cam2);
-        scene.appendChild(cam3);
+            x3d.appendChild(cam1);
+            x3d.appendChild(cam2);
+            x3d.appendChild(cam3);
+
+            this.setView('EarthServerGenericClient_Cam_Front');
+        }
 
         // Cube
         var shape = document.createElement('Shape');
@@ -785,14 +807,181 @@ EarthServerGenericClient.SceneManager = function()
 
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "trans");
+
+        // Append the child into the scene
+        if( oculusRift ) // oculus mode needs the root node to NOT rendered
+        {
+            var root = document.getElementById("root");
+            root.setAttribute("render","false");
+        }
+
         scene.appendChild(trans);
 
-        this.setView('EarthServerGenericClient_Cam_Front');
+
         this.trans = trans;
 
         var annotationTrans = document.createElement("transform");
         annotationTrans.setAttribute("id","AnnotationsGroup");
         scene.appendChild(annotationTrans);
+
+        if( oculusRift )
+        {   this.appendVRShader(x3dID,sceneID);  }
+    };
+
+    this.appendVRShader = function(x3dID,sceneID)
+    {
+        var scene = document.getElementById(x3dID);
+        if( !scene)
+        {
+            console.log("EarthServerClient::Scene::appendVRShader: Could not find scene element.")
+            return;
+        }
+
+        var navigation = document.createElement("navigationInfo");
+        navigation.setAttribute("headlight","false");
+        navigation.setAttribute("type",'"EXAMINE" "WALK"');
+        scene.appendChild(navigation);
+
+        var viewpoint = document.createElement("viewpoint");
+        viewpoint.setAttribute("id","EarthServerClient_VR_vpp");
+        viewpoint.setAttribute("DEF","EarthServerClient_VR_vp");
+        viewpoint.setAttribute("orientation",'0 1 0 -2.99229');
+        viewpoint.setAttribute("position",'0 120 0');//TODO: AUTOGENERATE
+        viewpoint.setAttribute("zNear","0.1");
+        viewpoint.setAttribute("zFar","5000");
+        scene.appendChild(viewpoint);
+
+        var background = document.createElement("background");
+        background.setAttribute("skyColor","0 0 0"); // this has to be black.
+        background.setAttribute("DEF","bgnd");
+        scene.appendChild(background);
+
+        var groupLEFT = document.createElement("group");
+        groupLEFT.setAttribute("DEF","left");
+
+        var shape = document.createElement("shape");
+        var plane = document.createElement("plane");
+        plane.setAttribute("solid","false");
+        var app   = document.createElement("appearance");
+        var renderTex = document.createElement("renderedTexture");
+        renderTex.setAttribute("id","rtLeft");
+        renderTex.setAttribute("stereoMode","LEFT_EYE");
+        renderTex.setAttribute("update","ALWAYS");
+        renderTex.setAttribute("dimensions",'1280 1600 4');
+        renderTex.setAttribute("repeatS",'false');
+        renderTex.setAttribute("repeatT",'false');
+        renderTex.setAttribute("interpupillaryDistance","0.09");
+
+        var viewpointLeft = document.createElement("viewpoint");
+        viewpointLeft.setAttribute("USE","EarthServerClient_VR_vp");
+        viewpointLeft.setAttribute("containerField",'viewpoint');
+        renderTex.appendChild(viewpointLeft);
+
+        var backgroundLeft = document.createElement("background");
+        backgroundLeft.setAttribute("groundAngle",Background_groundAngle);
+        backgroundLeft.setAttribute("groundColor",Background_groundColor);
+        backgroundLeft.setAttribute("skyAngle",Background_skyAngle);
+        backgroundLeft.setAttribute("skyColor",Background_skyColor);
+        backgroundLeft.setAttribute("containerField",'background');
+        renderTex.appendChild(backgroundLeft);
+
+        var groupLeft = document.createElement("group");
+        groupLeft.setAttribute("USE",sceneID);
+        groupLeft.setAttribute("containerField","scene");
+        renderTex.appendChild(groupLeft);
+
+        var cShader = document.createElement("composedShader");
+        var field1  = document.createElement("field");
+        field1.setAttribute("name","tex");
+        field1.setAttribute("type","SFInt32");
+        field1.setAttribute("value","0");
+        var field2  = document.createElement("field");
+        field2.setAttribute("name","LeftEye");
+        field2.setAttribute("type","SFFloat");
+        field2.setAttribute("value","1");
+        cShader.appendChild(field1);
+        cShader.appendChild(field2);
+
+        var shaderPartVertex = document.createElement("shaderPart");
+        shaderPartVertex.setAttribute("type","VERTEX");
+        shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        cShader.appendChild(shaderPartVertex);
+
+        var shaderPartFragment = document.createElement("shaderPart");
+        shaderPartFragment.setAttribute("type","FRAGMENT");
+        shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
+        shaderPartFragment.setAttribute("DEF","frag");
+        cShader.appendChild(shaderPartFragment);
+
+        var groupRIGHT = document.createElement("group");
+        groupRIGHT.setAttribute("DEF","right");
+
+        var shapeR = document.createElement("shape");
+        var planeR = document.createElement("plane");
+        planeR.setAttribute("solid","false");
+        var appR   = document.createElement("appearance");
+        var renderTexR = document.createElement("renderedTexture");
+        renderTexR.setAttribute("id","rtRight");
+        renderTexR.setAttribute("stereoMode","RIGHT_EYE");
+        renderTexR.setAttribute("update","ALWAYS");
+        renderTexR.setAttribute("dimensions",'1280 1600 4');
+        renderTexR.setAttribute("repeatS",'false');
+        renderTexR.setAttribute("repeatT",'false');
+        renderTexR.setAttribute("interpupillaryDistance","0.09");
+
+        var viewpointRight = document.createElement("viewpoint");
+        viewpointRight.setAttribute("USE","EarthServerClient_VR_vp");
+        viewpointRight.setAttribute("containerField",'viewpoint');
+        renderTexR.appendChild(viewpointRight);
+
+        var backgroundRight = document.createElement("background");
+        backgroundRight.setAttribute("groundAngle",Background_groundAngle);
+        backgroundRight.setAttribute("groundColor",Background_groundColor);
+        backgroundRight.setAttribute("skyAngle",Background_skyAngle);
+        backgroundRight.setAttribute("skyColor",Background_skyColor);
+        backgroundRight.setAttribute("containerField",'background');
+        renderTexR.appendChild(backgroundRight);
+
+        var groupRight = document.createElement("group");
+        groupRight.setAttribute("USE",sceneID);
+        groupRight.setAttribute("containerField","scene");
+        renderTexR.appendChild(groupRight);
+
+        var cShaderR = document.createElement("composedShader");
+        var field1R  = document.createElement("field");
+        field1R.setAttribute("name","tex");
+        field1R.setAttribute("type","SFInt32");
+        field1R.setAttribute("value","0");
+        var field2R = document.createElement("field");
+        field2R.setAttribute("name","LeftEye");
+        field2R.setAttribute("type","SFFloat");
+        field2R.setAttribute("value","1");
+        cShaderR.appendChild(field1R);
+        cShaderR.appendChild(field2R);
+
+        var shaderPartVertexR = document.createElement("shaderPart");
+        shaderPartVertexR.setAttribute("type","VERTEX");
+        shaderPartVertexR.setAttribute("url","shader/oculusVertexShaderRight.glsl");
+
+        cShaderR.appendChild(shaderPartVertexR);
+
+        var shaderPartFragmentR = document.createElement("shaderPart");
+        shaderPartFragmentR.setAttribute("type","FRAGMENT");
+        shaderPartFragmentR.setAttribute("USE", "frag");
+        cShaderR.appendChild(shaderPartFragmentR);
+
+        app.appendChild(renderTex);
+        app.appendChild(cShader);
+        shape.appendChild(app);
+        shape.appendChild(plane);
+        groupLEFT.appendChild(shape);
+        appR.appendChild(renderTexR);
+        appR.appendChild(cShaderR);
+        shapeR.appendChild(appR);
+        shapeR.appendChild(planeR);
+        groupRIGHT.appendChild(shapeR);
+        scene.appendChild(groupLEFT);
+        scene.appendChild(groupRIGHT);
     };
 
     /**
@@ -810,6 +999,42 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * @ignore
+     * Open a websocket
+     * @param location
+     * @returns {*}
+     */
+    this.websocket = function (location)
+    {
+        if (window.MozWebSocket)
+            return new MozWebSocket(location);
+        else
+            return new WebSocket(location);
+    };
+
+    /**
+     * @ignore
+     * Starts the connection to InstantIO.
+     * @param location
+     * @param name
+     */
+    this.start_log = function (location, name)
+    {
+        var viewpoint = document.getElementById('EarthServerClient_VR_vpp');
+
+        socket_ass = this.websocket(location);
+        socket_ass.onmessage = function(event)
+        {
+            var h = x3dom.fields.SFVec4f.parse(event.data);
+            var q = new x3dom.fields.Quaternion(h.x, h.y, h.z, h.w);
+
+            var aa = q.toAxisAngle();
+
+            viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+        }
+    };
+
+    /**
      * This function starts to load all models. You call this when the html is loaded or later on a click.
      */
     this.createModels = function()
@@ -817,7 +1042,46 @@ EarthServerGenericClient.SceneManager = function()
         // overwrite the enterFrame and exitFrame methods of the x3dom runtime (see doc below).
         var element = document.getElementById("x3d");
         element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
-        element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;
+
+        if( !oculusRift ) // oculus mode overwrites exit frame itself
+        {   element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;  }
+        else // oculus mode + this.exitframe
+        {
+            var runtime = null;
+            var rtLeft, rtRight;
+            var lastW, lastH;
+
+            runtime = document.getElementById('x3d').runtime;
+            rtLeft = document.getElementById('rtLeft');
+            rtRight = document.getElementById('rtRight');
+
+            lastW = +runtime.getWidth();
+            lastH = +runtime.getHeight();
+
+            var hw = Math.round(lastW / 2);
+            rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+            rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+            runtime.exitFrame = function ()
+            {
+                var w = +runtime.getWidth();
+                var h = +runtime.getHeight();
+
+                if (w != lastW || h != lastH)
+                {
+                    var half = Math.round(w / 2);
+                    rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+                    rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+
+                    lastW = w;
+                    lastH = h;
+                }
+
+                EarthServerGenericClient.MainScene.exitFrame();
+            };
+
+            this.start_log("ws://localhost:" + InstantIOPort + "/InstantIO/element/ovr/Orientation/data.string", "image");
+        }
 
         for(var i=0; i< models.length; i++)
         {
@@ -852,7 +1116,7 @@ EarthServerGenericClient.SceneManager = function()
         if( nextFrameCallback.length !== 0)
         {   lastFrameInsert++;  }
 
-        if( nextFrameCallback.length !== 0 && lastFrameInsert >= FramesBetweenDomInsertion)
+        if( nextFrameCallback.length !== 0 && lastFrameInsert >= framesBetweenDomInsertion)
         {
             var callbackIndex = nextFrameCallback.shift();
             models[callbackIndex].terrain.nextFrame();
@@ -1355,7 +1619,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
             if( this.bindings[i] === bindingObject)
             {
                 this.bindings[i].releaseBinding();
-                this.bindings.remove(i);
+                this.bindings = EarthServerGenericClient.arrayRemove(this.bindings,i,i);
                 return;
             }
         }
@@ -1772,8 +2036,8 @@ function ElevationGrid(parentNode,info, hf,appearances)
         {
             for (var k = 0; k < smallx; k++)
             {
-                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth));
-                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight));
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
 
                 buffer.push(tmpx + " ");
                 buffer.push(tmpy + " ");
