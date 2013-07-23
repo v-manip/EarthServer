@@ -191,8 +191,6 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
-	<li><a href="../symbols/Array.html">Array</a></li>
-	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
@@ -211,15 +209,21 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCPS.html">EarthServerGenericClient.Model_WCPSDemWCPS</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html">EarthServerGenericClient.Model_WMSDemWCS</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Module_Sharad.html">EarthServerGenericClient.Module_Sharad</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html">EarthServerGenericClient.ProgressiveTerrain</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.SharadTerrain.html">EarthServerGenericClient.SharadTerrain</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
@@ -365,6 +369,15 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.getWCPSDemCoverage">getWCPSDemCoverage</a></b>(callback, responseData, WCPSurl, WCPSquery)
+								</div>
+								<div class="description">This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.getWCPSImage">getWCPSImage</a></b>(callback, responseData, url, query, DemInAlpha)
 								</div>
 								<div class="description">Starts a WCPS query and stores the received image in the responseData.</div>
@@ -392,9 +405,27 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImage">requestWCPSImage</a></b>(callback, WCPSurl, WCPSquery)
+								</div>
+								<div class="description">Requests one image via WCSPS.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImageAlphaDem">requestWCPSImageAlphaDem</a></b>(callback, WCPSurl, WCPSquery)
 								</div>
 								<div class="description">Requests one image via WCSPS.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&lt;static&gt; &nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">EarthServerGenericClient.<b><a href="../symbols/EarthServerGenericClient.html#.requestWCPSImageWCPSDem">requestWCPSImageWCPSDem</a></b>(callback, imageURL, imageQuery, demURL, demQuery)
+								</div>
+								<div class="description"></div>
 							</td>
 						</tr>
 					
@@ -598,7 +629,7 @@ ul.inheritsList
 									<b>elementID</b>
 									
 								</dt>
-								<dd>- First parameter for the callback function. Change the element with this ID.</dd>
+								<dd>- First parameter for the callback function. Change the module with this ID.</dd>
 							
 								<dt>
 									<b>min</b>
@@ -968,6 +999,63 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name=".getWCPSDemCoverage"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>getWCPSDemCoverage</b>(callback, responseData, WCPSurl, WCPSquery)
+					
+					</div>
+					<div class="description">
+						This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Object to do the callback.</dd>
+							
+								<dt>
+									<b>responseData</b>
+									
+								</dt>
+								<dd>- Instance of the ServerResponseData.</dd>
+							
+								<dt>
+									<b>WCPSurl</b>
+									
+								</dt>
+								<dd>- URl of the WCPS service.</dd>
+							
+								<dt>
+									<b>WCPSquery</b>
+									
+								</dt>
+								<dd>- The WCPS request query.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name=".getWCPSImage"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
@@ -1120,6 +1208,57 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name=".requestWCPSImage"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>requestWCPSImage</b>(callback, WCPSurl, WCPSquery)
+					
+					</div>
+					<div class="description">
+						Requests one image via WCSPS.
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd>- Module that requests the image.</dd>
+							
+								<dt>
+									<b>WCPSurl</b>
+									
+								</dt>
+								<dd>- URL of the WCPS service.</dd>
+							
+								<dt>
+									<b>WCPSquery</b>
+									
+								</dt>
+								<dd>- The WCPS query.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name=".requestWCPSImageAlphaDem"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
@@ -1159,6 +1298,69 @@ ul.inheritsList
 									
 								</dt>
 								<dd>- The WCPS query.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name=".requestWCPSImageWCPSDem"> </a>
+					<div class="fixedFont">&lt;static&gt; 
+					
+					
+					<span class="light">EarthServerGenericClient.</span><b>requestWCPSImageWCPSDem</b>(callback, imageURL, imageQuery, demURL, demQuery)
+					
+					</div>
+					<div class="description">
+						
+						
+							<br />
+							<i>Defined in: </i> <a href="../symbols/src/code_ServerRequest.js.html">ServerRequest.js</a>.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>callback</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>imageURL</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>imageQuery</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>demURL</b>
+									
+								</dt>
+								<dd></dd>
+							
+								<dt>
+									<b>demQuery</b>
+									
+								</dt>
+								<dd></dd>
 							
 							</dl>
 						
@@ -1363,7 +1565,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Jul 23 2013 10:17:57 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

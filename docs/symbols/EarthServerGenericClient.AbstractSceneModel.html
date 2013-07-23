@@ -191,8 +191,6 @@ ul.inheritsList
 	
 	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
 	
-	<li><a href="../symbols/Array.html">Array</a></li>
-	
 	<li><a href="../symbols/EarthServerGenericClient.html">EarthServerGenericClient</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html">EarthServerGenericClient.AbstractSceneModel</a></li>
@@ -211,15 +209,21 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemAlpha.html">EarthServerGenericClient.Model_WCPSDemAlpha</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCPS.html">EarthServerGenericClient.Model_WCPSDemWCPS</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html">EarthServerGenericClient.Model_WMSDemWCS</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.Module_Sharad.html">EarthServerGenericClient.Module_Sharad</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.ProgressiveTerrain.html">EarthServerGenericClient.ProgressiveTerrain</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.SceneManager.html">EarthServerGenericClient.SceneManager</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.ServerResponseData.html">EarthServerGenericClient.ServerResponseData</a></li>
+	
+	<li><a href="../symbols/EarthServerGenericClient.SharadTerrain.html">EarthServerGenericClient.SharadTerrain</a></li>
 	
 	<li><a href="../symbols/ElevationGrid.html">ElevationGrid</a></li>
 	
@@ -334,6 +338,16 @@ ul.inheritsList
 								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#requests">requests</a></b>
 								</div>
 								<div class="description">The amount of requests the model do.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#sidePanels">sidePanels</a></b>
+								</div>
+								<div class="description">Flag if side panels should be added to the terrain.</div>
 							</td>
 						</tr>
 					
@@ -487,7 +501,43 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#movementUpdate">movementUpdate</a></b>(movementType, value)
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#elevationUpdateBinding">elevationUpdateBinding</a></b>(value)
+								</div>
+								<div class="description">This function calls every binding object that the elevation of the models was changed.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getAreaOfInterest">getAreaOfInterest</a></b>()
+								</div>
+								<div class="description">Returns object with the area of interest of the model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getHeightAt3DPosition">getHeightAt3DPosition</a></b>(xPos, zPos)
+								</div>
+								<div class="description">Returns the elevation value of it's terrain at a specific point in the 3D scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getName">getName</a></b>()
+								</div>
+								<div class="description">Returns the name of the model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#movementUpdateBindings">movementUpdateBindings</a></b>(movementType, value)
 								</div>
 								<div class="description">This function is called if the model is moved in the scene.</div>
 							</td>
@@ -508,6 +558,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#removePlaceHolder">removePlaceHolder</a></b>()
 								</div>
 								<div class="description">Removes the PlaceHolder created in createPlaceHolder().</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#replaceSymbolsInString">replaceSymbolsInString</a></b>(inputString)
+								</div>
+								<div class="description">Replaces all $xx symbols with the value-</div>
 							</td>
 						</tr>
 					
@@ -559,6 +618,15 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setNoDataValue">setNoDataValue</a></b>(red, green, blue)
+								</div>
+								<div class="description">Sets the RGB value to be considered as NODATA.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setOffset">setOffset</a></b>(xOffset, yOffset, zOffset)
 								</div>
 								<div class="description">Sets the position of the scene model within the fishtank/cube.</div>
@@ -580,6 +648,24 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setScale">setScale</a></b>(xScale, yScale, zScale)
 								</div>
 								<div class="description">Sets the size of the scene model compared to the fishtank/cube.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setSidePanels">setSidePanels</a></b>(value)
+								</div>
+								<div class="description">Sets if side panels should be added to the model.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setSidePanelsImageLinks">setSidePanelsImageLinks</a></b>(links)
+								</div>
+								<div class="description">Sets the queries for the four side panels' textures.</div>
 							</td>
 						</tr>
 					
@@ -778,6 +864,35 @@ ul.inheritsList
 							<dt class="heading">Default Value:</dt>
 							<dd>
 								1
+							</dd>
+							</dl>
+						
+
+					<hr />
+				
+					<a name="sidePanels"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>sidePanels</b>
+					
+					</div>
+					<div class="description">
+						Flag if side panels should be added to the terrain.
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Default Value:</dt>
+							<dd>
+								false
 							</dd>
 							</dl>
 						
@@ -1218,11 +1333,160 @@ ul.inheritsList
 
 					<hr />
 				
-					<a name="movementUpdate"> </a>
+					<a name="elevationUpdateBinding"> </a>
 					<div class="fixedFont">
 					
 					
-					<b>movementUpdate</b>(movementType, value)
+					<b>elevationUpdateBinding</b>(value)
+					
+					</div>
+					<div class="description">
+						This function calls every binding object that the elevation of the models was changed.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- This is the value the that was given to SceneManager::updateElevation().</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="getAreaOfInterest"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{{}}</span>
+					<b>getAreaOfInterest</b>()
+					
+					</div>
+					<div class="description">
+						Returns object with the area of interest of the model. (minx,miny,maxx,maxy)
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{{}}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getHeightAt3DPosition"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getHeightAt3DPosition</b>(xPos, zPos)
+					
+					</div>
+					<div class="description">
+						Returns the elevation value of it's terrain at a specific point in the 3D scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>xPos</b>
+									
+								</dt>
+								<dd>- Position on the x-axis.</dd>
+							
+								<dt>
+									<b>zPos</b>
+									
+								</dt>
+								<dd>- Position on the z-axis.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> - The height on the y-axis.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getName"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{String}</span>
+					<b>getName</b>()
+					
+					</div>
+					<div class="description">
+						Returns the name of the model.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{String}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="movementUpdateBindings"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>movementUpdateBindings</b>(movementType, value)
 					
 					</div>
 					<div class="description">
@@ -1315,6 +1579,49 @@ ul.inheritsList
 						
 						
 						
+						
+						
+						
+
+					<hr />
+				
+					<a name="replaceSymbolsInString"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{String}</span>
+					<b>replaceSymbolsInString</b>(inputString)
+					
+					</div>
+					<div class="description">
+						Replaces all $xx symbols with the value-
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>inputString</b>
+									
+								</dt>
+								<dd>- Input WCPS query string.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{String}</span> - String with symbols replaced by values.</dd>
+							
+							</dl>
 						
 						
 						
@@ -1497,6 +1804,54 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="setNoDataValue"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setNoDataValue</b>(red, green, blue)
+					
+					</div>
+					<div class="description">
+						Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>red</b>
+									
+								</dt>
+								<dd>- Value for the red channel.</dd>
+							
+								<dt>
+									<b>green</b>
+									
+								</dt>
+								<dd>- Value for the green channel.</dd>
+							
+								<dt>
+									<b>blue</b>
+									
+								</dt>
+								<dd>- Value for the blue channel.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="setOffset"> </a>
 					<div class="fixedFont">
 					
@@ -1635,6 +1990,78 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="setSidePanels"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setSidePanels</b>(value)
+					
+					</div>
+					<div class="description">
+						Sets if side panels should be added to the model.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd></dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setSidePanelsImageLinks"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setSidePanelsImageLinks</b>(links)
+					
+					</div>
+					<div class="description">
+						Sets the queries for the four side panels' textures.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>links</b>
+									
+								</dt>
+								<dd>- Array with four image links.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="setTransparency"> </a>
 					<div class="fixedFont">
 					
@@ -1719,7 +2146,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Apr 30 2013 12:23:32 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Jul 23 2013 10:17:58 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>
