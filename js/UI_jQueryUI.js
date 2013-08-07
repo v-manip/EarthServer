@@ -110,7 +110,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"R","Radius",i,0,5000,500,
             EarthServerGenericClient.MainScene.updateLightRadius);
 
-        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"I","Intensity",i,0,10,2,
+        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"I","Intensity",i,0,5,1,
             EarthServerGenericClient.MainScene.updateLightIntensity);
 
         lightDiv=null;

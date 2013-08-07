@@ -229,6 +229,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/Function.html">Function</a></li>
 	
+	<li><a href="../symbols/GapGrid.html">GapGrid</a></li>
+	
 </ul>
 <hr />
 			<!-- end publish.classesIndex -->
@@ -600,6 +602,15 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setDemNoDataValue">setDemNoDataValue</a></b>(value)
+								</div>
+								<div class="description">Sets the DEM value to be considered as NODATA in the DEM.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setImageFormat">setImageFormat</a></b>(imageFormat)
 								</div>
 								<div class="description">Sets the image format for the server request.</div>
@@ -612,15 +623,6 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setName">setName</a></b>(modelName)
 								</div>
 								<div class="description">Sets the name of the scene model.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setNoDataValue">setNoDataValue</a></b>(red, green, blue)
-								</div>
-								<div class="description">Sets the RGB value to be considered as NODATA.</div>
 							</td>
 						</tr>
 					
@@ -666,6 +668,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setSidePanelsImageLinks">setSidePanelsImageLinks</a></b>(links)
 								</div>
 								<div class="description">Sets the queries for the four side panels' textures.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setTextureNoDataValue">setTextureNoDataValue</a></b>(red, green, blue)
+								</div>
+								<div class="description">Sets the RGB value to be considered as NODATA in the TEXTURE.</div>
 							</td>
 						</tr>
 					
@@ -1732,6 +1743,42 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="setDemNoDataValue"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setDemNoDataValue</b>(value)
+					
+					</div>
+					<div class="description">
+						Sets the DEM value to be considered as NODATA in the DEM. No Faces will be drawn having a vertex with that value.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd>- No data value</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="setImageFormat"> </a>
 					<div class="fixedFont">
 					
@@ -1792,54 +1839,6 @@ ul.inheritsList
 									
 								</dt>
 								<dd>- Name of the model.</dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
-				
-					<a name="setNoDataValue"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>setNoDataValue</b>(red, green, blue)
-					
-					</div>
-					<div class="description">
-						Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>red</b>
-									
-								</dt>
-								<dd>- Value for the red channel.</dd>
-							
-								<dt>
-									<b>green</b>
-									
-								</dt>
-								<dd>- Value for the green channel.</dd>
-							
-								<dt>
-									<b>blue</b>
-									
-								</dt>
-								<dd>- Value for the blue channel.</dd>
 							
 							</dl>
 						
@@ -2062,6 +2061,54 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="setTextureNoDataValue"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setTextureNoDataValue</b>(red, green, blue)
+					
+					</div>
+					<div class="description">
+						Sets the RGB value to be considered as NODATA in the TEXTURE. All pixels with this RGB value will be drawn transparent.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>red</b>
+									
+								</dt>
+								<dd>- Value for the red channel.</dd>
+							
+								<dt>
+									<b>green</b>
+									
+								</dt>
+								<dd>- Value for the green channel.</dd>
+							
+								<dt>
+									<b>blue</b>
+									
+								</dt>
+								<dd>- Value for the blue channel.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
 					<a name="setTransparency"> </a>
 					<div class="fixedFont">
 					
@@ -2146,7 +2193,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Tue Jul 23 2013 10:17:58 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Aug 07 2013 15:11:32 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

@@ -19,27 +19,27 @@ function ElevationGrid(parentNode,info, hf,appearances)
         {
             var elevationGrid, shape, shf;
 
-            //We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
+            // We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
             for(var i=0; i<appearances.length; i++)
             {
-                //All none full resolutions needs to be one element bigger to keep the desired length
+                // All none full resolutions needs to be one element bigger to keep the desired length
                 var add = 0;
                 if(i !== 0)
                 { add = 1;  }
 
-                //Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
+                // Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
                 shape = document.createElement('Shape');
                 shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
 
-                //Build the Elevation Grids
-                //shrink the heightfield to the correct size for this detail level
+                // Build the Elevation Grids
+                // shrink the heightfield to the correct size for this detail level
                 shf = shrinkHeightMap(hf, info.chunkWidth, info.chunkHeight,Math.pow(2,i));
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
-                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));//To keep the same size with fewer elements increase the space of one element
+                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));// To keep the same size with fewer elements increase the space of one element
                 elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
-                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));//fewer elements in every step
+                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));// fewer elements in every step
                 elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
                 elevationGrid.setAttribute("height", shf );
                 elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,i)));
@@ -49,7 +49,7 @@ function ElevationGrid(parentNode,info, hf,appearances)
 
                 parentNode.appendChild(shape);
 
-                //set vars null
+                // set vars null
                 shf = null;
                 shape = null;
                 elevationGrid = null;

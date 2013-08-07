@@ -57,8 +57,6 @@
             // create the scene: Cube has 50% height compared to width and length
             EarthServerGenericClient.MainScene.createScene('x3dScene','theScene',1,0.6,1 );
 
-            // create the UI and axis labels
-            EarthServerGenericClient.MainScene.createUI('x3domUI');
             EarthServerGenericClient.MainScene.createAxisLabels("Latitude","Height","Longitude");
         });
 
@@ -68,6 +66,8 @@
             var pb = new EarthServerGenericClient.createProgressBar("progressbar");
             EarthServerGenericClient.MainScene.setProgressCallback(pb.updateValue);
 
+            // create the UI
+            EarthServerGenericClient.MainScene.createUI('x3domUI');
             // starts loading and creating the models
             // here the function starts as soon as the html page is fully loaded
             // you can map this function to e.g. a button

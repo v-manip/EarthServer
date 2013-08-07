@@ -25,11 +25,13 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
      * @param noData - NoData sets all pixels with the RGB value that is the same NODATA to fully transparent.
      * @param removeAlphaChannel - Flag if the alpha channel of the image should be set to be fully opaque.
+     *  texture No Data Value is found in the texture.
      * @returns {HTMLElement} The canvas element.
      */
     this.createCanvas = function(texture,index,noData,removeAlphaChannel)
     {
         var canvasTexture = null;
+        var checkScaledData = false;
 
         if( texture !== undefined)
         {
@@ -45,6 +47,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
             if(noData !== undefined && noData.length >2) // nodata RGB values are set:
             {
+                checkScaledData = true;
                 for (var k=0;k<imageData.data.length;k+=4)
                 {
                     if(imageData.data[k] === noData[0] && imageData.data[k+1] === noData[1] && imageData.data[k+2] === noData[2])
@@ -76,6 +79,19 @@ EarthServerGenericClient.AbstractTerrain = function()
 
             var canvasContext = canvasTexture.getContext('2d');
             canvasContext.drawImage(canvasTmp,0,0,canvasTexture.width,canvasTexture.height);
+
+            if( checkScaledData)
+            {
+                var scaledContext = canvasTexture.getContext('2d');
+                var scaledData = scaledContext.getImageData(0, 0, canvasTexture.width, canvasTexture.height);
+                for (var o=0;o<scaledData.data.length;o+=4)
+                {
+                    if(scaledData.data[o+3] != 0)
+                        scaledData.data[o+3]=255;
+                }
+                scaledContext.putImageData(scaledData,0,0);
+            }
+
         }
         else
         {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
@@ -396,6 +412,7 @@ EarthServerGenericClient.AbstractTerrain = function()
                     texture.setAttribute('hideChildren', 'true');
                     texture.setAttribute("repeatS", 'true');
                     texture.setAttribute("repeatT", 'true');
+                    texture.setAttribute("scale","false");
 
                     texture.appendChild(canvasTexture);
 
@@ -523,13 +540,16 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
      * @param root - Dom Element to append the terrain to.
-     * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
      * @param data - Received Data of the Server request.
+     * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
+     * @param noDemValue - The single value in the DEM that should be considered as NODATA
      */
-    this.insertLevel = function(root,data,noDataValue)
+    this.insertLevel = function(root,data,noDataValue,noDemValue)
     {
         this.data = data;
         this.root = root;
+        this.noData = noDataValue;
+        this.noDemValue = noDemValue;
         this.canvasTexture = this.createCanvas(data.texture,index,noDataValue,data.removeAlphaChannel);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
@@ -563,7 +583,10 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
             transform.setAttribute("scale", "1.0 1.0 1.0");
 
-            new ElevationGrid(transform,info, hm, appearance);
+            if( this.noData !== undefined || this.noDemValue != undefined)
+            {   new GapGrid(transform,info, hm, appearance,this.noDemValue); }
+            else
+            {   new ElevationGrid(transform,info, hm, appearance); }
 
             this.root.appendChild(transform);
 
@@ -589,14 +612,17 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  * @param data - Received Data of the Server request.
  * @param index - Index of the model that uses this terrain.
  * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
+ * @param noDemValue - The single value in the DEM that should be considered as NODATA
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */
-EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
+EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue,noDemValue)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
     this.index = index;
+    this.noData = noDataValue;
+    this.noDemValue = noDemValue;
 
     /**
      * Distance to change between full and 1/2 resolution.
@@ -671,7 +697,11 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
             lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
             lodNode.setAttribute("id", 'lod' + info.ID);
 
-            new ElevationGrid(lodNode,info, hm, appearance);
+            if( this.noData !== undefined || this.noDemValue != undefined)
+            {   new GapGrid(lodNode,info, hm, appearance,this.noDemValue); }
+            else
+            {   new ElevationGrid(lodNode,info, hm, appearance);  }
+
             transform.appendChild(lodNode);
             root.appendChild(transform);
 

@@ -69,8 +69,8 @@ EarthServerGenericClient.getEventTarget = function(e)
  */
 EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
 {
-    var ambientIntensity = "1";
-    var intensity        = "3";
+    var ambientIntensity = "0.5";
+    var intensity        = "0.5";
     var location         = "0 0 0";
 
     if(position === undefined){  location = position;    }
@@ -693,7 +693,7 @@ EarthServerGenericClient.SceneManager = function()
      * Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.
      * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
-     * @param x3dID - ID of the x3d dom element.
+     * @param x3dID - ID of the x3d scene dom element.
      * @param sceneID - ID of the x3dom root element.
      * @param SizeX - width of the cube.
      * @param SizeY - height of the cube.
@@ -833,7 +833,7 @@ EarthServerGenericClient.SceneManager = function()
         var scene = document.getElementById(x3dID);
         if( !scene)
         {
-            console.log("EarthServerClient::Scene::appendVRShader: Could not find scene element.")
+            console.log("EarthServerClient::Scene::appendVRShader: Could not find scene element.");
             return;
         }
 
@@ -846,7 +846,7 @@ EarthServerGenericClient.SceneManager = function()
         viewpoint.setAttribute("id","EarthServerClient_VR_vpp");
         viewpoint.setAttribute("DEF","EarthServerClient_VR_vp");
         viewpoint.setAttribute("orientation",'0 1 0 -2.99229');
-        viewpoint.setAttribute("position",'0 120 0');//TODO: AUTOGENERATE
+        viewpoint.setAttribute("position",'0 120 0');// TODO: AUTOGENERATE
         viewpoint.setAttribute("zNear","0.1");
         viewpoint.setAttribute("zFar","5000");
         scene.appendChild(viewpoint);
@@ -902,9 +902,23 @@ EarthServerGenericClient.SceneManager = function()
         cShader.appendChild(field1);
         cShader.appendChild(field2);
 
+        var vs = '![CDATA[ \n';
+        vs += "attribute vec3 position; \n";
+        vs += "attribute vec2 texcoord; \n";
+        vs += "uniform mat4 modelViewProjectionMatrix; \n";
+        vs += "varying vec2 fragTexCoord; \n";
+        vs += "void main() { \n";
+        vs += "vec2 pos = sign(position.xy); \n";
+        vs += "fragTexCoord = texcoord; \n";
+        vs += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
+        vs +=  "]]";
+
+        console.log(vs);
+
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        shaderPartVertex.innerHTML = vs;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");
@@ -1520,17 +1534,26 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
+     * Sets the RGB value to be considered as NODATA in the TEXTURE. All pixels with this RGB value will be drawn transparent.
      * @param red - Value for the red channel.
      * @param green - Value for the green channel.
      * @param blue - Value for the blue channel.
      */
-    this.setNoDataValue = function(red,green,blue)
+    this.setTextureNoDataValue = function(red,green,blue)
     {
         this.noData = [];
         this.noData[0] = parseInt(red);
         this.noData[1] = parseInt(green);
         this.noData[2] = parseInt(blue);
+    };
+
+    /**
+     * Sets the DEM value to be considered as NODATA in the DEM. No Faces will be drawn having a vertex with that value.
+     * @param value - No data value
+     */
+    this.setDemNoDataValue = function( value )
+    {
+        this.demNoData = value;
     };
 
     /**
@@ -1895,27 +1918,27 @@ function ElevationGrid(parentNode,info, hf,appearances)
         {
             var elevationGrid, shape, shf;
 
-            //We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
+            // We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
             for(var i=0; i<appearances.length; i++)
             {
-                //All none full resolutions needs to be one element bigger to keep the desired length
+                // All none full resolutions needs to be one element bigger to keep the desired length
                 var add = 0;
                 if(i !== 0)
                 { add = 1;  }
 
-                //Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
+                // Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
                 shape = document.createElement('Shape');
                 shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
 
-                //Build the Elevation Grids
-                //shrink the heightfield to the correct size for this detail level
+                // Build the Elevation Grids
+                // shrink the heightfield to the correct size for this detail level
                 shf = shrinkHeightMap(hf, info.chunkWidth, info.chunkHeight,Math.pow(2,i));
                 elevationGrid = document.createElement('ElevationGrid');
                 elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
                 elevationGrid.setAttribute("solid", "false");
-                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));//To keep the same size with fewer elements increase the space of one element
+                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));// To keep the same size with fewer elements increase the space of one element
                 elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
-                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));//fewer elements in every step
+                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));// fewer elements in every step
                 elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
                 elevationGrid.setAttribute("height", shf );
                 elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,i)));
@@ -1925,7 +1948,7 @@ function ElevationGrid(parentNode,info, hf,appearances)
 
                 parentNode.appendChild(shape);
 
-                //set vars null
+                // set vars null
                 shf = null;
                 shape = null;
                 elevationGrid = null;
@@ -2051,6 +2074,163 @@ function ElevationGrid(parentNode,info, hf,appearances)
     }
 
     setupChunk();
+}/**
+ * @class Builds one grid that contains gaps (NODATA zones) into a chunk.
+ * @param parentNode - Dom element to append the gap grid to.
+ * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
+ * @param hf - The height map to be used for the elevation grid.
+ * @param appearances - Appearances for the Gap Grid.
+ * @param NODATA - The NODATA value. Parts with this values are left as a gap in the grid.
+ * @constructor
+ */
+function GapGrid(parentNode,info, hf,appearances,NODATA)
+{
+    /**
+     * Creates and inserts elevation grid (terrain chunk) into the DOM.
+     */
+    function setupChunk()
+    {
+
+        try
+        {
+            var grid, shape, coords, coordsNode;
+
+            shape = document.createElement('Shape');
+            shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+0);
+
+            coords = buildCoordinates(hf, info.chunkWidth, info.chunkHeight,NODATA);
+            coordsNode = document.createElement('Coordinate');
+            coordsNode.setAttribute("point", coords.coords);
+
+            grid = document.createElement('IndexedFaceSet');
+            grid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+0);
+            grid.setAttribute("solid", "false");
+            grid.setAttribute("colorPerVertex", "false");
+
+            grid.setAttribute("creaseAngle", "0.01");
+            grid.setAttribute("ccw", "true");
+
+            grid.setAttribute("coordIndex", coords.index);
+            grid.appendChild( coordsNode );
+            grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
+
+            shape.appendChild(appearances[0]);
+            shape.appendChild(grid);
+
+            parentNode.appendChild(shape);
+
+            // set vars null
+            coords = null;
+            coordsNode = null;
+            shape = null;
+            grid = null;
+
+            hf = null;
+            parentNode = null;
+            info = null;
+            appearances = null;
+        }
+        catch(error)
+        {
+            alert('GapGrid::setupChunk(): ' + error);
+        }
+    }
+
+    /**
+     * Shrinks the heightfield with the given factor
+     * @param heightfield - The used heihgfield.
+     * @param sizex - Width of the heightfield.
+     * @param sizey - Height of the heightfield.
+     * @param NODATA - The value that a considered as NODATA available and shall be left as a gap
+     * @returns {Object}
+     */
+    function buildCoordinates(heightfield, sizex, sizey, NODATA)
+    {
+        var coords = {};
+        coords.coords = [];
+        coords.index  = [];
+
+        // add the coords
+        for(var o=0; o< sizey; o++)
+        {
+            for(var j=0; j<sizex; j++)
+            {
+                coords.coords.push(""+ j + " " + heightfield[o][j] + " " + o + " ");
+            }
+        }
+
+        for(var i=0; i+1< sizey; i++)
+        {
+            for(var k=0; k+1<sizex; k++)
+            {
+                // check if NONE of the four vertices used for this face as a NODATA value
+                if( heightfield[i][k] !== NODATA && heightfield[i+1][k] !== NODATA
+                     && heightfield[i+1][k+1] !== NODATA && heightfield[i][k+1] !== NODATA)
+                {
+                    // add indices
+                    coords.index.push( (i*sizex)+k );
+                    coords.index.push( ((i*sizex)+1)+k );
+                    coords.index.push( (((i+1)*sizex)+1)+k );
+                    coords.index.push( ((i+1)*sizex)+k );
+
+                    coords.index.push( -1 );
+                }
+            }
+        }
+
+        return coords;
+    }
+
+
+    /**
+     * Calcs the TextureCoordinates for the elevation grid(s).
+     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
+     * @param xpos - Start position of the elevation grid within the terrain.
+     * @param ypos - Start position of the elevation grid within the terrain.
+     * @param sizex - Size of the elevation grid on the x-Axis.
+     * @param sizey - Size of the elevation grid on the x-Axis.
+     * @param terrainWidth - Size of the whole terrain on the x-Axis.
+     * @param terrainHeight - Size of the whole terrain on the y-Axis.
+     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
+     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
+     */
+    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
+    {
+        var tmpx, tmpy;
+
+        var smallx = parseInt(sizex/shrinkfactor);
+        var smally = parseInt(sizey/shrinkfactor);
+
+        if( shrinkfactor !== 1)
+        {
+            smallx++;
+            smally++;
+        }
+
+        var buffer = [];
+        //Create Node
+        var tcnode = document.createElement("TextureCoordinate");
+
+        //File string
+        for (var i = 0; i < smally; i++)
+        {
+            for (var k = 0; k < smallx; k++)
+            {
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
+
+                buffer.push(tmpx + " ");
+                buffer.push(tmpy + " ");
+            }
+        }
+        var tc = buffer.join("");
+
+        tcnode.setAttribute("point", tc);
+
+        return tcnode;
+    }
+
+    setupChunk();
 }//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
@@ -2078,11 +2258,13 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param index - Index of the model using this canvas. Used to give the canvas a unique ID.
      * @param noData - NoData sets all pixels with the RGB value that is the same NODATA to fully transparent.
      * @param removeAlphaChannel - Flag if the alpha channel of the image should be set to be fully opaque.
+     *  texture No Data Value is found in the texture.
      * @returns {HTMLElement} The canvas element.
      */
     this.createCanvas = function(texture,index,noData,removeAlphaChannel)
     {
         var canvasTexture = null;
+        var checkScaledData = false;
 
         if( texture !== undefined)
         {
@@ -2098,6 +2280,7 @@ EarthServerGenericClient.AbstractTerrain = function()
 
             if(noData !== undefined && noData.length >2) // nodata RGB values are set:
             {
+                checkScaledData = true;
                 for (var k=0;k<imageData.data.length;k+=4)
                 {
                     if(imageData.data[k] === noData[0] && imageData.data[k+1] === noData[1] && imageData.data[k+2] === noData[2])
@@ -2129,6 +2312,19 @@ EarthServerGenericClient.AbstractTerrain = function()
 
             var canvasContext = canvasTexture.getContext('2d');
             canvasContext.drawImage(canvasTmp,0,0,canvasTexture.width,canvasTexture.height);
+
+            if( checkScaledData)
+            {
+                var scaledContext = canvasTexture.getContext('2d');
+                var scaledData = scaledContext.getImageData(0, 0, canvasTexture.width, canvasTexture.height);
+                for (var o=0;o<scaledData.data.length;o+=4)
+                {
+                    if(scaledData.data[o+3] != 0)
+                        scaledData.data[o+3]=255;
+                }
+                scaledContext.putImageData(scaledData,0,0);
+            }
+
         }
         else
         {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
@@ -2449,6 +2645,7 @@ EarthServerGenericClient.AbstractTerrain = function()
                     texture.setAttribute('hideChildren', 'true');
                     texture.setAttribute("repeatS", 'true');
                     texture.setAttribute("repeatT", 'true');
+                    texture.setAttribute("scale","false");
 
                     texture.appendChild(canvasTexture);
 
@@ -2576,13 +2773,16 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
     /**
      * Insert one data level into the scene. The old elevation grid will be removed and one new build.
      * @param root - Dom Element to append the terrain to.
-     * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
      * @param data - Received Data of the Server request.
+     * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
+     * @param noDemValue - The single value in the DEM that should be considered as NODATA
      */
-    this.insertLevel = function(root,data,noDataValue)
+    this.insertLevel = function(root,data,noDataValue,noDemValue)
     {
         this.data = data;
         this.root = root;
+        this.noData = noDataValue;
+        this.noDemValue = noDemValue;
         this.canvasTexture = this.createCanvas(data.texture,index,noDataValue,data.removeAlphaChannel);
         chunkInfo     = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
@@ -2616,7 +2816,10 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
             transform.setAttribute("scale", "1.0 1.0 1.0");
 
-            new ElevationGrid(transform,info, hm, appearance);
+            if( this.noData !== undefined || this.noDemValue != undefined)
+            {   new GapGrid(transform,info, hm, appearance,this.noDemValue); }
+            else
+            {   new ElevationGrid(transform,info, hm, appearance); }
 
             this.root.appendChild(transform);
 
@@ -2642,14 +2845,17 @@ EarthServerGenericClient.ProgressiveTerrain.inheritsFrom( EarthServerGenericClie
  * @param data - Received Data of the Server request.
  * @param index - Index of the model that uses this terrain.
  * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
+ * @param noDemValue - The single value in the DEM that should be considered as NODATA
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */
-EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
+EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue,noDemValue)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
     this.data = data;
     this.index = index;
+    this.noData = noDataValue;
+    this.noDemValue = noDemValue;
 
     /**
      * Distance to change between full and 1/2 resolution.
@@ -2724,7 +2930,11 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue)
             lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
             lodNode.setAttribute("id", 'lod' + info.ID);
 
-            new ElevationGrid(lodNode,info, hm, appearance);
+            if( this.noData !== undefined || this.noDemValue != undefined)
+            {   new GapGrid(lodNode,info, hm, appearance,this.noDemValue); }
+            else
+            {   new ElevationGrid(lodNode,info, hm, appearance);  }
+
             transform.appendChild(lodNode);
             root.appendChild(transform);
 
@@ -3866,7 +4076,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         if( !this.progressiveLoading)
         {
             EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-            this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index);
+            this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index, this.noData, this.demNoData);
             this.terrain.createTerrain();
             EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
             this.elevationUpdateBinding();
@@ -3882,7 +4092,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
 
             //Add new data (with higher resolution) to the terrain
             EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-            this.terrain.insertLevel(this.transformNode,data);
+            this.terrain.insertLevel(this.transformNode,data,this.noData, this.demNoData);
             this.elevationUpdateBinding();
             if(this.sidePanels)
             {   this.terrain.createSidePanels(this.transformNode,1);    }
@@ -4078,7 +4288,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdateBinding();
@@ -4274,7 +4484,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data
         data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
@@ -4447,7 +4657,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdateBinding();
@@ -4580,7 +4790,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"R","Radius",i,0,5000,500,
             EarthServerGenericClient.MainScene.updateLightRadius);
 
-        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"I","Intensity",i,0,10,2,
+        EarthServerGenericClient.appendGenericSlider(lightDiv,"Light"+i+"I","Intensity",i,0,5,1,
             EarthServerGenericClient.MainScene.updateLightIntensity);
 
         lightDiv=null;

@@ -69,8 +69,8 @@ EarthServerGenericClient.getEventTarget = function(e)
  */
 EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
 {
-    var ambientIntensity = "1";
-    var intensity        = "3";
+    var ambientIntensity = "0.5";
+    var intensity        = "0.5";
     var location         = "0 0 0";
 
     if(position === undefined){  location = position;    }
@@ -693,7 +693,7 @@ EarthServerGenericClient.SceneManager = function()
      * Creates the whole X3DOM Scene in the fishtank/cube with all added scene models.
      * The Sizes of the cube are assumed as aspect ratios with values between 0 and 1.
      * Example createScene("x3dom_div",1.0, 0.3, 0.5 ) Cube has 30% height and 50 depth compared to the width.
-     * @param x3dID - ID of the x3d dom element.
+     * @param x3dID - ID of the x3d scene dom element.
      * @param sceneID - ID of the x3dom root element.
      * @param SizeX - width of the cube.
      * @param SizeY - height of the cube.
@@ -833,7 +833,7 @@ EarthServerGenericClient.SceneManager = function()
         var scene = document.getElementById(x3dID);
         if( !scene)
         {
-            console.log("EarthServerClient::Scene::appendVRShader: Could not find scene element.")
+            console.log("EarthServerClient::Scene::appendVRShader: Could not find scene element.");
             return;
         }
 
@@ -846,7 +846,7 @@ EarthServerGenericClient.SceneManager = function()
         viewpoint.setAttribute("id","EarthServerClient_VR_vpp");
         viewpoint.setAttribute("DEF","EarthServerClient_VR_vp");
         viewpoint.setAttribute("orientation",'0 1 0 -2.99229');
-        viewpoint.setAttribute("position",'0 120 0');//TODO: AUTOGENERATE
+        viewpoint.setAttribute("position",'0 120 0');// TODO: AUTOGENERATE
         viewpoint.setAttribute("zNear","0.1");
         viewpoint.setAttribute("zFar","5000");
         scene.appendChild(viewpoint);
@@ -902,9 +902,23 @@ EarthServerGenericClient.SceneManager = function()
         cShader.appendChild(field1);
         cShader.appendChild(field2);
 
+        var vs = '![CDATA[ \n';
+        vs += "attribute vec3 position; \n";
+        vs += "attribute vec2 texcoord; \n";
+        vs += "uniform mat4 modelViewProjectionMatrix; \n";
+        vs += "varying vec2 fragTexCoord; \n";
+        vs += "void main() { \n";
+        vs += "vec2 pos = sign(position.xy); \n";
+        vs += "fragTexCoord = texcoord; \n";
+        vs += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
+        vs +=  "]]";
+
+        console.log(vs);
+
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        shaderPartVertex.innerHTML = vs;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");

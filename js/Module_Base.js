@@ -156,17 +156,26 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
-     * Sets the RGB value to be considered as NODATA. All pixels with this RGB value will be drawn transparent.
+     * Sets the RGB value to be considered as NODATA in the TEXTURE. All pixels with this RGB value will be drawn transparent.
      * @param red - Value for the red channel.
      * @param green - Value for the green channel.
      * @param blue - Value for the blue channel.
      */
-    this.setNoDataValue = function(red,green,blue)
+    this.setTextureNoDataValue = function(red,green,blue)
     {
         this.noData = [];
         this.noData[0] = parseInt(red);
         this.noData[1] = parseInt(green);
         this.noData[2] = parseInt(blue);
+    };
+
+    /**
+     * Sets the DEM value to be considered as NODATA in the DEM. No Faces will be drawn having a vertex with that value.
+     * @param value - No data value
+     */
+    this.setDemNoDataValue = function( value )
+    {
+        this.demNoData = value;
     };
 
     /**

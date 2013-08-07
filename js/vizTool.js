@@ -71,7 +71,7 @@ EarthServerGenericClient.AbstractVisualisation = function()
     this.getAxis = function()
     {   return axis;    };
 
-    this.createCanvas = function(width,height,imageData,canvasID)
+    this.createImageTexture = function(width,height,imageData,canvasID)
     {
         this.canvasTexture = null;
 
