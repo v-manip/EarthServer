@@ -35,6 +35,14 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 };
 
 /**
+ * @ignore Helper function to replace all occurences in strings
+ */
+EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
+{
+    return str.split(find).join(replace);
+};
+
+/**
  * This function checks if this code is running is on a mobile platform.
  * @return true if mobile platform, false if not
  */
@@ -1258,6 +1266,18 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * This changes the scaling of all models on the Y-Axis.
+     * @param value - The base elevation is multiplied by this value
+     */
+    this.updateElevationOfAllModels = function(value)
+    {
+        for(var i=0; i< models.length; i++)
+        {
+            this.updateElevation(i,value);
+        }
+    };
+
+    /**
      * This changes the scaling on the Y-Axis(Elevation).
      * @param modelIndex - Index of the model that should be altered
      * @param value - The base elevation is multiplied by this value
@@ -1363,6 +1383,9 @@ EarthServerGenericClient.SceneManager = function()
         if(modelIndex < models.length)
         {   models[modelIndex].updateTransparency(value);   }
     };
+
+    this.OnClickFunction = function()
+    {};
 
     /**
      * This creates the UI for the Scene.

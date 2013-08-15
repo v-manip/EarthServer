@@ -129,17 +129,9 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, c
     else //A custom query was defined so use it
     {
         //Replace $ symbols with the actual values
-        this.WCPSQuery = this.WCPSQuery.replace("$CI",this.coverageImage);
-        this.WCPSQuery = this.WCPSQuery.replace("$MINX",this.minx);
-        this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
-        this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
-        this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
-        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-        this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
-        this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
+        this.WCPSQuery = this.replaceSymbolsInString(this.WCPSQuery);
+        console.log(this.WCPSQuery);
     }
-
     //3: Make ServerRequest and receive data.
     var bb = {
         minLongitude: this.miny,

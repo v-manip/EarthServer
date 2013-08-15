@@ -35,6 +35,14 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 };
 
 /**
+ * @ignore Helper function to replace all occurences in strings
+ */
+EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
+{
+    return str.split(find).join(replace);
+};
+
+/**
  * This function checks if this code is running is on a mobile platform.
  * @return true if mobile platform, false if not
  */
@@ -1258,6 +1266,18 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * This changes the scaling of all models on the Y-Axis.
+     * @param value - The base elevation is multiplied by this value
+     */
+    this.updateElevationOfAllModels = function(value)
+    {
+        for(var i=0; i< models.length; i++)
+        {
+            this.updateElevation(i,value);
+        }
+    };
+
+    /**
      * This changes the scaling on the Y-Axis(Elevation).
      * @param modelIndex - Index of the model that should be altered
      * @param value - The base elevation is multiplied by this value
@@ -1363,6 +1383,9 @@ EarthServerGenericClient.SceneManager = function()
         if(modelIndex < models.length)
         {   models[modelIndex].updateTransparency(value);   }
     };
+
+    this.OnClickFunction = function()
+    {};
 
     /**
      * This creates the UI for the Scene.
@@ -1563,17 +1586,18 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.replaceSymbolsInString = function(inputString)
     {
-        inputString = inputString.replace("$CI",this.coverageImage);
-        inputString = inputString.replace("$MINX",this.minx);
-        inputString = inputString.replace("$MINY",this.miny);
-        inputString = inputString.replace("$MAXX",this.maxx);
-        inputString = inputString.replace("$MAXY",this.maxy);
-        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
-        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
-        inputString = inputString.replace("$RESX",this.XResolution);
-        inputString = inputString.replace("$RESZ",this.ZResolution);
+        var out;
+        out = EarthServerGenericClient.replaceAllFindsInString(inputString,"$CI",this.coverageImage);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CD",this.coverageDEM);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINX",this.minx);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINY",this.miny);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXX",this.maxx);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXY",this.maxy);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CRS" ,'"' + this.CRS + '"');
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESX",this.XResolution);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESZ",this.ZResolution);
 
-        return inputString;
+        return out;
     };
 
     /**
@@ -3084,6 +3108,7 @@ EarthServerGenericClient.ServerResponseData = function () {
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
+    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -3093,8 +3118,11 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.validate = function()
     {
         //Texture
-        if( this.texture === undefined){    return false;   }
-        if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+        if( this.validateTexture )
+        {
+            if( this.texture === undefined){    return false;   }
+            if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+        }
 
         //Heightmap
         if( this.validateHeightMap )
@@ -4021,16 +4049,15 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
             var tmpString = [];
             for(i=0; i<4; i++)
             {
-                tmpString[i] = this.WCPSQuery[i].replace("$CI","image");
-                tmpString[i] = tmpString[i].replace("$CD","dtm");
-                tmpString[i] = tmpString[i].replace("$MINX",this.minx);
-                tmpString[i] = tmpString[i].replace("$MINY",this.miny);
-                tmpString[i] = tmpString[i].replace("$MAXX",this.maxx);
-                tmpString[i] = tmpString[i].replace("$MAXY",this.maxy);
-                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
-                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
-                tmpString[i] = tmpString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
-                tmpString[i] = tmpString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI",this.coverageImage);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD",this.coverageDEM);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXY",this.maxy);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CRS" ,'"' + this.CRS + '"');
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
             }
             this.WCPSQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
             this.WCPSQuery[j] += "red: " + tmpString[0] + " ";
@@ -4247,17 +4274,9 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, c
     else //A custom query was defined so use it
     {
         //Replace $ symbols with the actual values
-        this.WCPSQuery = this.WCPSQuery.replace("$CI",this.coverageImage);
-        this.WCPSQuery = this.WCPSQuery.replace("$MINX",this.minx);
-        this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
-        this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
-        this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
-        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-        this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-        this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
-        this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
+        this.WCPSQuery = this.replaceSymbolsInString(this.WCPSQuery);
+        console.log(this.WCPSQuery);
     }
-
     //3: Make ServerRequest and receive data.
     var bb = {
         minLongitude: this.miny,
@@ -4445,6 +4464,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, 
     {
         //Replace $ symbols with the actual values
         this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
+        console.log(this.WCPSQuery);
     }
 
     if( this.WCPSDemQuery === undefined)

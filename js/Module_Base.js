@@ -185,17 +185,18 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.replaceSymbolsInString = function(inputString)
     {
-        inputString = inputString.replace("$CI",this.coverageImage);
-        inputString = inputString.replace("$MINX",this.minx);
-        inputString = inputString.replace("$MINY",this.miny);
-        inputString = inputString.replace("$MAXX",this.maxx);
-        inputString = inputString.replace("$MAXY",this.maxy);
-        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
-        inputString = inputString.replace("$CRS" ,'"' + this.CRS + '"');
-        inputString = inputString.replace("$RESX",this.XResolution);
-        inputString = inputString.replace("$RESZ",this.ZResolution);
+        var out;
+        out = EarthServerGenericClient.replaceAllFindsInString(inputString,"$CI",this.coverageImage);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CD",this.coverageDEM);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINX",this.minx);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINY",this.miny);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXX",this.maxx);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXY",this.maxy);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CRS" ,'"' + this.CRS + '"');
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESX",this.XResolution);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESZ",this.ZResolution);
 
-        return inputString;
+        return out;
     };
 
     /**

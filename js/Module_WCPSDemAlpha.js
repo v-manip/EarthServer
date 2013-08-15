@@ -177,16 +177,15 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
             var tmpString = [];
             for(i=0; i<4; i++)
             {
-                tmpString[i] = this.WCPSQuery[i].replace("$CI","image");
-                tmpString[i] = tmpString[i].replace("$CD","dtm");
-                tmpString[i] = tmpString[i].replace("$MINX",this.minx);
-                tmpString[i] = tmpString[i].replace("$MINY",this.miny);
-                tmpString[i] = tmpString[i].replace("$MAXX",this.maxx);
-                tmpString[i] = tmpString[i].replace("$MAXY",this.maxy);
-                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
-                tmpString[i] = tmpString[i].replace("$CRS" ,'"' + this.CRS + '"');
-                tmpString[i] = tmpString[i].replace("$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
-                tmpString[i] = tmpString[i].replace("$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI",this.coverageImage);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD",this.coverageDEM);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXY",this.maxy);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CRS" ,'"' + this.CRS + '"');
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
             }
             this.WCPSQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
             this.WCPSQuery[j] += "red: " + tmpString[0] + " ";

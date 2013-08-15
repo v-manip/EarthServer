@@ -133,6 +133,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, 
     {
         //Replace $ symbols with the actual values
         this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
+        console.log(this.WCPSQuery);
     }
 
     if( this.WCPSDemQuery === undefined)

@@ -24,6 +24,7 @@ EarthServerGenericClient.ServerResponseData = function () {
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
+    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -33,8 +34,11 @@ EarthServerGenericClient.ServerResponseData = function () {
     this.validate = function()
     {
         //Texture
-        if( this.texture === undefined){    return false;   }
-        if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+        if( this.validateTexture )
+        {
+            if( this.texture === undefined){    return false;   }
+            if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+        }
 
         //Heightmap
         if( this.validateHeightMap )
