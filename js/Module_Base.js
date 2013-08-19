@@ -52,6 +52,20 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets the height resolution of the model. This effects the scaling of the elevation of the model.
+     * The parameter should be the difference between the smallest and biggest value of the DEM.
+     * Make the sure the value fits to the model's size.
+     * @param value
+     */
+    this.setHeightResolution = function( value )
+    {
+        if( !isNaN(value) ) // has to be a number or undefined behavior will occur
+        {
+            this.YResolution = value;
+        }
+    };
+
+    /**
      * Sets the resolution of the scene model (if possible).
      * @param xRes - Resolution on the x-axis/Latitude
      * @param zRes - Resolution on the z-axis/Longitude
@@ -176,6 +190,15 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     this.setDemNoDataValue = function( value )
     {
         this.demNoData = value;
+    };
+
+    /**
+     * Returns the noData Value for the DEM or undefined if not set.
+     * @returns {float}
+     */
+    this.getDemNoDataValue = function()
+    {
+        return this.demNoData;
     };
 
     /**
@@ -317,6 +340,22 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Returns the dem value of it's terrain at a specific point in the 3D scene.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height of the dem.
+     */
+    this.getDemValueAt3DPosition = function(xPos,zPos)
+    {
+        if( this.terrain)
+        {
+            return this.terrain.getDemValueAt3DPosition(xPos,zPos);
+        }
+        else
+        {   return 0; }
+    };
+
+    /**
      * This creates a placeholder Element for the model. It consists of an simple quad.
      * Models that use this placeholder should remove it of course.
      */
@@ -396,6 +435,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     this.createTransform = function(xRes,yRes,zRes,minvalue){
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
+        trans.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
 
         this.YResolution = yRes;
 

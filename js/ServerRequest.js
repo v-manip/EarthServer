@@ -8,6 +8,7 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  */
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          // Heightmap
+    this.noDataValue = undefined;   // The value that should be considered as NODATA.
     this.heightmapUrl = "";         // If available, you can use the link as alternative.
     this.texture = new Image();     // Texture as image object
     this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
@@ -78,8 +79,16 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
             EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
             callback.receiveData(data);
         }
-    }
+    };
 
+    /**
+     * @ignore
+     * @returns {undefined|float} - Returns the noData value of the dem from the module.
+     */
+    this.getDemNoDataValue = function()
+    {
+        return callback.getDemNoDataValue();
+    };
 };
 
 /**
@@ -134,6 +143,7 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
             if(DemInAlpha)
             {
                 responseData.heightmapUrl = responseData.texture.src;
+                var demNoData = callback.getDemNoDataValue();
 
                 var canvas = document.createElement('canvas');
                 canvas.width = responseData.texture.width;
@@ -158,11 +168,14 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
                     var index = i/4;
                     hm[parseInt(index%hm.length)][parseInt(index/hm.length)] = imageData.data[i];
 
-                    if( responseData.minHMvalue > imageData.data[i] )
-                    { responseData.minHMvalue = imageData.data[i]  }
-                    if( responseData.maxHMvalue < imageData.data[i] )
-                    { responseData.maxHMvalue = imageData.data[i]  }
-                    total = total + parseFloat(imageData.data[i]);
+                    if(imageData.data[i] !== demNoData)
+                    {
+                        if( responseData.minHMvalue > imageData.data[i] )
+                        { responseData.minHMvalue = imageData.data[i]  }
+                        if( responseData.maxHMvalue < imageData.data[i] )
+                        { responseData.maxHMvalue = imageData.data[i]  }
+                        total = total + parseFloat(imageData.data[i]);
+                    }
 
                 }
                 responseData.averageHMvalue = parseFloat(total / imageData.data.length);
@@ -213,6 +226,7 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
             {
                 try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                var demNoData = callback.getDemNoDataValue();
                 //The received data is a list of tuples: {value,value},{value,value},.....
                 var tuples = receivedData.split('},');
 
@@ -235,13 +249,16 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
                         tmp = parseFloat(valuesList[k]);
                         hm[i][k] = tmp;
 
-                        if (responseData.maxHMvalue < tmp)
+                        if( tmp !== demNoData)
                         {
-                            responseData.maxHMvalue = parseFloat(tmp);
-                        }
-                        if (responseData.minHMvalue > tmp)
-                        {
-                            responseData.minHMvalue = parseFloat(tmp);
+                            if (responseData.maxHMvalue < tmp)
+                            {
+                                responseData.maxHMvalue = parseFloat(tmp);
+                            }
+                            if (responseData.minHMvalue > tmp)
+                            {
+                                responseData.minHMvalue = parseFloat(tmp);
+                            }
                         }
                     }
                 }
@@ -491,4 +508,27 @@ EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,R
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
+};
+
+/**
+ * Requests an image via WMS and a dem via WCPS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - Image format for the WMS response.
+ * @param WCPSurl - URL for the WCPS Query
+ * @param WCPSquery - WCPS DEM Query
+ */
+EarthServerGenericClient.requestWMSImageWCPSDem = function( callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCPSurl,WCPSquery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
+    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,WCPSurl,WCPSquery);
 };

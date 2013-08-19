@@ -491,6 +491,33 @@ EarthServerGenericClient.AbstractTerrain = function()
         return value;
     };
 
+    /**
+     * Returns the dem value of the height map at a specific point in the 3D scene.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height of the dem.
+     */
+    this.getDemValueAt3DPosition = function(xPos,zPos)
+    {
+        var value = 0;
+        var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+        if(transform)
+        {
+            var translations = transform.getAttribute("translation");
+            translations = translations.split(" ");
+            var scales = transform.getAttribute("scale");
+            scales = scales.split(" ");
+
+            var xValue = (xPos - translations[0]) / scales[0];
+            var zValue = (zPos - translations[2]) / scales[2];
+
+            value = parseFloat( this.data.heightmap[ parseInt(xValue) ][ parseInt(zValue) ] );
+        }
+        else
+        {   console.log("AbstractTerrain::getDemValueAt3DPosition: Can't find model transform for index " + this.index); }
+
+        return value;
+    };
 };
 
 

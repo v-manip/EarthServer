@@ -220,7 +220,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         //In the first receiveData call remove the placeholder.
         this.removePlaceHolder();
 
-        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild(this.transformNode);
 

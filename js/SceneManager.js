@@ -1374,6 +1374,23 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Returns the dem value of a scene model at a specific point in the 3D scene.
+     * @param modelIndex - Index of the model.
+     * @param xPos - Position on the x-axis.
+     * @param zPos - Position on the z-axis.
+     * @returns {number} - The height of the dem.
+     */
+    this.getDemValueAt3DPosition = function(modelIndex,xPos,zPos)
+    {
+        if(modelIndex >= 0 && modelIndex < models.length)
+        {
+            return models[modelIndex].getDemValueAt3DPosition(xPos,zPos);
+        }
+        else
+        {   return 0;   }
+    };
+
+    /**
      * Changes the transparency of the Scene Model.
      * @param modelIndex - Index of the model that should be altered
      * @param value - New Transparency between 0-1 (Fully Opaque - Fully Transparent)
@@ -1384,8 +1401,21 @@ EarthServerGenericClient.SceneManager = function()
         {   models[modelIndex].updateTransparency(value);   }
     };
 
-    this.OnClickFunction = function()
-    {};
+    /**
+     * Example function for the onClick event.
+     * @param modelIndex - Index of the clicked model.
+     * @param hitPoint - Array with the coordinates in screen space.
+     */
+    this.OnClickFunction = function(modelIndex,hitPoint)
+    {
+        /*
+            Do nothing per default but provide a small example.
+            Overwrite this function with custom code.
+        */
+        //var height = this.getHeightAt3DPosition(modelIndex,hitPoint[0],hitPoint[2]);
+        //var height = this.getDemValueAt3DPosition(modelIndex,hitPoint[0],hitPoint[2]);
+        //alert(height);
+    };
 
     /**
      * This creates the UI for the Scene.

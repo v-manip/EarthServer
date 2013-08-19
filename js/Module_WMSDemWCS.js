@@ -140,7 +140,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         //Remove the placeHolder
         this.removePlaceHolder();
 
-        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
@@ -155,7 +155,6 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         if(this.sidePanels)
         {   this.terrain.createSidePanels(this.transformNode,1);    }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-
 
         transform = null;
     }

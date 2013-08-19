@@ -2,22 +2,29 @@
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
- * @class Scene Model: WCPS Image with DEM from second WCPS Query
+ * @class Scene Model: WMS Image with DEM from WCPS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-EarthServerGenericClient.Model_WCPSDemWCPS = function()
+EarthServerGenericClient.Model_WMSDemWCPS = function()
 {
     this.setDefaults();
-    this.name = "WCPS Image with DEM from second WCPS Query.";
+    this.name = "WMS Image with DEM from WCPS Query.";
+
+    /**
+     * WMS version for the query.
+     * @default "1.3"
+     * @type {String}
+     */
+    this.WMSVersion = "1.3";
 };
-EarthServerGenericClient.Model_WCPSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+EarthServerGenericClient.Model_WMSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 /**
- * Sets the urls for both WCPS Queries. If only one url is given it is used for both requests.
+ * Sets the urls for the WMS and WCPS Queries. If only one url is given it is used for both requests.
  * @param imageURL - Service URL for the WCPS Image Request
  * @param demURL - Service URL for the WCPS Dem Request
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setURLs=function(imageURL, demURL){
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setURLs=function(imageURL, demURL){
     /**
      * URL for the WCPS image service.
      * @type {String}
@@ -38,7 +45,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setURLs=function(imageURL, 
  * @param coverageImage - Coverage name for the image dataset.
  * @param coverageDem   - Coverage name for the dem dataset.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
     /**
      * Name of the image coverage.
      * @type {String}
@@ -50,26 +57,21 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoverages = function (co
      */
     this.coverageDEM = String(coverageDem);
 };
+
 /**
- * Sets a complete custom querystring.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSImageQuery = function(querystring)
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSVersion = function(version)
 {
-    /**
-     * The custom WCPS image query.
-     * @type {String}
-     */
-    this.WCPSImageQuery = String(querystring);
+    this.WMSVersion = String(version);
 };
 
 /**
  * Sets a custom query for the WCPS Dem request.
  * @param querystring - WCPS as a string.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
 {
     /**
      * The custom WCPS Dem query.
@@ -80,12 +82,22 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSDemQuery = function(
 
 
 /**
- * Sets the Coordinate Reference System.
+ * Sets the Coordinate Reference System for the WCPS Query
  * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoordinateReferenceSystem = function(value)
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSCoordinateReferenceSystem = function(value)
 {
-    this.CRS = value;
+    this.WCPSCRS = value;
+};
+
+/**
+* Sets the Coordinate Reference System for the WMS Image.
+* @param System - eg. CRS,SRS
+* @param value - eg. EPSG:4326
+*/
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSCoordinateReferenceSystem = function(System,value)
+{
+    this.WMSCRS = System + "=" + value;
 };
 
 /**
@@ -95,7 +107,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoordinateReferenceSyste
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
     if( root === undefined)
         alert("root is not defined");
 
@@ -112,35 +124,20 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, 
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.WMSCRS === undefined || this.WCPSCRS === undefined )
     {
         alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
         console.log(this);
         return;
     }
 
-    //2: create wcps queries
-    //If no query was defined use standard query.
-    if( this.WCPSImageQuery === undefined)
-    {
-        this.WCPSImageQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
-        this.WCPSImageQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSImageQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSImageQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
-        this.WCPSImageQuery += '}, "' + this.imageFormat +'" )';
-    }
-    else //A custom query was defined so use it
-    {
-        //Replace $ symbols with the actual values
-        this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
-    }
 
     if( this.WCPSDemQuery === undefined)
     {
         var currentXRes = this.XResolution;
         var currentZRes = this.ZResolution;
         this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
-        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
+        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.WCPSCRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.WCPSCRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
         this.WCPSDemQuery += ', "csv" )';
     }
     else //A custom query was defined so use it
@@ -149,7 +146,16 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, 
         this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
     }
 
-    EarthServerGenericClient.requestWCPSImageWCPSDem(this,this.imageURL,this.WCPSImageQuery,this.demURL,this.WCPSDemQuery);
+    var bb = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+
+    // Request
+    EarthServerGenericClient.requestWMSImageWCPSDem(this,bb,this.XResolution,this.ZResolution,
+        this.imageURL,this.coverageImage,this.WMSVersion,this.WMSCRS,this.imageFormat,this.demURL,this.WCPSDemQuery);
 };
 
 /**
@@ -157,7 +163,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, 
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data)
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.receiveData= function( data)
 {
     if( this.checkReceivedData(data))
     {
@@ -191,7 +197,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
  */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setSpecificElement= function(element)
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setSpecificElement= function(element)
 {
     EarthServerGenericClient.appendElevationSlider(element,this.index);
 };
