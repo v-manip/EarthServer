@@ -910,7 +910,7 @@ EarthServerGenericClient.SceneManager = function()
         cShader.appendChild(field1);
         cShader.appendChild(field2);
 
-        var vs = '![CDATA[ \n';
+        /*var vs = '![CDATA[ \n';
         vs += "attribute vec3 position; \n";
         vs += "attribute vec2 texcoord; \n";
         vs += "uniform mat4 modelViewProjectionMatrix; \n";
@@ -919,14 +919,12 @@ EarthServerGenericClient.SceneManager = function()
         vs += "vec2 pos = sign(position.xy); \n";
         vs += "fragTexCoord = texcoord; \n";
         vs += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
-        vs +=  "]]";
-
-        console.log(vs);
+        vs +=  "]]";*/
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
-        shaderPartVertex.innerHTML = vs;
+        shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        //shaderPartVertex.innerHTML = vs;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");

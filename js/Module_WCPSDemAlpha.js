@@ -177,8 +177,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
             var tmpString = [];
             for(i=0; i<4; i++)
             {
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI",this.coverageImage);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD",this.coverageDEM);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI","image");
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD","dtm");
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);

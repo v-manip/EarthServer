@@ -213,6 +213,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WCPSDemWCS.html">EarthServerGenericClient.Model_WCPSDemWCS</a></li>
 	
+	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCPS.html">EarthServerGenericClient.Model_WMSDemWCPS</a></li>
+	
 	<li><a href="../symbols/EarthServerGenericClient.Model_WMSDemWCS.html">EarthServerGenericClient.Model_WMSDemWCS</a></li>
 	
 	<li><a href="../symbols/EarthServerGenericClient.Module_Sharad.html">EarthServerGenericClient.Module_Sharad</a></li>
@@ -521,6 +523,24 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getDemNoDataValue">getDemNoDataValue</a></b>()
+								</div>
+								<div class="description">Returns the noData Value for the DEM or undefined if not set.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getDemValueAt3DPosition">getDemValueAt3DPosition</a></b>(xPos, zPos)
+								</div>
+								<div class="description">Returns the dem value of it's terrain at a specific point in the 3D scene.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#getHeightAt3DPosition">getHeightAt3DPosition</a></b>(xPos, zPos)
 								</div>
 								<div class="description">Returns the elevation value of it's terrain at a specific point in the 3D scene.</div>
@@ -605,6 +625,15 @@ ul.inheritsList
 								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setDemNoDataValue">setDemNoDataValue</a></b>(value)
 								</div>
 								<div class="description">Sets the DEM value to be considered as NODATA in the DEM.</div>
+							</td>
+						</tr>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont"><b><a href="../symbols/EarthServerGenericClient.AbstractSceneModel.html#setHeightResolution">setHeightResolution</a></b>(value)
+								</div>
+								<div class="description">Sets the height resolution of the model.</div>
 							</td>
 						</tr>
 					
@@ -1412,6 +1441,87 @@ ul.inheritsList
 
 					<hr />
 				
+					<a name="getDemNoDataValue"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{float}</span>
+					<b>getDemNoDataValue</b>()
+					
+					</div>
+					<div class="description">
+						Returns the noData Value for the DEM or undefined if not set.
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{float}</span> </dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
+					<a name="getDemValueAt3DPosition"> </a>
+					<div class="fixedFont">
+					
+					<span class="light">{number}</span>
+					<b>getDemValueAt3DPosition</b>(xPos, zPos)
+					
+					</div>
+					<div class="description">
+						Returns the dem value of it's terrain at a specific point in the 3D scene.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>xPos</b>
+									
+								</dt>
+								<dd>- Position on the x-axis.</dd>
+							
+								<dt>
+									<b>zPos</b>
+									
+								</dt>
+								<dd>- Position on the z-axis.</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{number}</span> - The height of the dem.</dd>
+							
+							</dl>
+						
+						
+						
+
+					<hr />
+				
 					<a name="getHeightAt3DPosition"> </a>
 					<div class="fixedFont">
 					
@@ -1767,6 +1877,42 @@ ul.inheritsList
 									
 								</dt>
 								<dd>- No data value</dd>
+							
+							</dl>
+						
+						
+						
+						
+						
+						
+						
+
+					<hr />
+				
+					<a name="setHeightResolution"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>setHeightResolution</b>(value)
+					
+					</div>
+					<div class="description">
+						Sets the height resolution of the model. This effects the scaling of the elevation of the model.The parameter should be the difference between the smallest and biggest value of the DEM.Make the sure the value fits to the model's size.
+						
+						
+					</div>
+					
+					
+					
+						
+							<dl class="detailList">
+							<dt class="heading">Parameters:</dt>
+							
+								<dt>
+									<b>value</b>
+									
+								</dt>
+								<dd></dd>
 							
 							</dl>
 						
@@ -2193,7 +2339,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Aug 07 2013 15:11:32 GMT+0200 (MESZ)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Thu Aug 22 2013 15:28:59 GMT+0200 (MESZ)
 		</div>
 	</body>
 </html>

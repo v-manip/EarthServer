@@ -2690,7 +2690,15 @@ EarthServerGenericClient.AbstractTerrain = function()
         {
             var mat =  document.getElementById(this.materialNodes[k]);
             if( mat !== null)
-            {   mat.setAttribute("transparency",value); }
+            {
+                mat.setAttribute("transparency",value);
+                // get parent appearance
+                var app = mat.parentNode;
+                if( value === 0)
+                {   app.setAttribute('sortType', 'opaque'); }
+                else
+                {   app.setAttribute('sortType', 'transparent'); }
+            }
             else
             {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
         }
@@ -2723,7 +2731,11 @@ EarthServerGenericClient.AbstractTerrain = function()
             var appearances = [AppearanceCount];
             for (var i = 0; i < AppearanceCount; i++) {
                 var appearance = document.createElement('Appearance');
-                appearance.setAttribute('sortType', 'transparent');
+
+                if( transparency === 0)
+                {   appearance.setAttribute('sortType', 'opaque'); }
+                else
+                {   appearance.setAttribute('sortType', 'transparent'); }
 
                 if (AppearanceDefined[AppearanceName] != undefined)//use the already defined appearance
                 {
@@ -4186,8 +4198,8 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root,
             var tmpString = [];
             for(i=0; i<4; i++)
             {
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI",this.coverageImage);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD",this.coverageDEM);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI","image");
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD","dtm");
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
                 tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);
