@@ -1263,6 +1263,12 @@ EarthServerGenericClient.SceneManager = function()
         {   console.log("EarthServerGenericClient::SceneManager: Can't find transformation for model with index " + modelIndex);}
     };
 
+    this.updateMaxShownElements = function(moduleNumber,value)
+    {
+        if( moduleNumber <models.length && moduleNumber >=0)
+            models[moduleNumber].updateMaxShownElements(value);
+    };
+
     /**
      * This changes the scaling of all models on the Y-Axis.
      * @param value - The base elevation is multiplied by this value

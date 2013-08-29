@@ -211,6 +211,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         var out;
         out = EarthServerGenericClient.replaceAllFindsInString(inputString,"$CI",this.coverageImage);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$CD",this.coverageDEM);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CT",this.coverageTime);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINX",this.minx);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINY",this.miny);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXX",this.maxx);
@@ -236,6 +237,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         if( data === null || !data.validate() )
         {
             alert(this.name +": Request not successful.");
+            console.log(data);
             this.reportProgress();//NO Terrain will be built so report the progress here
             this.removePlaceHolder();//Remove the placeHolder.
 

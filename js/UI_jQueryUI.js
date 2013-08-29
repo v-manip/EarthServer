@@ -291,6 +291,29 @@ EarthServerGenericClient.appendElevationSlider = function(domElement,moduleNumbe
 
 };
 
+EarthServerGenericClient.appendMaxShownElementsSlider = function(domElement,moduleNumber,maxElements)
+{
+    var ep = document.createElement("p");
+    ep.setAttribute("id","EarthServerGenericClient_SliderCell_me_" + moduleNumber );
+    ep.innerHTML = "DrawnElements: ";
+    domElement.appendChild(ep);
+
+    //jQueryUI Slider
+    var Eslider = document.createElement("div");
+    Eslider.setAttribute("id","meSlider_"+moduleNumber);
+    domElement.appendChild(Eslider);
+
+    $( "#meSlider_"+moduleNumber ).slider({
+        range: "max",
+        min: 1,
+        max: maxElements,
+        value: parseInt(maxElements/2),
+        slide: function( event, ui ) {
+            EarthServerGenericClient.MainScene.updateMaxShownElements(moduleNumber,ui.value);
+        }
+    });
+};
+
 /**
  * @class The default progress bar to display the progress in loading and creating the scene models.
  * @param DivID

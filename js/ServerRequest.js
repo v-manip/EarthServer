@@ -25,7 +25,7 @@ EarthServerGenericClient.ServerResponseData = function () {
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
-    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
+    this.validateTexture   = false;  // Flag if the texture should be checked in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -60,11 +60,13 @@ EarthServerGenericClient.ServerResponseData = function () {
  * After each request is received a progress update is send to the module.
  * @param callback - Module which requests the data.
  * @param numberToCombine - Number of callbacks that shall be received.
+ * @param saveDataInArray - In most cases one responseData is used. If set true the data is stored in an array.
  */
-EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
+EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine,saveDataInArray)
 {
     var counter = 0;
     this.name = "Combined Callback: " + callback.name;
+    this.dataArray = [];
     EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
 
     /**
@@ -74,10 +76,18 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
     this.receiveData = function(data)
     {
         counter++;
+
+        if(saveDataInArray)
+            this.dataArray.push(data);
+
         if( counter ==  numberToCombine)
         {
             EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
-            callback.receiveData(data);
+
+            if(saveDataInArray)// callback with the 1 responseData or the array
+                callback.receiveData(this.dataArray);
+            else
+                callback.receiveData(data);
         }
     };
 
@@ -180,17 +190,19 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
                 }
                 responseData.averageHMvalue = parseFloat(total / imageData.data.length);
                 responseData.heightmap = hm;
+
+                context = null;
+                canvas = null;
             }
 
-            x3dom.debug.logInfo("Server request done.");
-            context = null;
-            canvas = null;
             callback.receiveData(responseData);
         };
         responseData.texture.onerror = function()
         {
-            x3dom.debug.logInfo("ServerRequest::wcpsRequest(): Could not load Image from url " + url + "! Aborted!");
-            callback.receiveData(responseData);
+            responseData.texture = new Image();
+            responseData.texture.onload = callback.receiveData(responseData);
+            responseData.texture.src="defaultTexture.png";
+            console.log("ServerRequest::wcpsRequest(): Could not load Image from url " + url);
         };
 
         responseData.textureUrl = url + "?query=" + encodeURIComponent(query);
@@ -531,4 +543,21 @@ EarthServerGenericClient.requestWMSImageWCPSDem = function( callback,BoundingBox
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,WCPSurl,WCPSquery);
+};
+
+EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQuery)
+{
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,WCPSQuery.length,true);
+    var responseDataArray = [];
+
+    for(var o=0; o< WCPSQuery.length;o++)
+    {
+        responseDataArray.push( new EarthServerGenericClient.ServerResponseData() );
+        responseDataArray[o].validateHeightMap = false; // no height map will be received
+    }
+
+    for(var i=0; i< WCPSQuery.length;i++)
+    {
+        EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
+    }
 };

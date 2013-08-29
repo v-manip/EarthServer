@@ -30,12 +30,11 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.createCanvas = function(texture,index,noData,removeAlphaChannel)
     {
-        var canvasTexture = null;
+        var canvasTmp = document.createElement('canvas');
         var checkScaledData = false;
 
-        if( texture !== undefined)
+        if( texture !== undefined && texture.width > 0 && texture.height > 0)
         {
-            var canvasTmp = document.createElement('canvas');
             canvasTmp.style.display = "none";
             canvasTmp.width  = texture.width;
             canvasTmp.height = texture.height;
@@ -377,6 +376,41 @@ EarthServerGenericClient.AbstractTerrain = function()
         }
     };
 
+    this.setDrawnElements = function(numberElements,focusElement)
+    {
+        var addOne =0;
+        if( numberElements % 2 == 1)
+        {   addOne =1; }
+
+        var start = focusElement - parseInt(numberElements / 2)-addOne;
+        var add = 0;
+        if( start < 0)
+        {
+            add = 0 - start;
+            start = 0;
+        }
+        var end = focusElement + parseInt(numberElements / 2) + add;
+        if( end > this.materialNodes.length )
+        {   end = this.materialNodes.length;  }
+
+        for(var k=0;k<this.materialNodes.length;k++)
+        {
+            var mat =  document.getElementById(this.materialNodes[k]);
+            if( mat !== null)
+            {
+                // get parent appearance
+                var app = mat.parentNode;
+                app = app.parentNode;
+                if(k>=start && k < end)
+                    app.setAttribute('render', 'true');
+                else
+                    app.setAttribute('render', 'false');
+            }
+            else
+            {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
+        }
+    };
+
     /**
      * Deletes all saved material IDs. Use this function if you remove old material from the dom.
      * E.g. for ProgressiveTerrain.
@@ -485,7 +519,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     {
         var value = 0;
         var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
-        if(transform)
+        if(transform && this.data.heightmap)
         {
             var translations = transform.getAttribute("translation");
             translations = translations.split(" ");
@@ -513,7 +547,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     {
         var value = 0;
         var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
-        if(transform)
+        if(transform && this.data.heightmap)
         {
             var translations = transform.getAttribute("translation");
             translations = translations.split(" ");
@@ -865,3 +899,64 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
 
 };
 EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
+
+EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataValue)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.data = dataArray; // Empty data but Abstract Terrain needs it
+    this.index = index;
+    this.noData = noDataValue;
+    this.appearances = [];  // appearances of the layers
+    this.canvasTextures = []; // canvas textures of the layers
+    this.focus = 0;//parseInt( dataArray.length / 2 ) +1;
+
+    //create canvas textures and appearances
+    for(var i=0; i<dataArray.length;i++)
+    {
+        this.canvasTextures.push( this.createCanvas( dataArray[i].texture,index,noDataValue,dataArray[i].removeAlphaChannel) );
+        this.appearances.push( this.getAppearances("TerrainApp_"+this.index+i,1,this.index,this.canvasTextures[i],dataArray[i].transparency) );
+    }
+
+    // create planes with textures
+    for(i=0; i<dataArray.length;i++)
+    {
+        var shape,transform,grid, coordsNode;
+
+        transform = document.createElement("transform");
+        transform.setAttribute("translation","0 "+ i +" 0");
+
+        shape = document.createElement('Shape');
+        shape.setAttribute("id",this.index+"_shape_"+i+"_"+0);
+
+        coordsNode = document.createElement('Coordinate');
+        coordsNode.setAttribute("point", "0 0 0 1 0 0 1 0 1 0 0 1");
+
+        grid = document.createElement('IndexedFaceSet');
+        grid.setAttribute("solid", "false");
+        grid.setAttribute("colorPerVertex", "false");
+
+        grid.setAttribute("coordIndex", "0 1 2 3 -1");
+        grid.appendChild( coordsNode );
+
+        shape.appendChild(this.appearances[i][0]);
+        shape.appendChild(grid);
+        transform.appendChild(shape);
+
+        root.appendChild(transform);
+
+        // set vars null
+        shape = null;
+        grid = null;
+        transform = null;
+        coordsNode = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(this.index);
+    }
+
+    this.updateMaxShownElements = function(value)
+    {
+        this.setDrawnElements(value,this.focus);
+    };
+};
+EarthServerGenericClient.VolumeTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
