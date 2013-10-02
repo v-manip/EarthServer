@@ -125,6 +125,8 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
         var smallx = parseInt(sizex/shrinkfactor);
         var smally = parseInt(sizey/shrinkfactor);
 
+        console.log( xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor );
+
         if( shrinkfactor !== 1)
         {
             smallx++;

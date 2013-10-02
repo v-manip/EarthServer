@@ -124,6 +124,9 @@ EarthServerGenericClient.SceneManager = function()
     var framesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
     var oculusRift = false;         // Flag if the scene is rendered for the oculus rift.
     var InstantIOPort = undefined; // Port to Instant IO to connect the oculus rift.
+    var drawCube = true;            // Flag if the cube should be drawn.
+    var defaultSpecularColor = "0.25,0.25,0.25"; // default specular color for materials
+    var defaultDiffuseColor = "1 1 1"; // default diffuse color for materials
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -170,6 +173,44 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Sets the default specular color for all modules.
+     * The color set directly for a module overwrite this color.
+     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     */
+    this.setDefaultSpecularColor = function(color)
+    {
+        defaultSpecularColor = color;
+    };
+
+    /**
+     * Return the default specular color.
+     * @returns {string} - Default specular color in rgb.
+     */
+    this.getDefaultSpecularColor = function()
+    {
+        return defaultSpecularColor;
+    };
+
+    /**
+     * Sets the default specular color for all modules.
+     * The color set directly for a module overwrite this color.
+     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     */
+    this.setDefaultDiffuseColor = function(color)
+    {
+        defaultDiffuseColor = color;
+    };
+
+    /**
+     * Return the default diffuse color.
+     * @returns {string} - Default diffuse color in rgb.
+     */
+    this.getDefaultDiffuseColor = function()
+    {
+        return defaultDiffuseColor;
+    };
+
+    /**
      * Return the size of the cube in the x axis
      * @returns {number}
      */
@@ -197,6 +238,15 @@ EarthServerGenericClient.SceneManager = function()
     this.addLightToScene = function(value)
     {
         lightInScene = value;
+    };
+
+    /**
+     * Sets if the cube should be drawn.
+     * @param value - Boolean value.
+     */
+    this.setDrawCube = function(value)
+    {
+        drawCube = value;
     };
 
     /**
@@ -670,6 +720,8 @@ EarthServerGenericClient.SceneManager = function()
             cam.setAttribute('set_bind','false');
             cam.setAttribute('set_bind','true');
         }
+        else
+            console.log("EarthServerGenericClient::SceneManager::SetView can't find Camera with ID ", camID);
     };
 
     /**
@@ -770,48 +822,51 @@ EarthServerGenericClient.SceneManager = function()
             x3d.appendChild(cam2);
             x3d.appendChild(cam3);
 
-            this.setView('EarthServerGenericClient_Cam_Front');
+            //this.setView('EarthServerGenericClient_Cam_Front');
         }
 
         // Cube
-        var shape = document.createElement('Shape');
-        var appearance = document.createElement('Appearance');
-        var material = document.createElement('Material');
-        material.setAttribute("emissiveColor","1 1 0");
+        if( drawCube)
+        {
+            var shape = document.createElement('Shape');
+            var appearance = document.createElement('Appearance');
+            var material = document.createElement('Material');
+            material.setAttribute("emissiveColor","1 1 0");
 
-        var lineset = document.createElement('IndexedLineSet');
-        lineset.setAttribute("colorPerVertex", "false");
-        lineset.setAttribute("coordIndex","0 1 2 3 0 -1 4 5 6 7 4 -1 0 4 -1 1 5 -1 2 6 -1 3 7 -1");
+            var lineset = document.createElement('IndexedLineSet');
+            lineset.setAttribute("colorPerVertex", "false");
+            lineset.setAttribute("coordIndex","0 1 2 3 0 -1 4 5 6 7 4 -1 0 4 -1 1 5 -1 2 6 -1 3 7 -1");
 
-        var coords = document.createElement('Coordinate');
-        coords.setAttribute("id", "cube");
+            var coords = document.createElement('Coordinate');
+            coords.setAttribute("id", "cube");
 
-        var cubeX = cubeSizeX/2.0;
-        var cubeY = cubeSizeY/2.0;
-        var cubeZ = cubeSizeZ/2.0;
-        var cubeXNeg = -cubeSizeX/2.0;
-        var cubeYNeg = -cubeSizeY/2.0;
-        var cubeZNeg = -cubeSizeZ/2.0;
+            var cubeX = cubeSizeX/2.0;
+            var cubeY = cubeSizeY/2.0;
+            var cubeZ = cubeSizeZ/2.0;
+            var cubeXNeg = -cubeSizeX/2.0;
+            var cubeYNeg = -cubeSizeY/2.0;
+            var cubeZNeg = -cubeSizeZ/2.0;
 
-        var p = {};
-        p[0] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZNeg + " ";
-        p[1] = ""+ cubeX + " " + cubeYNeg + " " + cubeZNeg + " ";
-        p[2] = ""+ cubeX + " " + cubeY + " " + cubeZNeg + " ";
-        p[3] = ""+ cubeXNeg + " " + cubeY + " " + cubeZNeg + " ";
-        p[4] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZ + " ";
-        p[5] = ""+ cubeX + " " + cubeYNeg + " " + cubeZ + " ";
-        p[6] = ""+ cubeX + " " + cubeY + " " + cubeZ + " ";
-        p[7] = ""+ cubeXNeg + " " + cubeY + " " + cubeZ + " ";
-        var points="";
-        for(var i=0; i<8;i++)
-        {   points = points+p[i];   }
-        coords.setAttribute("point", points);
+            var p = {};
+            p[0] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZNeg + " ";
+            p[1] = ""+ cubeX + " " + cubeYNeg + " " + cubeZNeg + " ";
+            p[2] = ""+ cubeX + " " + cubeY + " " + cubeZNeg + " ";
+            p[3] = ""+ cubeXNeg + " " + cubeY + " " + cubeZNeg + " ";
+            p[4] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZ + " ";
+            p[5] = ""+ cubeX + " " + cubeYNeg + " " + cubeZ + " ";
+            p[6] = ""+ cubeX + " " + cubeY + " " + cubeZ + " ";
+            p[7] = ""+ cubeXNeg + " " + cubeY + " " + cubeZ + " ";
+            var points="";
+            for(var i=0; i<8;i++)
+            {   points = points+p[i];   }
+            coords.setAttribute("point", points);
 
-        lineset.appendChild(coords);
-        appearance.appendChild(material);
-        shape.appendChild(appearance);
-        shape.appendChild(lineset);
-        scene.appendChild(shape);
+            lineset.appendChild(coords);
+            appearance.appendChild(material);
+            shape.appendChild(appearance);
+            shape.appendChild(lineset);
+            scene.appendChild(shape);
+        }
 
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "trans");
@@ -910,26 +965,55 @@ EarthServerGenericClient.SceneManager = function()
         cShader.appendChild(field1);
         cShader.appendChild(field2);
 
-        /*var vs = '![CDATA[ \n';
-        vs += "attribute vec3 position; \n";
-        vs += "attribute vec2 texcoord; \n";
-        vs += "uniform mat4 modelViewProjectionMatrix; \n";
-        vs += "varying vec2 fragTexCoord; \n";
-        vs += "void main() { \n";
-        vs += "vec2 pos = sign(position.xy); \n";
-        vs += "fragTexCoord = texcoord; \n";
-        vs += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
-        vs +=  "]]";*/
+        var vsl = "attribute vec3 position; \n";
+        vsl += "attribute vec2 texcoord; \n";
+        vsl += "uniform mat4 modelViewProjectionMatrix; \n";
+        vsl += "varying vec2 fragTexCoord; \n";
+        vsl += "void main() { \n";
+        vsl += "vec2 pos = sign(position.xy); \n";
+        vsl += "fragTexCoord = texcoord; \n";
+        vsl += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
+
+        var vsr = "attribute vec3 position; \n";
+        vsr += "attribute vec2 texcoord; \n";
+        vsr += "uniform mat4 modelViewProjectionMatrix; \n";
+        vsr += "varying vec2 fragTexCoord; \n";
+        vsr += "void main() { \n";
+        vsr += "vec2 pos = sign(position.xy); \n";
+        vsr += "fragTexCoord = texcoord; \n";
+        vsr += "gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
+
+        var vsf = "#ifdef GL_ES \n";
+        vsf += "precision highp float; \n";
+        vsf += "#endif \n";
+        vsf += "uniform sampler2D tex; \n";
+        vsf += "uniform float leftEye; \n";
+        vsf += "varying vec2 fragTexCoord; \n";
+        vsf += "void main() { \n";
+        vsf += "float distortionScale = 0.7; \n";
+        vsf += "vec2 lensCenter = vec2(0.151976495726, 0.0); \n";
+        vsf += "if (leftEye == 0.0) { \n";
+        vsf += "lensCenter.x *= -1.0; } \n";
+        vsf += "vec2 theta = (fragTexCoord * 2.0) - 1.0; \n";
+        vsf += "float rSq = theta.x * theta.x + theta.y * theta.y; \n";
+        vsf += "vec2 rvec = theta * (1.0 + 0.22 * rSq + 0.24 * rSq * rSq); \n";
+        vsf += "vec2 texCoord = (distortionScale*rvec+(1.0-distortionScale)*lensCenter + 1.0) / 2.0; \n";
+        vsf += "if (any(notEqual(clamp(texCoord, vec2(0.0, 0.0), vec2(1.0, 1.0)) - texCoord,vec2(0.0, 0.0)))) \n";
+        vsf += "{ discard; } \n";
+        vsf += "else { \n";
+        vsf += "vec3 col = texture2D(tex, texCoord).rgb; \n";
+        vsf += "gl_FragColor = vec4(col, 1.0); }  } \n";
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
-        //shaderPartVertex.innerHTML = vs;
+        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        shaderPartVertex.innerHTML = vsl;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");
         shaderPartFragment.setAttribute("type","FRAGMENT");
-        shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
+        //shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
+        shaderPartFragment.innerHTML = vsf;
         shaderPartFragment.setAttribute("DEF","frag");
         cShader.appendChild(shaderPartFragment);
 
@@ -981,7 +1065,8 @@ EarthServerGenericClient.SceneManager = function()
 
         var shaderPartVertexR = document.createElement("shaderPart");
         shaderPartVertexR.setAttribute("type","VERTEX");
-        shaderPartVertexR.setAttribute("url","shader/oculusVertexShaderRight.glsl");
+        //shaderPartVertexR.setAttribute("url","shader/oculusVertexShaderRight.glsl");
+        shaderPartVertexR.innerHTML = vsr;
 
         cShaderR.appendChild(shaderPartVertexR);
 

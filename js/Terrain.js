@@ -65,7 +65,7 @@ EarthServerGenericClient.AbstractTerrain = function()
                 context.putImageData(imageData,0,0);
             }
 
-            canvasTexture = document.createElement('canvas');
+            var canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";
             canvasTexture.setAttribute("id", "EarthServerGenericClient_Canvas"+index);
             canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
@@ -220,7 +220,6 @@ EarthServerGenericClient.AbstractTerrain = function()
         trans.appendChild(shape);
         domElement.appendChild(trans);
 
-
         trans = null;
         shape = null;
         faceSet = null;
@@ -366,10 +365,23 @@ EarthServerGenericClient.AbstractTerrain = function()
                 mat.setAttribute("transparency",value);
                 // get parent appearance
                 var app = mat.parentNode;
-                if( value === 0)
-                {   app.setAttribute('sortType', 'opaque'); }
-                else
-                {   app.setAttribute('sortType', 'transparent'); }
+                if(app != null)
+                {
+                    if( value === 0)
+                    {   app.setAttribute('sortType', 'opaque'); }
+                    else
+                    {   app.setAttribute('sortType', 'transparent'); }
+
+                    // get parent shape
+                    var shape = app.parentNode;
+                    if( shape != null)
+                    {
+                        if( value == 1) // if shape is fully transparent, set rendering to false
+                        {   shape.setAttribute("render","false");   }
+                        else
+                        {   shape.setAttribute("render","true");   }
+                    }
+                }
             }
             else
             {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
@@ -430,10 +442,12 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param modelIndex - Index of the model using this appearance.
      * @param canvasTexture - Canvas element to be used in the appearance as texture.
      * @param transparency - Transparency of the appearance.
+     * @param specular - Specular color of the appearance.
+     * @param diffuse - Diffuse color of the appearance.
      * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
      * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
      */
-    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,upright) {
+    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,specular,diffuse,upright) {
         try {
             var appearances = [AppearanceCount];
             for (var i = 0; i < AppearanceCount; i++) {
@@ -468,8 +482,8 @@ EarthServerGenericClient.AbstractTerrain = function()
                     {   imageTransform.setAttribute("rotation", "-1.57");   }
 
                     var material = document.createElement('material');
-                    material.setAttribute("specularColor", "0.25,0.25,0.25");
-                    material.setAttribute("diffuseColor", "1 1 1");
+                    material.setAttribute("specularColor", specular);
+                    material.setAttribute("diffuseColor", diffuse);
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
@@ -650,7 +664,8 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             //Build all necessary information and values to create a chunk
             var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,this.data.width,this.data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_"+this.index+"_"+currentData,1,this.index,this.canvasTexture,this.data.transparency);
+            var appearance = this.getAppearances("TerrainApp_"+this.index+"_"+currentData,1,
+                this.index,this.canvasTexture,this.data.transparency,this.data.specularColor,this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -760,7 +775,8 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue,noDe
             //Build all necessary information and values to create a chunk
             var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,data.transparency);
+            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,
+                data.transparency,this.data.specularColor,this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -822,7 +838,8 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
      */
     this.createTerrain = function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency,true);
+        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,
+            data.transparency,this.data.specularColor,this.data.diffuseColor,true);
         var shape = document.createElement("shape");
 
         var indexedFaceSet = document.createElement('IndexedFaceSet');
@@ -915,7 +932,8 @@ EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataVal
     for(var i=0; i<dataArray.length;i++)
     {
         this.canvasTextures.push( this.createCanvas( dataArray[i].texture,index,noDataValue,dataArray[i].removeAlphaChannel) );
-        this.appearances.push( this.getAppearances("TerrainApp_"+this.index+i,1,this.index,this.canvasTextures[i],dataArray[i].transparency) );
+        this.appearances.push( this.getAppearances("TerrainApp_"+this.index+i,1,this.index,this.canvasTextures[i],
+            dataArray[i].transparency,dataArray[i].specularColor,dataArray[i].diffuseColor) );
     }
 
     // create planes with textures

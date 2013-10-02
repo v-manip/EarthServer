@@ -123,6 +123,24 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets the specular color for the scene model.
+     * @param color - Color in rgb.
+     */
+    this.setSpecularColor = function( color )
+    {
+        this.specularColor = color;
+    };
+
+    /**
+     * Sets the diffuse color for the scene model.
+     * @param color - Color in rgb.
+     */
+    this.setDiffuseColor = function( color )
+    {
+        this.diffuseColor = color;
+    };
+
+    /**
      * Sets if side panels should be added to the model.
      * @param value
      */
@@ -218,7 +236,9 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXY",this.maxy);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$CRS" ,'"' + this.CRS + '"');
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESX",this.XResolution);
+        // allows users to use either $RESY or $RESZ
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESZ",this.ZResolution);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESY",this.ZResolution);
 
         return out;
     };
@@ -257,6 +277,11 @@ EarthServerGenericClient.AbstractSceneModel = function(){
             }
             return false;
         }
+
+        // add module specific values
+        data.transparency =  this.transparency;
+        data.specularColor = this.specularColor || EarthServerGenericClient.MainScene.getDefaultSpecularColor();
+        data.diffuseColor = this.diffuseColor || EarthServerGenericClient.MainScene.getDefaultDiffuseColor();
 
         return true;
     };

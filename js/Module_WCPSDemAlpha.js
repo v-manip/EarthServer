@@ -224,9 +224,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild(this.transformNode);
 
-        //Set transparency
-        data.transparency =  this.transparency;
-
         //Create Terrain out of the received data
         if( !this.progressiveLoading)
         {

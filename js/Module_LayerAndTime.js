@@ -170,8 +170,6 @@ EarthServerGenericClient.Model_LayerAndTime.prototype.receiveData = function( da
         // TODO: delete only the one element and UI only if all failed.
         if( !this.checkReceivedData( data[i] ) )
             return;
-        else
-            data[i].transparency = this.transparency;
     }
 
     // create transform

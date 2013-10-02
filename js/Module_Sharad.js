@@ -180,9 +180,6 @@ EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
 
         this.root.appendChild( trans);
 
-        // Set transparency
-        data.transparency = this.transparency;
-
         // Create terrain
         var area = {};
         area.minx = this.minx;

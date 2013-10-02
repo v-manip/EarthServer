@@ -144,8 +144,6 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
-        //Set transparency
-        data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
