@@ -1388,6 +1388,8 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+
+            models[modelIndex].updateTranslationForElevation(oldTrans[1]);
             models[modelIndex].elevationUpdateBinding(value);
         }
     };
@@ -1985,6 +1987,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         trans.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
 
         this.YResolution = yRes;
+        this.minValue = minvalue;
 
         var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(xRes)-1);
         var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
@@ -1998,6 +2001,29 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 
         return trans;
     };
+
+    /**
+     * Updates the translation on the y-axis after the elevation was updated
+     * so the model will stay in place.
+     * @param newScale - The new scale value for the y-axis.
+     */
+    this.updateTranslationForElevation = function(newScale)
+    {
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+
+        if(trans)
+        {
+            var yoff = (this.cubeSizeY * this.yOffset) - ( this.minValue*newScale) - (this.cubeSizeY/2.0);
+            var translation = trans.getAttribute("translation");
+            var values = translation.split(" ");
+
+            trans.setAttribute("translation", "" + values[0]+ " " + yoff  + " " + values[2]);
+        }
+        else
+        {   console.log("EarthServerGenericClient::Module::updateTranslationForElevation " + this.index + ": Can't find transform.");    }
+
+    };
+
     /**
      * Sets the default values. This is done automatically by the scene model.
      */
@@ -2410,8 +2436,6 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
 
         var smallx = parseInt(sizex/shrinkfactor);
         var smally = parseInt(sizey/shrinkfactor);
-
-        console.log( xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor );
 
         if( shrinkfactor !== 1)
         {

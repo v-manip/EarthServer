@@ -1388,6 +1388,8 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+
+            models[modelIndex].updateTranslationForElevation(oldTrans[1]);
             models[modelIndex].elevationUpdateBinding(value);
         }
     };
