@@ -1,5 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
+ * @version 0.6
  */
 var EarthServerGenericClient =  {};
 
@@ -64,6 +65,22 @@ EarthServerGenericClient.getEventTarget = function(e)
 {
     e = e || window.event;
     return e.target || e.srcElement;
+};
+
+/**
+ * @ignore Helper function to delete all children of a dom element.
+ */
+EarthServerGenericClient.deleteAllChildsFromDomElement = function(domElementID)
+{
+    var domElement = document.getElementById(domElementID);
+
+    if(domElement)
+    {
+        while(domElement.firstChild)
+        {
+            domElement.removeChild(domElement.firstChild);
+        }
+    }
 };
 
 /**
@@ -180,6 +197,44 @@ EarthServerGenericClient.SceneManager = function()
     this.setDefaultSpecularColor = function(color)
     {
         defaultSpecularColor = color;
+    };
+
+    /**
+     * Resets the X3D Scene. All global setting of the scene keeps the the same.
+     */
+    this.resetScene = function()
+    {
+        // TODO: TEST function with different setups
+        // reset vars
+        models = [];
+        modelLoadingProgress = [];
+        totalLoadingProgress = 0;
+        baseElevation = [];
+        baseWidth = [];
+        baseLength = [];
+        progressCallback = undefined;
+        annotationLayers = [];
+        cameraDefs = [];
+        lights = [];
+        nextFrameCallback = [];
+        lastFrameInsert = Number.MAX_VALUE;
+
+        // reset x3d scene
+        EarthServerGenericClient.deleteAllChildsFromDomElement( this.x3dID );
+
+        // reset UI
+        EarthServerGenericClient.deleteAllChildsFromDomElement( this.UIID );
+
+        // add root and scene group nodes
+        var root = document.createElement("group");
+        root.setAttribute("id","root");
+        var scene = document.createElement("group");
+        scene.setAttribute("id",this.sceneID);
+
+        root.appendChild(scene);
+        var x3d = document.getElementById( this.x3dID);
+        if(x3d)
+            x3d.appendChild(root);
     };
 
     /**
@@ -450,7 +505,7 @@ EarthServerGenericClient.SceneManager = function()
 
         // Check bounds
         if( xPercent <0 || xPercent > 1 || zPercent <0 || zPercent >1)
-        {   console.log("EarthServerGenericClient::SceneMangager::getCubePositionForPoint: Point is not in the given area"); }
+        {   console.log("EarthServerGenericClient::SceneManager::getCubePositionForPoint: Point is not in the given area"); }
         else
         {
             position.x = (-cubeSizeX/2.0) + xPercent*cubeSizeX;
@@ -776,6 +831,11 @@ EarthServerGenericClient.SceneManager = function()
             alert("No X3D Scene found with id " + sceneID);
             return;
         }
+        else
+        {
+            this.x3dID = x3dID;
+            this.sceneID = sceneID;
+        }
 
         // Light
         if( lightInScene)
@@ -790,12 +850,12 @@ EarthServerGenericClient.SceneManager = function()
         // Background
         if( !oculusRift ) // in oculus mode the background is the rendertextures and declared in this.appendVRShader()
         {
-        var background = document.createElement("Background");
-        background.setAttribute("groundAngle",Background_groundAngle);
-        background.setAttribute("groundColor",Background_groundColor);
-        background.setAttribute("skyAngle",Background_skyAngle);
-        background.setAttribute("skyColor",Background_skyColor);
-        x3d.appendChild(background);
+            var background = document.createElement("Background");
+            background.setAttribute("groundAngle",Background_groundAngle);
+            background.setAttribute("groundColor",Background_groundColor);
+            background.setAttribute("skyAngle",Background_skyAngle);
+            background.setAttribute("skyColor",Background_skyColor);
+            x3d.appendChild(background);
         }
 
         // Cameras
@@ -1500,7 +1560,7 @@ EarthServerGenericClient.SceneManager = function()
     this.OnClickFunction = function(modelIndex,hitPoint)
     {
         /*
-            Do nothing per default but provide a small example.
+            Does nothing per default but provide a small example.
             Overwrite this function with custom code.
         */
         //var height = this.getHeightAt3DPosition(modelIndex,hitPoint[0],hitPoint[2]);
@@ -1514,6 +1574,7 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createUI = function(domElementID)
     {
+        this.UIID = domElementID;
         EarthServerGenericClient.createBasicUI(domElementID);
     };
 
@@ -1671,6 +1732,8 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.sidePanels = value;
     };
 
+
+
     /**
      * Sets the queries for the four side panels' textures.
      * @param links - Array with four image links.
@@ -1766,6 +1829,15 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * sets if no texture shall be used. If true the terrain uses the default or specified color only.
+     * @param value
+     */
+    this.setColorOnly = function(value)
+    {
+        this.colorOnly = value;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.
@@ -1775,6 +1847,13 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     {
         this.receivedDataCount++;
         this.reportProgress();
+
+        // No texture whished?
+        if( this.colorOnly && data !== null && data !== undefined)
+        {
+            data.validateTexture = false; // disable check for texture
+            data.texture = undefined;
+        }
 
         if( data === null || !data.validate() )
         {
@@ -2132,6 +2211,13 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {boolean}
          */
         this.sidePanels = false;
+
+        /**
+         * Flag if no texture shall be used. If true the terrain uses the default or specified color only.
+         * @default false
+         * @type {boolean}
+         */
+        this.colorOnly = false;
     };
 };/**
  * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
@@ -2350,7 +2436,8 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
             grid.appendChild( coordsNode );
             grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
 
-            shape.appendChild(appearances[0]);
+            if(appearances.length )
+            {   shape.appendChild(appearances[0]);  }
             shape.appendChild(grid);
 
             parentNode.appendChild(shape);
@@ -2937,18 +3024,21 @@ EarthServerGenericClient.AbstractTerrain = function()
                     appearance.setAttribute("id", AppearanceDefined[AppearanceName]);
                     appearance.setAttribute("def", AppearanceDefined[AppearanceName]);
 
-                    var texture = document.createElement('Texture');
-                    texture.setAttribute('hideChildren', 'true');
-                    texture.setAttribute("repeatS", 'true');
-                    texture.setAttribute("repeatT", 'true');
-                    texture.setAttribute("scale","false");
+                    // maybe only color
+                    if( canvasTexture != undefined)
+                    {
+                        var texture = document.createElement('Texture');
+                        texture.setAttribute('hideChildren', 'true');
+                        texture.setAttribute("repeatS", 'true');
+                        texture.setAttribute("repeatT", 'true');
+                        texture.setAttribute("scale","false");
+                        texture.appendChild(canvasTexture);
 
-                    texture.appendChild(canvasTexture);
-
-                    var imageTransform = document.createElement('TextureTransform');
-                    imageTransform.setAttribute("scale", "1,-1");
-                    if(upright)
-                    {   imageTransform.setAttribute("rotation", "-1.57");   }
+                        var imageTransform = document.createElement('TextureTransform');
+                        imageTransform.setAttribute("scale", "1,-1");
+                        if(upright)
+                        {   imageTransform.setAttribute("rotation", "-1.57");   }
+                    }
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", specular);
@@ -2956,11 +3046,15 @@ EarthServerGenericClient.AbstractTerrain = function()
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
-                   this.materialNodes.push( AppearanceName+"_mat");
+                    this.materialNodes.push( AppearanceName+"_mat");
 
                     appearance.appendChild(material);
-                    appearance.appendChild(imageTransform);
-                    appearance.appendChild(texture);
+                    // only add if created
+                    if( canvasTexture !== undefined)
+                    {
+                        appearance.appendChild(imageTransform);
+                        appearance.appendChild(texture);
+                    }
 
                     texture = null;
                     imageTransform = null;
@@ -2971,7 +3065,7 @@ EarthServerGenericClient.AbstractTerrain = function()
             return appearances;
         }
         catch (error) {
-            console.log('AbstractTerrain::getAppearances(): ' + error);
+            console.log('EarthServerGenericClient::AbstractTerrain::getAppearances(): ' + error);
             return null;
         }
     };
@@ -5596,6 +5690,26 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
 
     cdiv=null;
     cp=null;
+
+    //Create Div Reset
+    /*var reset = document.createElement("h3");
+    reset.innerHTML = "Reset";
+    var rdiv = document.createElement("div");
+    var rp   = document.createElement("p");
+
+    var rbutton = document.createElement('button');
+    rbutton.setAttribute("onclick", "EarthServerGenericClient.MainScene.resetScene();return false;");
+    rbutton.innerHTML = "RESET";
+
+   rp.appendChild(rbutton);
+   rbutton = null;
+
+    rdiv.appendChild(rp);
+    UI_DIV.appendChild(reset);
+    UI_DIV.appendChild(rdiv);
+
+    rdiv=null;
+    rp=null;*/
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
