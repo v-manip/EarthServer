@@ -36,7 +36,7 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 };
 
 /**
- * @ignore Helper function to replace all occurences in strings
+ * @ignore Helper function to replace all occurrences in strings
  */
 EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
 {
@@ -56,15 +56,6 @@ EarthServerGenericClient.isMobilePlatform = function ()
     })(navigator.userAgent||window.opera);
 
     return mobilePlatform;
-};
-
-/**
- * @ignore Helper for Events
- */
-EarthServerGenericClient.getEventTarget = function(e)
-{
-    e = e || window.event;
-    return e.target || e.srcElement;
 };
 
 /**
@@ -205,6 +196,14 @@ EarthServerGenericClient.SceneManager = function()
     this.resetScene = function()
     {
         // TODO: TEST function with different setups
+        // clear all models and terrains
+        for(var i=0; i<models.length; i++)
+        {
+            models[i].terrain.clearMaterials();
+            models[i].terrain.clearDefinedAppearances();
+            models[i].terrain = null;
+        }
+
         // reset vars
         models = [];
         modelLoadingProgress = [];
@@ -222,8 +221,9 @@ EarthServerGenericClient.SceneManager = function()
         // reset x3d scene
         EarthServerGenericClient.deleteAllChildsFromDomElement( this.x3dID );
 
-        // reset UI
+        // destroy UI
         EarthServerGenericClient.deleteAllChildsFromDomElement( this.UIID );
+        EarthServerGenericClient.destroyBasicUI( this.UIID );
 
         // add root and scene group nodes
         var root = document.createElement("group");
@@ -856,6 +856,8 @@ EarthServerGenericClient.SceneManager = function()
             background.setAttribute("skyAngle",Background_skyAngle);
             background.setAttribute("skyColor",Background_skyColor);
             x3d.appendChild(background);
+
+            background = null;
         }
 
         // Cameras
@@ -882,6 +884,9 @@ EarthServerGenericClient.SceneManager = function()
             x3d.appendChild(cam2);
             x3d.appendChild(cam3);
 
+            cam1 = null;
+            cam2 = null;
+            cam3 = null;
             //this.setView('EarthServerGenericClient_Cam_Front');
         }
 
@@ -926,6 +931,13 @@ EarthServerGenericClient.SceneManager = function()
             shape.appendChild(appearance);
             shape.appendChild(lineset);
             scene.appendChild(shape);
+
+            shape = null;
+            appearance = null;
+            material = null;
+            lineset = null;
+            coords = null;
+            points = null;
         }
 
         var trans = document.createElement('Transform');
@@ -939,13 +951,13 @@ EarthServerGenericClient.SceneManager = function()
         }
 
         scene.appendChild(trans);
-
-
         this.trans = trans;
+        trans = null;
 
         var annotationTrans = document.createElement("transform");
         annotationTrans.setAttribute("id","AnnotationsGroup");
         scene.appendChild(annotationTrans);
+        annotationTrans = null;
 
         if( oculusRift )
         {   this.appendVRShader(x3dID,sceneID);  }
@@ -2461,7 +2473,7 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
 
     /**
      * Shrinks the heightfield with the given factor
-     * @param heightfield - The used heihgfield.
+     * @param heightfield - The used heightfield.
      * @param sizex - Width of the heightfield.
      * @param sizey - Height of the heightfield.
      * @param NODATA - The value that a considered as NODATA available and shall be left as a gap
@@ -2570,10 +2582,27 @@ EarthServerGenericClient.AbstractTerrain = function()
     var AppearanceDefined = [];
 
     /**
+     * Clears the list of already defined appearances.
+     */
+    this.clearDefinedAppearances = function()
+    {
+        AppearanceDefined = [];
+    };
+
+    /**
      * Stores the IDs of the materials to change the transparency.
      * @type {Array}
      */
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+
+    /**
+     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
+     * E.g. for ProgressiveTerrain.
+     */
+    this.clearMaterials = function()
+    {
+        this.materialNodes = [];
+    };
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
@@ -2648,8 +2677,6 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
 
         }
-        else
-        {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
 
         return canvasTexture;
     };
@@ -2792,6 +2819,8 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.createSidePanels = function(domElement,spacing)
     {
+        if(this.data.texture === undefined) return;
+
         var modelScale = domElement.getAttribute("scale");
         modelScale = modelScale.split(" ");
         modelScale = modelScale[1];
@@ -2891,7 +2920,6 @@ EarthServerGenericClient.AbstractTerrain = function()
                     //If the requested position is out of bounce return the min value of the hm.
                     if(i > this.data.height || j > this.data.width || info.xpos+j < 0 || info.ypos+i <0)
                     {
-                        //console.log("HM acces: ", i,j,this.data.width,this.data.height);
                         heightmapPart[i][j] = this.data.minHMvalue;
                     }
                     else
@@ -2944,6 +2972,12 @@ EarthServerGenericClient.AbstractTerrain = function()
         }
     };
 
+    /**
+     * Sets the number of drawn elements of the terrain.
+     * The materials of the elements render flag are altered.
+     * @param numberElements - Number of elements to be drawn.
+     * @param focusElement - Element which has to be drawn, all other elements around this are next.
+     */
     this.setDrawnElements = function(numberElements,focusElement)
     {
         var addOne =0;
@@ -2978,16 +3012,6 @@ EarthServerGenericClient.AbstractTerrain = function()
             {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
         }
     };
-
-    /**
-     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
-     * E.g. for ProgressiveTerrain.
-     */
-    this.clearMaterials = function()
-    {
-       this.materialNodes = [];
-    };
-
 
     /**
      * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
@@ -3083,7 +3107,6 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.getHeightmapHeight = function()
     {   return this.data.height; };
-
 
     /**
      * Returns the elevation value of the height map at a specific point in the 3D scene.
@@ -5692,7 +5715,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     cp=null;
 
     //Create Div Reset
-    /*var reset = document.createElement("h3");
+    var reset = document.createElement("h3");
     reset.innerHTML = "Reset";
     var rdiv = document.createElement("div");
     var rp   = document.createElement("p");
@@ -5709,7 +5732,7 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     UI_DIV.appendChild(rdiv);
 
     rdiv=null;
-    rp=null;*/
+    rp=null;
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
@@ -5797,6 +5820,14 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     });
 
     UI_DIV = null;
+};
+
+/**
+ * Destroys the basic UI.
+ */
+EarthServerGenericClient.destroyBasicUI = function(domElementID)
+{
+    $( "#"+domElementID ).accordion( "destroy" );
 };
 
 /**
