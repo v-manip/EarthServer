@@ -52,7 +52,6 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         EarthServerGenericClient.MainScene.setSpecificElement(i,div);
 
         div=null;
-        p=null;
     }
 
     //Create Div for the Cameras
@@ -78,6 +77,26 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
 
     cdiv=null;
     cp=null;
+
+    //Create Div Reset
+    var reset = document.createElement("h3");
+    reset.innerHTML = "Reset";
+    var rdiv = document.createElement("div");
+    var rp   = document.createElement("p");
+
+    var rbutton = document.createElement('button');
+    rbutton.setAttribute("onclick", "EarthServerGenericClient.MainScene.resetScene();return false;");
+    rbutton.innerHTML = "RESET";
+
+   rp.appendChild(rbutton);
+   rbutton = null;
+
+    rdiv.appendChild(rp);
+    UI_DIV.appendChild(reset);
+    UI_DIV.appendChild(rdiv);
+
+    rdiv=null;
+    rp=null;
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
@@ -165,6 +184,14 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     });
 
     UI_DIV = null;
+};
+
+/**
+ * Destroys the basic UI.
+ */
+EarthServerGenericClient.destroyBasicUI = function(domElementID)
+{
+    $( "#"+domElementID ).accordion( "destroy" );
 };
 
 /**

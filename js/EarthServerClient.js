@@ -1,5 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
+ * @version 0.7 alpha
  */
 var EarthServerGenericClient =  {};
 
@@ -35,7 +36,7 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 };
 
 /**
- * @ignore Helper function to replace all occurences in strings
+ * @ignore Helper function to replace all occurrences in strings
  */
 EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
 {
@@ -58,12 +59,19 @@ EarthServerGenericClient.isMobilePlatform = function ()
 };
 
 /**
- * @ignore Helper for Events
+ * @ignore Helper function to delete all children of a dom element.
  */
-EarthServerGenericClient.getEventTarget = function(e)
+EarthServerGenericClient.deleteAllChildsFromDomElement = function(domElementID)
 {
-    e = e || window.event;
-    return e.target || e.srcElement;
+    var domElement = document.getElementById(domElementID);
+
+    if(domElement)
+    {
+        while(domElement.firstChild)
+        {
+            domElement.removeChild(domElement.firstChild);
+        }
+    }
 };
 
 /**
@@ -78,8 +86,8 @@ EarthServerGenericClient.getEventTarget = function(e)
 EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
 {
     var ambientIntensity = "0.5";
-    var intensity        = "0.5";
-    var location         = "0 0 0";
+    var intensity        = "0.8";
+    var location         = "0 1000 0";
 
     if(position === undefined){  location = position;    }
     if(radius === undefined ) {  radius = "8000";    }
@@ -116,6 +124,7 @@ EarthServerGenericClient.SceneManager = function()
     var baseLength = [];            // Every Model has it's base length on the Z-Axis. Needed to change and restore the length.
     var progressCallback = undefined;// Callback function for the progress update.
     var annotationLayers = [];      // Array of AnnotationsLayer to display annotations in the cube
+    var viewpoints = [];            // Array of user created viewpoints
     var cameraDefs = [];            // Name and ID of the specified cameras. Format: "NAME:ID"
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
@@ -123,7 +132,12 @@ EarthServerGenericClient.SceneManager = function()
     var lastFrameInsert = Number.MAX_VALUE; // Frame counter since the last insertion of data into the dom
     var framesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
     var oculusRift = false;         // Flag if the scene is rendered for the oculus rift.
-    var InstantIOPort = undefined; // Port to Instant IO to connect the oculus rift.
+    var InstantIOPort = undefined;  // Port to Instant IO to connect the oculus rift.
+    var drawCube = true;            // Flag if the cube should be drawn.
+    var defaultSpecularColor = "0.25,0.25,0.25"; // default specular color for materials
+    var defaultDiffuseColor = "1 1 1"; // default diffuse color for materials
+    var keyMapping = {};            // Stores the keys for certain events
+    var globalElevationValue = 10;  // Stores the last used global elevation value
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -159,6 +173,106 @@ EarthServerGenericClient.SceneManager = function()
     var axisLabels = null;
 
     /**
+     * Initiates the default key mapping.
+     */
+    this.initKeyMapping = function()
+    {
+        // Go to viewpoint x
+        keyMapping.vp1 = 49; // key: 1
+        keyMapping.vp2 = 50; // key: 2
+        keyMapping.vp3 = 51; // key: 3
+        keyMapping.vp3 = 51; // key: 3
+        keyMapping.vp4 = 52; // key: 4
+        keyMapping.vp5 = 53; // key: 5
+        keyMapping.vp6 = 54; // key: 6
+
+        // modify light
+        keyMapping.lightDown = 57; // key: 9
+        keyMapping.lightUp   = 48; // key: 0
+
+        // global elevation
+        keyMapping.globalElevUp   = 105; // key: i
+        keyMapping.globalElevDown = 107; // key: k
+
+        // prompts the current viewpoint
+        keyMapping.cvp = 66; // key: B
+    };
+
+    /**
+     * Sets a custom short cut key. Events can be:
+     * "ViewPointX": While x is a number between 1-6. Goes to viewpoint x.
+     * "ShowViewPoint": Prompts the current viewpoint.
+     * "LightDown"/"LightUp": changes the intensity of the light source.
+     * "ElevationDown"/ElevationUp": changes the global elevation.
+     * @param event - The event.
+     * @param key - The key as char.
+     */
+    this.setShortCut = function(event,key)
+    {
+        // get the char value
+        var value = String(key).charCodeAt(0);
+
+        if(event.toLowerCase() === "viewpoint1") keyMapping.vp1 = value;
+        if(event.toLowerCase() === "viewpoint2") keyMapping.vp2 = value;
+        if(event.toLowerCase() === "viewpoint3") keyMapping.vp3 = value;
+        if(event.toLowerCase() === "viewpoint4") keyMapping.vp4 = value;
+        if(event.toLowerCase() === "viewpoint5") keyMapping.vp5 = value;
+        if(event.toLowerCase() === "viewpoint6") keyMapping.vp6 = value;
+
+        if(event.toLowerCase() === "showviewpoint") keyMapping.cvp = value;
+        if(event.toLowerCase() === "elevationdown") keyMapping.globalElevDown = value;
+        if(event.toLowerCase() === "elevationup")   keyMapping.globalElevUp = value;
+        if(event.toLowerCase() === "lightup")       keyMapping.lightUp = value;
+        if(event.toLowerCase() === "lightdwon")     keyMapping.lightDown = value;
+    };
+
+    /**
+     * Handles the pressed key.
+     */
+    this.handleKeys = function (e)
+    {
+        var key = e.charCode;
+
+        switch(key)
+        {
+            case keyMapping.vp1: this.setViewByCameraDefIndex(0);  break;
+            case keyMapping.vp2: this.setViewByCameraDefIndex(1);  break;
+            case keyMapping.vp3: this.setViewByCameraDefIndex(2);  break;
+            case keyMapping.vp4: this.setViewByCameraDefIndex(3);  break;
+            case keyMapping.vp5: this.setViewByCameraDefIndex(4);  break;
+            case keyMapping.vp6: this.setViewByCameraDefIndex(5);  break;
+
+            case keyMapping.cvp:        this.showCurrentViewPoint(); break;
+            case keyMapping.lightUp:    this.increaseLightIntensity(0); break;
+            case keyMapping.lightDown:  this.decreaseLightIntensity(0); break;
+            case keyMapping.globalElevUp: this.increaseGlobalElevation(); break;
+            case keyMapping.globalElevDown: this.decreaseGlobalElevation(); break;
+            //default: console.log("No key defined for char: " + key);
+        }
+    };
+
+    /**
+     * Shows an alert with the current viewpoint.
+     */
+    this.showCurrentViewPoint = function()
+    {
+        var e = document.getElementById('x3d');
+        var mat_view = e.runtime.viewMatrix().inverse();
+
+        var rotation = new x3dom.fields.Quaternion(0, 0, 1, 0);
+        rotation.setValue(mat_view);
+        var rot = rotation.toAxisAngle();
+        var translation = mat_view.e3();
+
+        var text = '"' + translation.x.toFixed(5) + ' '
+            + translation.y.toFixed(5) + ' ' + translation.z.toFixed(5) + '", ' +
+            '"' + rot[0].x.toFixed(5) + ' ' + rot[0].y.toFixed(5) + ' '
+            + rot[0].z.toFixed(5) + ' ' + rot[1].toFixed(5)+'"';
+
+        window.prompt ("Copy to clipboard: Ctrl+C, Enter", text);
+    };
+
+    /**
      * Sets if the x3dom oculus rift mode shall be enabled.
      * @param value - True/False
      * @param port - Instant IO Port
@@ -167,6 +281,119 @@ EarthServerGenericClient.SceneManager = function()
     {
         oculusRift = value;
         InstantIOPort = port;
+    };
+
+    /**
+     * Adds custom viewpoints to the scene and UI.
+     * Viewpoints can be put out to the debug console by pressing 'd' and 'v'.
+     * @param name - Name of the Viewpoint for the UI.
+     * @param Position - Position of the viewpoint.
+     * @param Orientation - Orientation of the viewpoint.
+     */
+    this.addCustomViewPoint = function(name,Position,Orientation)
+    {
+        // check if viewpoint with this name already exist
+        for(var i=0; i<viewpoints.length;i++)
+        {
+            if( viewpoints[i].name === name)
+            {
+                console.log("EarthServerClient::MainScene::addCustomViewPoint: Viewpoint with name" + name + " already exist.");
+                return;
+            }
+        }
+
+        var vp = {};
+        vp.name = name;
+        vp.position = Position;
+        vp.orientation = Orientation;
+
+        viewpoints.push( vp );
+    };
+
+    /**
+     * Resets the X3D Scene. All global setting of the scene keeps the the same.
+     */
+    this.resetScene = function()
+    {
+        // TODO: TEST function with different setups
+        // clear all models and terrains
+        for(var i=0; i<models.length; i++)
+        {
+            models[i].terrain.clearMaterials();
+            models[i].terrain.clearDefinedAppearances();
+            models[i].terrain = null;
+        }
+
+        // reset vars
+        models = [];
+        modelLoadingProgress = [];
+        totalLoadingProgress = 0;
+        baseElevation = [];
+        baseWidth = [];
+        baseLength = [];
+        progressCallback = undefined;
+        annotationLayers = [];
+        cameraDefs = [];
+        lights = [];
+        nextFrameCallback = [];
+        lastFrameInsert = Number.MAX_VALUE;
+
+        // reset x3d scene
+        EarthServerGenericClient.deleteAllChildsFromDomElement( this.x3dID );
+
+        // destroy UI
+        EarthServerGenericClient.deleteAllChildsFromDomElement( this.UIID );
+        EarthServerGenericClient.destroyBasicUI( this.UIID );
+
+        // add root and scene group nodes
+        var root = document.createElement("group");
+        root.setAttribute("id","root");
+        var scene = document.createElement("group");
+        scene.setAttribute("id",this.sceneID);
+
+        root.appendChild(scene);
+        var x3d = document.getElementById( this.x3dID);
+        if(x3d)
+            x3d.appendChild(root);
+    };
+
+    /**
+     * Sets the default specular color for all modules.
+     * The color set directly for a module overwrite this color.
+     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     */
+    this.setDefaultSpecularColor = function(color)
+    {
+        defaultSpecularColor = color;
+    };
+
+
+    /**
+     * Return the default specular color.
+     * @returns {string} - Default specular color in rgb.
+     */
+    this.getDefaultSpecularColor = function()
+    {
+        return defaultSpecularColor;
+    };
+
+    /**
+     * Sets the default specular color for all modules.
+     * The color set directly for a module overwrite this color.
+     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     */
+    this.setDefaultDiffuseColor = function(color)
+    {
+        defaultDiffuseColor = color;
+    };
+
+    /**
+     * Return the default diffuse color.
+     * @returns {string} - Default diffuse color in rgb.
+     */
+    this.getDefaultDiffuseColor = function()
+    {
+        return defaultDiffuseColor;
     };
 
     /**
@@ -197,6 +424,15 @@ EarthServerGenericClient.SceneManager = function()
     this.addLightToScene = function(value)
     {
         lightInScene = value;
+    };
+
+    /**
+     * Sets if the cube should be drawn.
+     * @param value - Boolean value.
+     */
+    this.setDrawCube = function(value)
+    {
+        drawCube = value;
     };
 
     /**
@@ -400,7 +636,7 @@ EarthServerGenericClient.SceneManager = function()
 
         // Check bounds
         if( xPercent <0 || xPercent > 1 || zPercent <0 || zPercent >1)
-        {   console.log("EarthServerGenericClient::SceneMangager::getCubePositionForPoint: Point is not in the given area"); }
+        {   console.log("EarthServerGenericClient::SceneManager::getCubePositionForPoint: Point is not in the given area"); }
         else
         {
             position.x = (-cubeSizeX/2.0) + xPercent*cubeSizeX;
@@ -666,11 +902,43 @@ EarthServerGenericClient.SceneManager = function()
         var cam = document.getElementById(camID);
         if(cam)
         {
-            //If the user changes the camera, then moves around the camera has to be set to false to be able to bin again
-            cam.setAttribute('set_bind','false');
-            cam.setAttribute('set_bind','true');
+            if( oculusRift ) // there is always one viewpoint in oculus mode, change it
+            {
+                var oculusVP = document.getElementById("EarthServerClient_VR_vpp");
+                var pos = cam.getAttribute("position");
+                oculusVP.setAttribute("position",pos);
+            }
+            else
+            {
+                //If the user changes the camera, then moves around the camera has to be set to false to be able to bin again
+                cam.setAttribute('set_bind','false');
+                cam.setAttribute('set_bind','true');
+            }
         }
+        else
+            console.log("EarthServerGenericClient::SceneManager::SetView can't find Camera with ID ", camID);
     };
+
+    /**
+     * Sets the view of the X3Dom window to the predefined camera.
+     * @param cameraDefIndex - Index of the camera as stored in cameraDef.
+     */
+    this.setViewByCameraDefIndex =function(cameraDefIndex)
+    {
+        if(cameraDefIndex >= cameraDefs.length)
+        {   console.log("EarthServerGenericClient::SceneManager::SetViewByCameraDefIndex has no camera with index ", cameraDefIndex);   }
+        else
+        {   var cameraDef = cameraDefs[ cameraDefIndex];    }
+
+        var camName = cameraDef.split(":");
+        if(camName.length <2 )
+        {   console.log("EarthServerGenericClient::SceneManager::SetViewByCameraDefIndex can't find Camera with DEF ", cameraDef);   }
+        else
+        {   var camID = camName[1];}
+
+        this.setView(camID);
+    };
+
 
     /**
      * Returns the number of defined cameras
@@ -724,6 +992,11 @@ EarthServerGenericClient.SceneManager = function()
             alert("No X3D Scene found with id " + sceneID);
             return;
         }
+        else
+        {
+            this.x3dID = x3dID;
+            this.sceneID = sceneID;
+        }
 
         // Light
         if( lightInScene)
@@ -738,99 +1011,129 @@ EarthServerGenericClient.SceneManager = function()
         // Background
         if( !oculusRift ) // in oculus mode the background is the rendertextures and declared in this.appendVRShader()
         {
-        var background = document.createElement("Background");
-        background.setAttribute("groundAngle",Background_groundAngle);
-        background.setAttribute("groundColor",Background_groundColor);
-        background.setAttribute("skyAngle",Background_skyAngle);
-        background.setAttribute("skyColor",Background_skyColor);
-        x3d.appendChild(background);
+            var background = document.createElement("Background");
+            background.setAttribute("groundAngle",Background_groundAngle);
+            background.setAttribute("groundColor",Background_groundColor);
+            background.setAttribute("skyAngle",Background_skyAngle);
+            background.setAttribute("skyColor",Background_skyColor);
+            x3d.appendChild(background);
+
+            background = null;
         }
 
         // Cameras
-        if( !oculusRift ) // the oculus handles the navigation
-        {
-            var cam1 = document.createElement('Viewpoint');
-            cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
-            cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
-            cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
+       // if no custom viewpoints are set create three default ones
+       if( viewpoints.length ===0 )
+       {
+           var cam1 = document.createElement('Viewpoint');
+           cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
+           cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
+           cam1.setAttribute("description","EarthServerGenericClient_Cam_Front");
+           cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
 
-            var cam2 = document.createElement('Viewpoint');
-            cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
-            cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
-            cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
-            cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
+           var cam2 = document.createElement('Viewpoint');
+           cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
+           cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
+           cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
+           cam2.setAttribute("description","EarthServerGenericClient_Cam_Top");
+           cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
 
-            var cam3 = document.createElement('Viewpoint');
-            cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
-            cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
-            cam3.setAttribute("orientation", "0 1 0 -1.55");
-            cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
+           var cam3 = document.createElement('Viewpoint');
+           cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
+           cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
+           cam3.setAttribute("orientation", "0 1 0 -1.55");
+           cam3.setAttribute("description","EarthServerGenericClient_Cam_Side");
+           cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
 
-            x3d.appendChild(cam1);
-            x3d.appendChild(cam2);
-            x3d.appendChild(cam3);
+           x3d.appendChild(cam1);
+           x3d.appendChild(cam2);
+           x3d.appendChild(cam3);
 
-            this.setView('EarthServerGenericClient_Cam_Front');
-        }
+           cam1 = null;
+           cam2 = null;
+           cam3 = null;
+       }
+
+       // insert custom viewpoints
+       for(var o=0;o<viewpoints.length;o++)
+       {
+           var customCam = document.createElement('Viewpoint');
+           customCam.setAttribute("id","EarthServerGenericClient_Cam_"+viewpoints[o].name);
+           customCam.setAttribute("description","EarthServerGenericClient_Cam_"+viewpoints[o].name);
+           customCam.setAttribute("position", viewpoints[o].position);
+           // check if orientation is set, else use default
+           if( viewpoints[o].orientation !== undefined && viewpoints[o].orientation !== null )
+           {   customCam.setAttribute("orientation",viewpoints[o].orientation );   }
+
+           cameraDefs.push(""+viewpoints[o].name+":EarthServerGenericClient_Cam_"+viewpoints[o].name);
+
+           x3d.appendChild(customCam);
+           customCam = null;
+       }
+
 
         // Cube
-        var shape = document.createElement('Shape');
-        var appearance = document.createElement('Appearance');
-        var material = document.createElement('Material');
-        material.setAttribute("emissiveColor","1 1 0");
+        if( drawCube)
+        {
+            var shape = document.createElement('Shape');
+            var appearance = document.createElement('Appearance');
+            //appearance.setAttribute("sorttype","opaque");
+            var material = document.createElement('Material');
+            material.setAttribute("emissiveColor","1 1 0");
 
-        var lineset = document.createElement('IndexedLineSet');
-        lineset.setAttribute("colorPerVertex", "false");
-        lineset.setAttribute("coordIndex","0 1 2 3 0 -1 4 5 6 7 4 -1 0 4 -1 1 5 -1 2 6 -1 3 7 -1");
+            var lineset = document.createElement('IndexedLineSet');
+            lineset.setAttribute("colorPerVertex", "false");
+            lineset.setAttribute("coordIndex","0 1 2 3 0 -1 4 5 6 7 4 -1 0 4 -1 1 5 -1 2 6 -1 3 7 -1");
 
-        var coords = document.createElement('Coordinate');
-        coords.setAttribute("id", "cube");
+            var coords = document.createElement('Coordinate');
+            coords.setAttribute("id", "cube");
 
-        var cubeX = cubeSizeX/2.0;
-        var cubeY = cubeSizeY/2.0;
-        var cubeZ = cubeSizeZ/2.0;
-        var cubeXNeg = -cubeSizeX/2.0;
-        var cubeYNeg = -cubeSizeY/2.0;
-        var cubeZNeg = -cubeSizeZ/2.0;
+            var cubeX = cubeSizeX/2.0;
+            var cubeY = cubeSizeY/2.0;
+            var cubeZ = cubeSizeZ/2.0;
+            var cubeXNeg = -cubeSizeX/2.0;
+            var cubeYNeg = -cubeSizeY/2.0;
+            var cubeZNeg = -cubeSizeZ/2.0;
 
-        var p = {};
-        p[0] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZNeg + " ";
-        p[1] = ""+ cubeX + " " + cubeYNeg + " " + cubeZNeg + " ";
-        p[2] = ""+ cubeX + " " + cubeY + " " + cubeZNeg + " ";
-        p[3] = ""+ cubeXNeg + " " + cubeY + " " + cubeZNeg + " ";
-        p[4] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZ + " ";
-        p[5] = ""+ cubeX + " " + cubeYNeg + " " + cubeZ + " ";
-        p[6] = ""+ cubeX + " " + cubeY + " " + cubeZ + " ";
-        p[7] = ""+ cubeXNeg + " " + cubeY + " " + cubeZ + " ";
-        var points="";
-        for(var i=0; i<8;i++)
-        {   points = points+p[i];   }
-        coords.setAttribute("point", points);
+            var p = {};
+            p[0] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZNeg + " ";
+            p[1] = ""+ cubeX + " " + cubeYNeg + " " + cubeZNeg + " ";
+            p[2] = ""+ cubeX + " " + cubeY + " " + cubeZNeg + " ";
+            p[3] = ""+ cubeXNeg + " " + cubeY + " " + cubeZNeg + " ";
+            p[4] = ""+ cubeXNeg + " " + cubeYNeg + " " + cubeZ + " ";
+            p[5] = ""+ cubeX + " " + cubeYNeg + " " + cubeZ + " ";
+            p[6] = ""+ cubeX + " " + cubeY + " " + cubeZ + " ";
+            p[7] = ""+ cubeXNeg + " " + cubeY + " " + cubeZ + " ";
+            var points="";
+            for(var i=0; i<8;i++)
+            {   points = points+p[i];   }
+            coords.setAttribute("point", points);
 
-        lineset.appendChild(coords);
-        appearance.appendChild(material);
-        shape.appendChild(appearance);
-        shape.appendChild(lineset);
-        scene.appendChild(shape);
+            lineset.appendChild(coords);
+            appearance.appendChild(material);
+            shape.appendChild(appearance);
+            shape.appendChild(lineset);
+            scene.appendChild(shape);
+
+            shape = null;
+            appearance = null;
+            material = null;
+            lineset = null;
+            coords = null;
+            points = null;
+        }
 
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "trans");
 
-        // Append the child into the scene
-        if( oculusRift ) // oculus mode needs the root node to NOT rendered
-        {
-            var root = document.getElementById("root");
-            root.setAttribute("render","false");
-        }
-
         scene.appendChild(trans);
-
-
         this.trans = trans;
+        trans = null;
 
         var annotationTrans = document.createElement("transform");
         annotationTrans.setAttribute("id","AnnotationsGroup");
         scene.appendChild(annotationTrans);
+        annotationTrans = null;
 
         if( oculusRift )
         {   this.appendVRShader(x3dID,sceneID);  }
@@ -856,7 +1159,8 @@ EarthServerGenericClient.SceneManager = function()
         viewpoint.setAttribute("orientation",'0 1 0 -2.99229');
         viewpoint.setAttribute("position",'0 120 0');// TODO: AUTOGENERATE
         viewpoint.setAttribute("zNear","0.1");
-        viewpoint.setAttribute("zFar","5000");
+        viewpoint.setAttribute("zFar","4000");
+        //viewpoint.setAttribute("fieldOfView","1.74");
         scene.appendChild(viewpoint);
 
         var background = document.createElement("background");
@@ -910,28 +1214,55 @@ EarthServerGenericClient.SceneManager = function()
         cShader.appendChild(field1);
         cShader.appendChild(field2);
 
-        var vs = '![CDATA[ \n';
-        vs += "attribute vec3 position; \n";
-        vs += "attribute vec2 texcoord; \n";
-        vs += "uniform mat4 modelViewProjectionMatrix; \n";
-        vs += "varying vec2 fragTexCoord; \n";
-        vs += "void main() { \n";
-        vs += "vec2 pos = sign(position.xy); \n";
-        vs += "fragTexCoord = texcoord; \n";
-        vs += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
-        vs +=  "]]";
+        var vsl = "attribute vec3 position; \n";
+        vsl += "attribute vec2 texcoord; \n";
+        vsl += "uniform mat4 modelViewProjectionMatrix; \n";
+        vsl += "varying vec2 fragTexCoord; \n";
+        vsl += "void main() { \n";
+        vsl += "vec2 pos = sign(position.xy); \n";
+        vsl += "fragTexCoord = texcoord; \n";
+        vsl += "gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
 
-        console.log(vs);
+        var vsr = "attribute vec3 position; \n";
+        vsr += "attribute vec2 texcoord; \n";
+        vsr += "uniform mat4 modelViewProjectionMatrix; \n";
+        vsr += "varying vec2 fragTexCoord; \n";
+        vsr += "void main() { \n";
+        vsr += "vec2 pos = sign(position.xy); \n";
+        vsr += "fragTexCoord = texcoord; \n";
+        vsr += "gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0); } \n";
+
+        var vsf = "#ifdef GL_ES \n";
+        vsf += "precision highp float; \n";
+        vsf += "#endif \n";
+        vsf += "uniform sampler2D tex; \n";
+        vsf += "uniform float leftEye; \n";
+        vsf += "varying vec2 fragTexCoord; \n";
+        vsf += "void main() { \n";
+        vsf += "float distortionScale = 0.7; \n";
+        vsf += "vec2 lensCenter = vec2(0.151976495726, 0.0); \n";
+        vsf += "if (leftEye == 0.0) { \n";
+        vsf += "lensCenter.x *= -1.0; } \n";
+        vsf += "vec2 theta = (fragTexCoord * 2.0) - 1.0; \n";
+        vsf += "float rSq = theta.x * theta.x + theta.y * theta.y; \n";
+        vsf += "vec2 rvec = theta * (1.0 + 0.22 * rSq + 0.24 * rSq * rSq); \n";
+        vsf += "vec2 texCoord = (distortionScale*rvec+(1.0-distortionScale)*lensCenter + 1.0) / 2.0; \n";
+        vsf += "if (any(notEqual(clamp(texCoord, vec2(0.0, 0.0), vec2(1.0, 1.0)) - texCoord,vec2(0.0, 0.0)))) \n";
+        vsf += "{ discard; } \n";
+        vsf += "else { \n";
+        vsf += "vec3 col = texture2D(tex, texCoord).rgb; \n";
+        vsf += "gl_FragColor = vec4(col, 1.0); }  } \n";
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
-        shaderPartVertex.innerHTML = vs;
+       // shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+        shaderPartVertex.innerHTML = vsl;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");
         shaderPartFragment.setAttribute("type","FRAGMENT");
-        shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
+        //shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
+        shaderPartFragment.innerHTML = vsf;
         shaderPartFragment.setAttribute("DEF","frag");
         cShader.appendChild(shaderPartFragment);
 
@@ -983,7 +1314,8 @@ EarthServerGenericClient.SceneManager = function()
 
         var shaderPartVertexR = document.createElement("shaderPart");
         shaderPartVertexR.setAttribute("type","VERTEX");
-        shaderPartVertexR.setAttribute("url","shader/oculusVertexShaderRight.glsl");
+        //shaderPartVertexR.setAttribute("url","shader/oculusVertexShaderRight.glsl");
+        shaderPartVertexR.innerHTML = vsr;
 
         cShaderR.appendChild(shaderPartVertexR);
 
@@ -1065,6 +1397,11 @@ EarthServerGenericClient.SceneManager = function()
         var element = document.getElementById("x3d");
         element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
 
+        // add event listener for keyboard
+        document.addEventListener('keypress', function (e) {
+            EarthServerGenericClient.MainScene.handleKeys(e);
+        }, false);
+
         if( !oculusRift ) // oculus mode overwrites exit frame itself
         {   element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;  }
         else // oculus mode + this.exitframe
@@ -1103,6 +1440,13 @@ EarthServerGenericClient.SceneManager = function()
             };
 
             this.start_log("ws://localhost:" + InstantIOPort + "/InstantIO/element/ovr/Orientation/data.string", "image");
+        }
+
+        // Append the child into the scene
+        if( oculusRift ) // oculus mode needs the root node to NOT rendered
+        {
+            var root = document.getElementById("root");
+            root.setAttribute("render","false");
         }
 
         for(var i=0; i< models.length; i++)
@@ -1212,6 +1556,40 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Increases the intensity value of the light with the given index by a constant value.
+     * @param lightIndex
+     */
+    this.increaseLightIntensity = function(lightIndex)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            var currentValue = light.getAttribute("intensity");
+            var newValue = parseFloat(currentValue) + 0.1;
+            light.setAttribute("intensity",String(newValue));
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
+    };
+
+    /**
+     * Decreases the intensity value of the light with the given index by a constant value.
+     * @param lightIndex
+     */
+    this.decreaseLightIntensity = function(lightIndex)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            var currentValue = light.getAttribute("intensity");
+            var newValue = parseFloat(currentValue) - 0.1;
+            light.setAttribute("intensity",String(newValue));
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
+    };
+
+    /**
      * Update Offset changes the position selected SceneModel on the x-,y- or z-Axis.
      * @param modelIndex - Index of the model that should be altered
      * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
@@ -1265,15 +1643,44 @@ EarthServerGenericClient.SceneManager = function()
         {   console.log("EarthServerGenericClient::SceneManager: Can't find transformation for model with index " + modelIndex);}
     };
 
+    this.updateMaxShownElements = function(moduleNumber,value)
+    {
+        if( moduleNumber <models.length && moduleNumber >=0)
+            models[moduleNumber].updateMaxShownElements(value);
+    };
+
     /**
      * This changes the scaling of all models on the Y-Axis.
      * @param value - The base elevation is multiplied by this value
      */
     this.updateElevationOfAllModels = function(value)
     {
+        globalElevationValue = value;
+
         for(var i=0; i< models.length; i++)
         {
             this.updateElevation(i,value);
+        }
+    };
+
+    /**
+     * Increases the global elevation by a constant factor.
+     */
+    this.increaseGlobalElevation = function()
+    {
+        globalElevationValue++;
+        this.updateElevationOfAllModels(globalElevationValue);
+    };
+
+    /**
+     * Decreases the global elevation by a constant factor.
+     */
+    this.decreaseGlobalElevation = function()
+    {
+        if(globalElevationValue > 1) // don't let global elevation value get negative or 0
+        {
+            globalElevationValue--;
+            this.updateElevationOfAllModels(globalElevationValue);
         }
     };
 
@@ -1288,8 +1695,8 @@ EarthServerGenericClient.SceneManager = function()
 
         if( trans )
         {
-            var oldTrans = trans.getAttribute("scale");
-            oldTrans = oldTrans.split(" ");
+            var transValue = trans.getAttribute("scale");
+            var oldTrans = transValue.split(" ");
 
             if( baseElevation[modelIndex] === undefined)
             {
@@ -1299,6 +1706,8 @@ EarthServerGenericClient.SceneManager = function()
             oldTrans[1] = value*baseElevation[modelIndex]/10;
 
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
+
+            models[modelIndex].updateTranslationForElevation(oldTrans[1]);
             models[modelIndex].elevationUpdateBinding(value);
         }
     };
@@ -1409,7 +1818,7 @@ EarthServerGenericClient.SceneManager = function()
     this.OnClickFunction = function(modelIndex,hitPoint)
     {
         /*
-            Do nothing per default but provide a small example.
+            Does nothing per default but provide a small example.
             Overwrite this function with custom code.
         */
         //var height = this.getHeightAt3DPosition(modelIndex,hitPoint[0],hitPoint[2]);
@@ -1423,9 +1832,12 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.createUI = function(domElementID)
     {
+        this.UIID = domElementID;
         EarthServerGenericClient.createBasicUI(domElementID);
     };
 
+    // init keymapping
+    this.initKeyMapping();
 };
 
 // Create main scene
@@ -1554,6 +1966,24 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Sets the specular color for the scene model.
+     * @param color - Color in rgb.
+     */
+    this.setSpecularColor = function( color )
+    {
+        this.specularColor = color;
+    };
+
+    /**
+     * Sets the diffuse color for the scene model.
+     * @param color - Color in rgb.
+     */
+    this.setDiffuseColor = function( color )
+    {
+        this.diffuseColor = color;
+    };
+
+    /**
      * Sets if side panels should be added to the model.
      * @param value
      */
@@ -1561,6 +1991,8 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     {
         this.sidePanels = value;
     };
+
+
 
     /**
      * Sets the queries for the four side panels' textures.
@@ -1642,15 +2074,27 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         var out;
         out = EarthServerGenericClient.replaceAllFindsInString(inputString,"$CI",this.coverageImage);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$CD",this.coverageDEM);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$CT",this.coverageTime);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINX",this.minx);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MINY",this.miny);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXX",this.maxx);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$MAXY",this.maxy);
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$CRS" ,'"' + this.CRS + '"');
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESX",this.XResolution);
+        // allows users to use either $RESY or $RESZ
         out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESZ",this.ZResolution);
+        out = EarthServerGenericClient.replaceAllFindsInString(out,"$RESY",this.ZResolution);
 
         return out;
+    };
+
+    /**
+     * sets if no texture shall be used. If true the terrain uses the default or specified color only.
+     * @param value
+     */
+    this.setColorOnly = function(value)
+    {
+        this.colorOnly = value;
     };
 
     /**
@@ -1664,9 +2108,17 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.receivedDataCount++;
         this.reportProgress();
 
+        // No texture whished?
+        if( this.colorOnly && data !== null && data !== undefined)
+        {
+            data.validateTexture = false; // disable check for texture
+            data.texture = undefined;
+        }
+
         if( data === null || !data.validate() )
         {
             alert(this.name +": Request not successful.");
+            console.log(data);
             this.reportProgress();//NO Terrain will be built so report the progress here
             this.removePlaceHolder();//Remove the placeHolder.
 
@@ -1686,6 +2138,11 @@ EarthServerGenericClient.AbstractSceneModel = function(){
             }
             return false;
         }
+
+        // add module specific values
+        data.transparency =  this.transparency;
+        data.specularColor = this.specularColor || EarthServerGenericClient.MainScene.getDefaultSpecularColor();
+        data.diffuseColor = this.diffuseColor || EarthServerGenericClient.MainScene.getDefaultDiffuseColor();
 
         return true;
     };
@@ -1869,6 +2326,7 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         trans.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
 
         this.YResolution = yRes;
+        this.minValue = minvalue;
 
         var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(xRes)-1);
         var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
@@ -1882,6 +2340,29 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 
         return trans;
     };
+
+    /**
+     * Updates the translation on the y-axis after the elevation was updated
+     * so the model will stay in place.
+     * @param newScale - The new scale value for the y-axis.
+     */
+    this.updateTranslationForElevation = function(newScale)
+    {
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+
+        if(trans)
+        {
+            var yoff = (this.cubeSizeY * this.yOffset) - ( this.minValue*newScale) - (this.cubeSizeY/2.0);
+            var translation = trans.getAttribute("translation");
+            var values = translation.split(" ");
+
+            trans.setAttribute("translation", "" + values[0]+ " " + yoff  + " " + values[2]);
+        }
+        else
+        {   console.log("EarthServerGenericClient::Module::updateTranslationForElevation " + this.index + ": Can't find transform.");    }
+
+    };
+
     /**
      * Sets the default values. This is done automatically by the scene model.
      */
@@ -1990,6 +2471,24 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {boolean}
          */
         this.sidePanels = false;
+
+        /**
+         * Flag if no texture shall be used. If true the terrain uses the default or specified color only.
+         * @default false
+         * @type {boolean}
+         */
+        this.colorOnly = false;
+
+        /**
+         * Terrain of the module.
+         */
+        this.terrain = null;
+
+        /**
+         * Index aka. ID of the module.#
+         * @type {Number}
+         */
+        this.index = -1;
     };
 };/**
  * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
@@ -2208,7 +2707,8 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
             grid.appendChild( coordsNode );
             grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
 
-            shape.appendChild(appearances[0]);
+            if(appearances.length )
+            {   shape.appendChild(appearances[0]);  }
             shape.appendChild(grid);
 
             parentNode.appendChild(shape);
@@ -2232,7 +2732,7 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
 
     /**
      * Shrinks the heightfield with the given factor
-     * @param heightfield - The used heihgfield.
+     * @param heightfield - The used heightfield.
      * @param sizex - Width of the heightfield.
      * @param sizey - Height of the heightfield.
      * @param NODATA - The value that a considered as NODATA available and shall be left as a gap
@@ -2341,10 +2841,27 @@ EarthServerGenericClient.AbstractTerrain = function()
     var AppearanceDefined = [];
 
     /**
+     * Clears the list of already defined appearances.
+     */
+    this.clearDefinedAppearances = function()
+    {
+        AppearanceDefined = [];
+    };
+
+    /**
      * Stores the IDs of the materials to change the transparency.
      * @type {Array}
      */
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+
+    /**
+     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
+     * E.g. for ProgressiveTerrain.
+     */
+    this.clearMaterials = function()
+    {
+        this.materialNodes = [];
+    };
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
@@ -2357,12 +2874,11 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.createCanvas = function(texture,index,noData,removeAlphaChannel)
     {
-        var canvasTexture = null;
+        var canvasTmp = document.createElement('canvas');
         var checkScaledData = false;
 
-        if( texture !== undefined)
+        if( texture !== undefined && texture.width > 0 && texture.height > 0)
         {
-            var canvasTmp = document.createElement('canvas');
             canvasTmp.style.display = "none";
             canvasTmp.width  = texture.width;
             canvasTmp.height = texture.height;
@@ -2393,7 +2909,7 @@ EarthServerGenericClient.AbstractTerrain = function()
                 context.putImageData(imageData,0,0);
             }
 
-            canvasTexture = document.createElement('canvas');
+            var canvasTexture = document.createElement('canvas');
             canvasTexture.style.display = "none";
             canvasTexture.setAttribute("id", "EarthServerGenericClient_Canvas"+index);
             canvasTexture.width  = Math.pow(2, Math.round(Math.log(texture.width)  / Math.log(2)));
@@ -2420,8 +2936,6 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
 
         }
-        else
-        {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
 
         return canvasTexture;
     };
@@ -2548,7 +3062,6 @@ EarthServerGenericClient.AbstractTerrain = function()
         trans.appendChild(shape);
         domElement.appendChild(trans);
 
-
         trans = null;
         shape = null;
         faceSet = null;
@@ -2565,6 +3078,8 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.createSidePanels = function(domElement,spacing)
     {
+        if(this.data.texture === undefined) return;
+
         var modelScale = domElement.getAttribute("scale");
         modelScale = modelScale.split(" ");
         modelScale = modelScale[1];
@@ -2664,7 +3179,6 @@ EarthServerGenericClient.AbstractTerrain = function()
                     //If the requested position is out of bounce return the min value of the hm.
                     if(i > this.data.height || j > this.data.width || info.xpos+j < 0 || info.ypos+i <0)
                     {
-                        //console.log("HM acces: ", i,j,this.data.width,this.data.height);
                         heightmapPart[i][j] = this.data.minHMvalue;
                     }
                     else
@@ -2694,10 +3208,23 @@ EarthServerGenericClient.AbstractTerrain = function()
                 mat.setAttribute("transparency",value);
                 // get parent appearance
                 var app = mat.parentNode;
-                if( value === 0)
-                {   app.setAttribute('sortType', 'opaque'); }
-                else
-                {   app.setAttribute('sortType', 'transparent'); }
+                if(app != null)
+                {
+                    if( value === 0)
+                    {   app.setAttribute('sortType', 'opaque'); }
+                    else
+                    {   app.setAttribute('sortType', 'transparent'); }
+
+                    // get parent shape
+                    var shape = app.parentNode;
+                    if( shape != null)
+                    {
+                        if( value == 1) // if shape is fully transparent, set rendering to false
+                        {   shape.setAttribute("render","false");   }
+                        else
+                        {   shape.setAttribute("render","true");   }
+                    }
+                }
             }
             else
             {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
@@ -2705,14 +3232,45 @@ EarthServerGenericClient.AbstractTerrain = function()
     };
 
     /**
-     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
-     * E.g. for ProgressiveTerrain.
+     * Sets the number of drawn elements of the terrain.
+     * The materials of the elements render flag are altered.
+     * @param numberElements - Number of elements to be drawn.
+     * @param focusElement - Element which has to be drawn, all other elements around this are next.
      */
-    this.clearMaterials = function()
+    this.setDrawnElements = function(numberElements,focusElement)
     {
-       this.materialNodes = [];
-    };
+        var addOne =0;
+        if( numberElements % 2 == 1)
+        {   addOne =1; }
 
+        var start = focusElement - parseInt(numberElements / 2)-addOne;
+        var add = 0;
+        if( start < 0)
+        {
+            add = 0 - start;
+            start = 0;
+        }
+        var end = focusElement + parseInt(numberElements / 2) + add;
+        if( end > this.materialNodes.length )
+        {   end = this.materialNodes.length;  }
+
+        for(var k=0;k<this.materialNodes.length;k++)
+        {
+            var mat =  document.getElementById(this.materialNodes[k]);
+            if( mat !== null)
+            {
+                // get parent appearance
+                var app = mat.parentNode;
+                app = app.parentNode;
+                if(k>=start && k < end)
+                    app.setAttribute('render', 'true');
+                else
+                    app.setAttribute('render', 'false');
+            }
+            else
+            {   console.log("Material with ID " +this.materialNodes[k] + " not found.");    }
+        }
+    };
 
     /**
      * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
@@ -2723,10 +3281,12 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @param modelIndex - Index of the model using this appearance.
      * @param canvasTexture - Canvas element to be used in the appearance as texture.
      * @param transparency - Transparency of the appearance.
+     * @param specular - Specular color of the appearance.
+     * @param diffuse - Diffuse color of the appearance.
      * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
      * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
      */
-    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,upright) {
+    this.getAppearances = function (AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency,specular,diffuse,upright) {
         try {
             var appearances = [AppearanceCount];
             for (var i = 0; i < AppearanceCount; i++) {
@@ -2747,30 +3307,37 @@ EarthServerGenericClient.AbstractTerrain = function()
                     appearance.setAttribute("id", AppearanceDefined[AppearanceName]);
                     appearance.setAttribute("def", AppearanceDefined[AppearanceName]);
 
-                    var texture = document.createElement('Texture');
-                    texture.setAttribute('hideChildren', 'true');
-                    texture.setAttribute("repeatS", 'true');
-                    texture.setAttribute("repeatT", 'true');
-                    texture.setAttribute("scale","false");
+                    // maybe only color
+                    if( canvasTexture != undefined)
+                    {
+                        var texture = document.createElement('Texture');
+                        texture.setAttribute('hideChildren', 'true');
+                        texture.setAttribute("repeatS", 'true');
+                        texture.setAttribute("repeatT", 'true');
+                        texture.setAttribute("scale","false");
+                        texture.appendChild(canvasTexture);
 
-                    texture.appendChild(canvasTexture);
-
-                    var imageTransform = document.createElement('TextureTransform');
-                    imageTransform.setAttribute("scale", "1,-1");
-                    if(upright)
-                    {   imageTransform.setAttribute("rotation", "-1.57");   }
+                        var imageTransform = document.createElement('TextureTransform');
+                        imageTransform.setAttribute("scale", "1,-1");
+                        if(upright)
+                        {   imageTransform.setAttribute("rotation", "-1.57");   }
+                    }
 
                     var material = document.createElement('material');
-                    material.setAttribute("specularColor", "0.25,0.25,0.25");
-                    material.setAttribute("diffuseColor", "1 1 1");
+                    material.setAttribute("specularColor", specular);
+                    material.setAttribute("diffuseColor", diffuse);
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
-                   this.materialNodes.push( AppearanceName+"_mat");
+                    this.materialNodes.push( AppearanceName+"_mat");
 
                     appearance.appendChild(material);
-                    appearance.appendChild(imageTransform);
-                    appearance.appendChild(texture);
+                    // only add if created
+                    if( canvasTexture !== undefined)
+                    {
+                        appearance.appendChild(imageTransform);
+                        appearance.appendChild(texture);
+                    }
 
                     texture = null;
                     imageTransform = null;
@@ -2781,7 +3348,7 @@ EarthServerGenericClient.AbstractTerrain = function()
             return appearances;
         }
         catch (error) {
-            console.log('AbstractTerrain::getAppearances(): ' + error);
+            console.log('EarthServerGenericClient::AbstractTerrain::getAppearances(): ' + error);
             return null;
         }
     };
@@ -2800,7 +3367,6 @@ EarthServerGenericClient.AbstractTerrain = function()
     this.getHeightmapHeight = function()
     {   return this.data.height; };
 
-
     /**
      * Returns the elevation value of the height map at a specific point in the 3D scene.
      * All transformations and scales are considered.
@@ -2812,7 +3378,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     {
         var value = 0;
         var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
-        if(transform)
+        if(transform && this.data.heightmap)
         {
             var translations = transform.getAttribute("translation");
             translations = translations.split(" ");
@@ -2840,7 +3406,7 @@ EarthServerGenericClient.AbstractTerrain = function()
     {
         var value = 0;
         var transform = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
-        if(transform)
+        if(transform && this.data.heightmap)
         {
             var translations = transform.getAttribute("translation");
             translations = translations.split(" ");
@@ -2943,7 +3509,8 @@ EarthServerGenericClient.ProgressiveTerrain = function(index)
             //Build all necessary information and values to create a chunk
             var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,this.data.width,this.data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_"+this.index+"_"+currentData,1,this.index,this.canvasTexture,this.data.transparency);
+            var appearance = this.getAppearances("TerrainApp_"+this.index+"_"+currentData,1,
+                this.index,this.canvasTexture,this.data.transparency,this.data.specularColor,this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -3053,7 +3620,8 @@ EarthServerGenericClient.LODTerrain = function(root, data,index,noDataValue,noDe
             //Build all necessary information and values to create a chunk
             var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,data.transparency);
+            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,
+                data.transparency,this.data.specularColor,this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -3115,7 +3683,8 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
      */
     this.createTerrain = function()
     {
-        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,data.transparency,true);
+        var appearance = this.getAppearances("TerrainApp_"+this.index,1,this.index,this.canvasTexture,
+            data.transparency,this.data.specularColor,this.data.diffuseColor,true);
         var shape = document.createElement("shape");
 
         var indexedFaceSet = document.createElement('IndexedFaceSet');
@@ -3191,7 +3760,69 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
 
 
 };
-EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);//Namespace
+EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
+
+EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataValue)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.data = dataArray; // Empty data but Abstract Terrain needs it
+    this.index = index;
+    this.noData = noDataValue;
+    this.appearances = [];  // appearances of the layers
+    this.canvasTextures = []; // canvas textures of the layers
+    this.focus = 0;//parseInt( dataArray.length / 2 ) +1;
+
+    //create canvas textures and appearances
+    for(var i=0; i<dataArray.length;i++)
+    {
+        this.canvasTextures.push( this.createCanvas( dataArray[i].texture,index,noDataValue,dataArray[i].removeAlphaChannel) );
+        this.appearances.push( this.getAppearances("TerrainApp_"+this.index+i,1,this.index,this.canvasTextures[i],
+            dataArray[i].transparency,dataArray[i].specularColor,dataArray[i].diffuseColor) );
+    }
+
+    // create planes with textures
+    for(i=0; i<dataArray.length;i++)
+    {
+        var shape,transform,grid, coordsNode;
+
+        transform = document.createElement("transform");
+        transform.setAttribute("translation","0 "+ i +" 0");
+
+        shape = document.createElement('Shape');
+        shape.setAttribute("id",this.index+"_shape_"+i+"_"+0);
+
+        coordsNode = document.createElement('Coordinate');
+        coordsNode.setAttribute("point", "0 0 0 1 0 0 1 0 1 0 0 1");
+
+        grid = document.createElement('IndexedFaceSet');
+        grid.setAttribute("solid", "false");
+        grid.setAttribute("colorPerVertex", "false");
+
+        grid.setAttribute("coordIndex", "0 1 2 3 -1");
+        grid.appendChild( coordsNode );
+
+        shape.appendChild(this.appearances[i][0]);
+        shape.appendChild(grid);
+        transform.appendChild(shape);
+
+        root.appendChild(transform);
+
+        // set vars null
+        shape = null;
+        grid = null;
+        transform = null;
+        coordsNode = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(this.index);
+    }
+
+    this.updateMaxShownElements = function(value)
+    {
+        this.setDrawnElements(value,this.focus);
+    };
+};
+EarthServerGenericClient.VolumeTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -3253,11 +3884,13 @@ EarthServerGenericClient.ServerResponseData = function () {
  * After each request is received a progress update is send to the module.
  * @param callback - Module which requests the data.
  * @param numberToCombine - Number of callbacks that shall be received.
+ * @param saveDataInArray - In most cases one responseData is used. If set true the data is stored in an array.
  */
-EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
+EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine,saveDataInArray)
 {
     var counter = 0;
     this.name = "Combined Callback: " + callback.name;
+    this.dataArray = [];
     EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
 
     /**
@@ -3267,10 +3900,18 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine)
     this.receiveData = function(data)
     {
         counter++;
+
+        if(saveDataInArray)
+            this.dataArray.push(data);
+
         if( counter ==  numberToCombine)
         {
             EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
-            callback.receiveData(data);
+
+            if(saveDataInArray)// callback with the 1 responseData or the array
+                callback.receiveData(this.dataArray);
+            else
+                callback.receiveData(data);
         }
     };
 
@@ -3373,17 +4014,19 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
                 }
                 responseData.averageHMvalue = parseFloat(total / imageData.data.length);
                 responseData.heightmap = hm;
+
+                context = null;
+                canvas = null;
             }
 
-            x3dom.debug.logInfo("Server request done.");
-            context = null;
-            canvas = null;
             callback.receiveData(responseData);
         };
         responseData.texture.onerror = function()
         {
-            x3dom.debug.logInfo("ServerRequest::wcpsRequest(): Could not load Image from url " + url + "! Aborted!");
-            callback.receiveData(responseData);
+            responseData.texture = new Image();
+            responseData.texture.onload = callback.receiveData(responseData);
+            responseData.texture.src="defaultTexture.png";
+            console.log("ServerRequest::wcpsRequest(): Could not load Image from url " + url);
         };
 
         responseData.textureUrl = url + "?query=" + encodeURIComponent(query);
@@ -3724,6 +4367,23 @@ EarthServerGenericClient.requestWMSImageWCPSDem = function( callback,BoundingBox
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,WCPSurl,WCPSquery);
+};
+
+EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQuery)
+{
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,WCPSQuery.length,true);
+    var responseDataArray = [];
+
+    for(var o=0; o< WCPSQuery.length;o++)
+    {
+        responseDataArray.push( new EarthServerGenericClient.ServerResponseData() );
+        responseDataArray[o].validateHeightMap = false; // no height map will be received
+    }
+
+    for(var i=0; i< WCPSQuery.length;i++)
+    {
+        EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
+    }
 };//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
@@ -3905,9 +4565,6 @@ EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
 
 
         this.root.appendChild( trans);
-
-        // Set transparency
-        data.transparency = this.transparency;
 
         // Create terrain
         var area = {};
@@ -4245,9 +4902,6 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild(this.transformNode);
 
-        //Set transparency
-        data.transparency =  this.transparency;
-
         //Create Terrain out of the received data
         if( !this.progressiveLoading)
         {
@@ -4452,8 +5106,6 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
-        //Set transparency
-        data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
@@ -4648,8 +5300,6 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
-        //Set transparency
-        data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
@@ -4821,8 +5471,6 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
-        //Set transparency
-        data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
@@ -5021,8 +5669,6 @@ EarthServerGenericClient.Model_WMSDemWCPS.prototype.receiveData= function( data)
         var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
         this.root.appendChild( transform);
 
-        //Set transparency
-        data.transparency = this.transparency;
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
@@ -5102,7 +5748,6 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         EarthServerGenericClient.MainScene.setSpecificElement(i,div);
 
         div=null;
-        p=null;
     }
 
     //Create Div for the Cameras
@@ -5128,6 +5773,26 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
 
     cdiv=null;
     cp=null;
+
+    //Create Div Reset
+    var reset = document.createElement("h3");
+    reset.innerHTML = "Reset";
+    var rdiv = document.createElement("div");
+    var rp   = document.createElement("p");
+
+    var rbutton = document.createElement('button');
+    rbutton.setAttribute("onclick", "EarthServerGenericClient.MainScene.resetScene();return false;");
+    rbutton.innerHTML = "RESET";
+
+   rp.appendChild(rbutton);
+   rbutton = null;
+
+    rdiv.appendChild(rp);
+    UI_DIV.appendChild(reset);
+    UI_DIV.appendChild(rdiv);
+
+    rdiv=null;
+    rp=null;
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
@@ -5215,6 +5880,14 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
     });
 
     UI_DIV = null;
+};
+
+/**
+ * Destroys the basic UI.
+ */
+EarthServerGenericClient.destroyBasicUI = function(domElementID)
+{
+    $( "#"+domElementID ).accordion( "destroy" );
 };
 
 /**
@@ -5339,6 +6012,29 @@ EarthServerGenericClient.appendElevationSlider = function(domElement,moduleNumbe
         }
     });
 
+};
+
+EarthServerGenericClient.appendMaxShownElementsSlider = function(domElement,moduleNumber,maxElements)
+{
+    var ep = document.createElement("p");
+    ep.setAttribute("id","EarthServerGenericClient_SliderCell_me_" + moduleNumber );
+    ep.innerHTML = "DrawnElements: ";
+    domElement.appendChild(ep);
+
+    //jQueryUI Slider
+    var Eslider = document.createElement("div");
+    Eslider.setAttribute("id","meSlider_"+moduleNumber);
+    domElement.appendChild(Eslider);
+
+    $( "#meSlider_"+moduleNumber ).slider({
+        range: "max",
+        min: 1,
+        max: maxElements,
+        value: parseInt(maxElements/2),
+        slide: function( event, ui ) {
+            EarthServerGenericClient.MainScene.updateMaxShownElements(moduleNumber,ui.value);
+        }
+    });
 };
 
 /**

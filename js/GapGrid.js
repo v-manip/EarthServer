@@ -38,7 +38,8 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
             grid.appendChild( coordsNode );
             grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
 
-            shape.appendChild(appearances[0]);
+            if(appearances.length )
+            {   shape.appendChild(appearances[0]);  }
             shape.appendChild(grid);
 
             parentNode.appendChild(shape);
@@ -62,7 +63,7 @@ function GapGrid(parentNode,info, hf,appearances,NODATA)
 
     /**
      * Shrinks the heightfield with the given factor
-     * @param heightfield - The used heihgfield.
+     * @param heightfield - The used heightfield.
      * @param sizex - Width of the heightfield.
      * @param sizey - Height of the heightfield.
      * @param NODATA - The value that a considered as NODATA available and shall be left as a gap

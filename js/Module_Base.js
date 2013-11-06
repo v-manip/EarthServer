@@ -149,6 +149,8 @@ EarthServerGenericClient.AbstractSceneModel = function(){
         this.sidePanels = value;
     };
 
+
+
     /**
      * Sets the queries for the four side panels' textures.
      * @param links - Array with four image links.
@@ -244,6 +246,15 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * sets if no texture shall be used. If true the terrain uses the default or specified color only.
+     * @param value
+     */
+    this.setColorOnly = function(value)
+    {
+        this.colorOnly = value;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.
@@ -253,6 +264,13 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     {
         this.receivedDataCount++;
         this.reportProgress();
+
+        // No texture whished?
+        if( this.colorOnly && data !== null && data !== undefined)
+        {
+            data.validateTexture = false; // disable check for texture
+            data.texture = undefined;
+        }
 
         if( data === null || !data.validate() )
         {
@@ -610,5 +628,23 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {boolean}
          */
         this.sidePanels = false;
+
+        /**
+         * Flag if no texture shall be used. If true the terrain uses the default or specified color only.
+         * @default false
+         * @type {boolean}
+         */
+        this.colorOnly = false;
+
+        /**
+         * Terrain of the module.
+         */
+        this.terrain = null;
+
+        /**
+         * Index aka. ID of the module.#
+         * @type {Number}
+         */
+        this.index = -1;
     };
 };

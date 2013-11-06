@@ -14,10 +14,27 @@ EarthServerGenericClient.AbstractTerrain = function()
     var AppearanceDefined = [];
 
     /**
+     * Clears the list of already defined appearances.
+     */
+    this.clearDefinedAppearances = function()
+    {
+        AppearanceDefined = [];
+    };
+
+    /**
      * Stores the IDs of the materials to change the transparency.
      * @type {Array}
      */
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+
+    /**
+     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
+     * E.g. for ProgressiveTerrain.
+     */
+    this.clearMaterials = function()
+    {
+        this.materialNodes = [];
+    };
 
     /**
      * Creates a html canvas element out of the texture and removes the alpha values.
@@ -92,8 +109,6 @@ EarthServerGenericClient.AbstractTerrain = function()
             }
 
         }
-        else
-        {   console.log("EarthServerGenericClient.AbstractTerrain: Could not create Canvas, response Texture is empty."); }
 
         return canvasTexture;
     };
@@ -236,6 +251,8 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.createSidePanels = function(domElement,spacing)
     {
+        if(this.data.texture === undefined) return;
+
         var modelScale = domElement.getAttribute("scale");
         modelScale = modelScale.split(" ");
         modelScale = modelScale[1];
@@ -335,7 +352,6 @@ EarthServerGenericClient.AbstractTerrain = function()
                     //If the requested position is out of bounce return the min value of the hm.
                     if(i > this.data.height || j > this.data.width || info.xpos+j < 0 || info.ypos+i <0)
                     {
-                        //console.log("HM acces: ", i,j,this.data.width,this.data.height);
                         heightmapPart[i][j] = this.data.minHMvalue;
                     }
                     else
@@ -388,6 +404,12 @@ EarthServerGenericClient.AbstractTerrain = function()
         }
     };
 
+    /**
+     * Sets the number of drawn elements of the terrain.
+     * The materials of the elements render flag are altered.
+     * @param numberElements - Number of elements to be drawn.
+     * @param focusElement - Element which has to be drawn, all other elements around this are next.
+     */
     this.setDrawnElements = function(numberElements,focusElement)
     {
         var addOne =0;
@@ -424,16 +446,6 @@ EarthServerGenericClient.AbstractTerrain = function()
     };
 
     /**
-     * Deletes all saved material IDs. Use this function if you remove old material from the dom.
-     * E.g. for ProgressiveTerrain.
-     */
-    this.clearMaterials = function()
-    {
-       this.materialNodes = [];
-    };
-
-
-    /**
      * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
      * It returns the amount of appearances specified. For every name only one appearance exits, every other uses it.
      * @param AppearanceName - Name of the appearance. If this name is not set in the array, it will be registered.
@@ -468,18 +480,21 @@ EarthServerGenericClient.AbstractTerrain = function()
                     appearance.setAttribute("id", AppearanceDefined[AppearanceName]);
                     appearance.setAttribute("def", AppearanceDefined[AppearanceName]);
 
-                    var texture = document.createElement('Texture');
-                    texture.setAttribute('hideChildren', 'true');
-                    texture.setAttribute("repeatS", 'true');
-                    texture.setAttribute("repeatT", 'true');
-                    texture.setAttribute("scale","false");
+                    // maybe only color
+                    if( canvasTexture != undefined)
+                    {
+                        var texture = document.createElement('Texture');
+                        texture.setAttribute('hideChildren', 'true');
+                        texture.setAttribute("repeatS", 'true');
+                        texture.setAttribute("repeatT", 'true');
+                        texture.setAttribute("scale","false");
+                        texture.appendChild(canvasTexture);
 
-                    texture.appendChild(canvasTexture);
-
-                    var imageTransform = document.createElement('TextureTransform');
-                    imageTransform.setAttribute("scale", "1,-1");
-                    if(upright)
-                    {   imageTransform.setAttribute("rotation", "-1.57");   }
+                        var imageTransform = document.createElement('TextureTransform');
+                        imageTransform.setAttribute("scale", "1,-1");
+                        if(upright)
+                        {   imageTransform.setAttribute("rotation", "-1.57");   }
+                    }
 
                     var material = document.createElement('material');
                     material.setAttribute("specularColor", specular);
@@ -487,11 +502,15 @@ EarthServerGenericClient.AbstractTerrain = function()
                     material.setAttribute('transparency', transparency);
                     material.setAttribute('ID',AppearanceName+"_mat");
                     //Save this material ID to change transparency during runtime
-                   this.materialNodes.push( AppearanceName+"_mat");
+                    this.materialNodes.push( AppearanceName+"_mat");
 
                     appearance.appendChild(material);
-                    appearance.appendChild(imageTransform);
-                    appearance.appendChild(texture);
+                    // only add if created
+                    if( canvasTexture !== undefined)
+                    {
+                        appearance.appendChild(imageTransform);
+                        appearance.appendChild(texture);
+                    }
 
                     texture = null;
                     imageTransform = null;
@@ -502,7 +521,7 @@ EarthServerGenericClient.AbstractTerrain = function()
             return appearances;
         }
         catch (error) {
-            console.log('AbstractTerrain::getAppearances(): ' + error);
+            console.log('EarthServerGenericClient::AbstractTerrain::getAppearances(): ' + error);
             return null;
         }
     };
@@ -520,7 +539,6 @@ EarthServerGenericClient.AbstractTerrain = function()
      */
     this.getHeightmapHeight = function()
     {   return this.data.height; };
-
 
     /**
      * Returns the elevation value of the height map at a specific point in the 3D scene.

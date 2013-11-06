@@ -1,6 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
- * @version 0.6
+ * @version 0.7 alpha
  */
 var EarthServerGenericClient =  {};
 
@@ -86,8 +86,8 @@ EarthServerGenericClient.deleteAllChildsFromDomElement = function(domElementID)
 EarthServerGenericClient.Light = function(domElement,index,position,radius,color)
 {
     var ambientIntensity = "0.5";
-    var intensity        = "0.5";
-    var location         = "0 0 0";
+    var intensity        = "0.8";
+    var location         = "0 1000 0";
 
     if(position === undefined){  location = position;    }
     if(radius === undefined ) {  radius = "8000";    }
@@ -124,6 +124,7 @@ EarthServerGenericClient.SceneManager = function()
     var baseLength = [];            // Every Model has it's base length on the Z-Axis. Needed to change and restore the length.
     var progressCallback = undefined;// Callback function for the progress update.
     var annotationLayers = [];      // Array of AnnotationsLayer to display annotations in the cube
+    var viewpoints = [];            // Array of user created viewpoints
     var cameraDefs = [];            // Name and ID of the specified cameras. Format: "NAME:ID"
     var lights = [];                // Array of (Point)lights
     var lightInScene = false;       // Flag if a light should be added to the scene
@@ -131,10 +132,12 @@ EarthServerGenericClient.SceneManager = function()
     var lastFrameInsert = Number.MAX_VALUE; // Frame counter since the last insertion of data into the dom
     var framesBetweenDomInsertion = 1; // Number of frames between two insertions into the dom.
     var oculusRift = false;         // Flag if the scene is rendered for the oculus rift.
-    var InstantIOPort = undefined; // Port to Instant IO to connect the oculus rift.
+    var InstantIOPort = undefined;  // Port to Instant IO to connect the oculus rift.
     var drawCube = true;            // Flag if the cube should be drawn.
     var defaultSpecularColor = "0.25,0.25,0.25"; // default specular color for materials
     var defaultDiffuseColor = "1 1 1"; // default diffuse color for materials
+    var keyMapping = {};            // Stores the keys for certain events
+    var globalElevationValue = 10;  // Stores the last used global elevation value
 
     // Default cube sizes
     var cubeSizeX = 1000;
@@ -170,6 +173,106 @@ EarthServerGenericClient.SceneManager = function()
     var axisLabels = null;
 
     /**
+     * Initiates the default key mapping.
+     */
+    this.initKeyMapping = function()
+    {
+        // Go to viewpoint x
+        keyMapping.vp1 = 49; // key: 1
+        keyMapping.vp2 = 50; // key: 2
+        keyMapping.vp3 = 51; // key: 3
+        keyMapping.vp3 = 51; // key: 3
+        keyMapping.vp4 = 52; // key: 4
+        keyMapping.vp5 = 53; // key: 5
+        keyMapping.vp6 = 54; // key: 6
+
+        // modify light
+        keyMapping.lightDown = 57; // key: 9
+        keyMapping.lightUp   = 48; // key: 0
+
+        // global elevation
+        keyMapping.globalElevUp   = 105; // key: i
+        keyMapping.globalElevDown = 107; // key: k
+
+        // prompts the current viewpoint
+        keyMapping.cvp = 66; // key: B
+    };
+
+    /**
+     * Sets a custom short cut key. Events can be:
+     * "ViewPointX": While x is a number between 1-6. Goes to viewpoint x.
+     * "ShowViewPoint": Prompts the current viewpoint.
+     * "LightDown"/"LightUp": changes the intensity of the light source.
+     * "ElevationDown"/ElevationUp": changes the global elevation.
+     * @param event - The event.
+     * @param key - The key as char.
+     */
+    this.setShortCut = function(event,key)
+    {
+        // get the char value
+        var value = String(key).charCodeAt(0);
+
+        if(event.toLowerCase() === "viewpoint1") keyMapping.vp1 = value;
+        if(event.toLowerCase() === "viewpoint2") keyMapping.vp2 = value;
+        if(event.toLowerCase() === "viewpoint3") keyMapping.vp3 = value;
+        if(event.toLowerCase() === "viewpoint4") keyMapping.vp4 = value;
+        if(event.toLowerCase() === "viewpoint5") keyMapping.vp5 = value;
+        if(event.toLowerCase() === "viewpoint6") keyMapping.vp6 = value;
+
+        if(event.toLowerCase() === "showviewpoint") keyMapping.cvp = value;
+        if(event.toLowerCase() === "elevationdown") keyMapping.globalElevDown = value;
+        if(event.toLowerCase() === "elevationup")   keyMapping.globalElevUp = value;
+        if(event.toLowerCase() === "lightup")       keyMapping.lightUp = value;
+        if(event.toLowerCase() === "lightdwon")     keyMapping.lightDown = value;
+    };
+
+    /**
+     * Handles the pressed key.
+     */
+    this.handleKeys = function (e)
+    {
+        var key = e.charCode;
+
+        switch(key)
+        {
+            case keyMapping.vp1: this.setViewByCameraDefIndex(0);  break;
+            case keyMapping.vp2: this.setViewByCameraDefIndex(1);  break;
+            case keyMapping.vp3: this.setViewByCameraDefIndex(2);  break;
+            case keyMapping.vp4: this.setViewByCameraDefIndex(3);  break;
+            case keyMapping.vp5: this.setViewByCameraDefIndex(4);  break;
+            case keyMapping.vp6: this.setViewByCameraDefIndex(5);  break;
+
+            case keyMapping.cvp:        this.showCurrentViewPoint(); break;
+            case keyMapping.lightUp:    this.increaseLightIntensity(0); break;
+            case keyMapping.lightDown:  this.decreaseLightIntensity(0); break;
+            case keyMapping.globalElevUp: this.increaseGlobalElevation(); break;
+            case keyMapping.globalElevDown: this.decreaseGlobalElevation(); break;
+            //default: console.log("No key defined for char: " + key);
+        }
+    };
+
+    /**
+     * Shows an alert with the current viewpoint.
+     */
+    this.showCurrentViewPoint = function()
+    {
+        var e = document.getElementById('x3d');
+        var mat_view = e.runtime.viewMatrix().inverse();
+
+        var rotation = new x3dom.fields.Quaternion(0, 0, 1, 0);
+        rotation.setValue(mat_view);
+        var rot = rotation.toAxisAngle();
+        var translation = mat_view.e3();
+
+        var text = '"' + translation.x.toFixed(5) + ' '
+            + translation.y.toFixed(5) + ' ' + translation.z.toFixed(5) + '", ' +
+            '"' + rot[0].x.toFixed(5) + ' ' + rot[0].y.toFixed(5) + ' '
+            + rot[0].z.toFixed(5) + ' ' + rot[1].toFixed(5)+'"';
+
+        window.prompt ("Copy to clipboard: Ctrl+C, Enter", text);
+    };
+
+    /**
      * Sets if the x3dom oculus rift mode shall be enabled.
      * @param value - True/False
      * @param port - Instant IO Port
@@ -181,13 +284,30 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
-     * Sets the default specular color for all modules.
-     * The color set directly for a module overwrite this color.
-     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     * Adds custom viewpoints to the scene and UI.
+     * Viewpoints can be put out to the debug console by pressing 'd' and 'v'.
+     * @param name - Name of the Viewpoint for the UI.
+     * @param Position - Position of the viewpoint.
+     * @param Orientation - Orientation of the viewpoint.
      */
-    this.setDefaultSpecularColor = function(color)
+    this.addCustomViewPoint = function(name,Position,Orientation)
     {
-        defaultSpecularColor = color;
+        // check if viewpoint with this name already exist
+        for(var i=0; i<viewpoints.length;i++)
+        {
+            if( viewpoints[i].name === name)
+            {
+                console.log("EarthServerClient::MainScene::addCustomViewPoint: Viewpoint with name" + name + " already exist.");
+                return;
+            }
+        }
+
+        var vp = {};
+        vp.name = name;
+        vp.position = Position;
+        vp.orientation = Orientation;
+
+        viewpoints.push( vp );
     };
 
     /**
@@ -236,6 +356,17 @@ EarthServerGenericClient.SceneManager = function()
         if(x3d)
             x3d.appendChild(root);
     };
+
+    /**
+     * Sets the default specular color for all modules.
+     * The color set directly for a module overwrite this color.
+     * @param color - Default Color in rgb e.g.: 0.25 0.25 0.25
+     */
+    this.setDefaultSpecularColor = function(color)
+    {
+        defaultSpecularColor = color;
+    };
+
 
     /**
      * Return the default specular color.
@@ -771,13 +902,43 @@ EarthServerGenericClient.SceneManager = function()
         var cam = document.getElementById(camID);
         if(cam)
         {
-            //If the user changes the camera, then moves around the camera has to be set to false to be able to bin again
-            cam.setAttribute('set_bind','false');
-            cam.setAttribute('set_bind','true');
+            if( oculusRift ) // there is always one viewpoint in oculus mode, change it
+            {
+                var oculusVP = document.getElementById("EarthServerClient_VR_vpp");
+                var pos = cam.getAttribute("position");
+                oculusVP.setAttribute("position",pos);
+            }
+            else
+            {
+                //If the user changes the camera, then moves around the camera has to be set to false to be able to bin again
+                cam.setAttribute('set_bind','false');
+                cam.setAttribute('set_bind','true');
+            }
         }
         else
             console.log("EarthServerGenericClient::SceneManager::SetView can't find Camera with ID ", camID);
     };
+
+    /**
+     * Sets the view of the X3Dom window to the predefined camera.
+     * @param cameraDefIndex - Index of the camera as stored in cameraDef.
+     */
+    this.setViewByCameraDefIndex =function(cameraDefIndex)
+    {
+        if(cameraDefIndex >= cameraDefs.length)
+        {   console.log("EarthServerGenericClient::SceneManager::SetViewByCameraDefIndex has no camera with index ", cameraDefIndex);   }
+        else
+        {   var cameraDef = cameraDefs[ cameraDefIndex];    }
+
+        var camName = cameraDef.split(":");
+        if(camName.length <2 )
+        {   console.log("EarthServerGenericClient::SceneManager::SetViewByCameraDefIndex can't find Camera with DEF ", cameraDef);   }
+        else
+        {   var camID = camName[1];}
+
+        this.setView(camID);
+    };
+
 
     /**
      * Returns the number of defined cameras
@@ -861,40 +1022,62 @@ EarthServerGenericClient.SceneManager = function()
         }
 
         // Cameras
-        if( !oculusRift ) // the oculus handles the navigation
-        {
-            var cam1 = document.createElement('Viewpoint');
-            cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
-            cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
-            cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
+       // if no custom viewpoints are set create three default ones
+       if( viewpoints.length ===0 )
+       {
+           var cam1 = document.createElement('Viewpoint');
+           cam1.setAttribute("id","EarthServerGenericClient_Cam_Front");
+           cam1.setAttribute("position", "0 0 " + cubeSizeZ*2);
+           cam1.setAttribute("description","EarthServerGenericClient_Cam_Front");
+           cameraDefs.push("Front:EarthServerGenericClient_Cam_Front");
 
-            var cam2 = document.createElement('Viewpoint');
-            cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
-            cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
-            cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
-            cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
+           var cam2 = document.createElement('Viewpoint');
+           cam2.setAttribute("id","EarthServerGenericClient_Cam_Top");
+           cam2.setAttribute("position", "0 " + cubeSizeY*2.5 + " 0");
+           cam2.setAttribute("orientation", "1.0 0.0 0.0 -1.55");
+           cam2.setAttribute("description","EarthServerGenericClient_Cam_Top");
+           cameraDefs.push("Top:EarthServerGenericClient_Cam_Top");
 
-            var cam3 = document.createElement('Viewpoint');
-            cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
-            cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
-            cam3.setAttribute("orientation", "0 1 0 -1.55");
-            cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
+           var cam3 = document.createElement('Viewpoint');
+           cam3.setAttribute("id","EarthServerGenericClient_Cam_Side");
+           cam3.setAttribute("position", "" + -cubeSizeX*2+ " 0 0");
+           cam3.setAttribute("orientation", "0 1 0 -1.55");
+           cam3.setAttribute("description","EarthServerGenericClient_Cam_Side");
+           cameraDefs.push("Side:EarthServerGenericClient_Cam_Side");
 
-            x3d.appendChild(cam1);
-            x3d.appendChild(cam2);
-            x3d.appendChild(cam3);
+           x3d.appendChild(cam1);
+           x3d.appendChild(cam2);
+           x3d.appendChild(cam3);
 
-            cam1 = null;
-            cam2 = null;
-            cam3 = null;
-            //this.setView('EarthServerGenericClient_Cam_Front');
-        }
+           cam1 = null;
+           cam2 = null;
+           cam3 = null;
+       }
+
+       // insert custom viewpoints
+       for(var o=0;o<viewpoints.length;o++)
+       {
+           var customCam = document.createElement('Viewpoint');
+           customCam.setAttribute("id","EarthServerGenericClient_Cam_"+viewpoints[o].name);
+           customCam.setAttribute("description","EarthServerGenericClient_Cam_"+viewpoints[o].name);
+           customCam.setAttribute("position", viewpoints[o].position);
+           // check if orientation is set, else use default
+           if( viewpoints[o].orientation !== undefined && viewpoints[o].orientation !== null )
+           {   customCam.setAttribute("orientation",viewpoints[o].orientation );   }
+
+           cameraDefs.push(""+viewpoints[o].name+":EarthServerGenericClient_Cam_"+viewpoints[o].name);
+
+           x3d.appendChild(customCam);
+           customCam = null;
+       }
+
 
         // Cube
         if( drawCube)
         {
             var shape = document.createElement('Shape');
             var appearance = document.createElement('Appearance');
+            //appearance.setAttribute("sorttype","opaque");
             var material = document.createElement('Material');
             material.setAttribute("emissiveColor","1 1 0");
 
@@ -943,13 +1126,6 @@ EarthServerGenericClient.SceneManager = function()
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "trans");
 
-        // Append the child into the scene
-        if( oculusRift ) // oculus mode needs the root node to NOT rendered
-        {
-            var root = document.getElementById("root");
-            root.setAttribute("render","false");
-        }
-
         scene.appendChild(trans);
         this.trans = trans;
         trans = null;
@@ -983,7 +1159,8 @@ EarthServerGenericClient.SceneManager = function()
         viewpoint.setAttribute("orientation",'0 1 0 -2.99229');
         viewpoint.setAttribute("position",'0 120 0');// TODO: AUTOGENERATE
         viewpoint.setAttribute("zNear","0.1");
-        viewpoint.setAttribute("zFar","5000");
+        viewpoint.setAttribute("zFar","4000");
+        //viewpoint.setAttribute("fieldOfView","1.74");
         scene.appendChild(viewpoint);
 
         var background = document.createElement("background");
@@ -1078,7 +1255,7 @@ EarthServerGenericClient.SceneManager = function()
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-        //shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
+       // shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
         shaderPartVertex.innerHTML = vsl;
         cShader.appendChild(shaderPartVertex);
 
@@ -1220,6 +1397,11 @@ EarthServerGenericClient.SceneManager = function()
         var element = document.getElementById("x3d");
         element.runtime.enterFrame = EarthServerGenericClient.MainScene.nextFrame;
 
+        // add event listener for keyboard
+        document.addEventListener('keypress', function (e) {
+            EarthServerGenericClient.MainScene.handleKeys(e);
+        }, false);
+
         if( !oculusRift ) // oculus mode overwrites exit frame itself
         {   element.runtime.exitFrame  = EarthServerGenericClient.MainScene.exitFrame;  }
         else // oculus mode + this.exitframe
@@ -1258,6 +1440,13 @@ EarthServerGenericClient.SceneManager = function()
             };
 
             this.start_log("ws://localhost:" + InstantIOPort + "/InstantIO/element/ovr/Orientation/data.string", "image");
+        }
+
+        // Append the child into the scene
+        if( oculusRift ) // oculus mode needs the root node to NOT rendered
+        {
+            var root = document.getElementById("root");
+            root.setAttribute("render","false");
         }
 
         for(var i=0; i< models.length; i++)
@@ -1367,6 +1556,40 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Increases the intensity value of the light with the given index by a constant value.
+     * @param lightIndex
+     */
+    this.increaseLightIntensity = function(lightIndex)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            var currentValue = light.getAttribute("intensity");
+            var newValue = parseFloat(currentValue) + 0.1;
+            light.setAttribute("intensity",String(newValue));
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
+    };
+
+    /**
+     * Decreases the intensity value of the light with the given index by a constant value.
+     * @param lightIndex
+     */
+    this.decreaseLightIntensity = function(lightIndex)
+    {
+        var light = document.getElementById("EarthServerGenericClient_Light_"+lightIndex);
+        if(light)
+        {
+            var currentValue = light.getAttribute("intensity");
+            var newValue = parseFloat(currentValue) - 0.1;
+            light.setAttribute("intensity",String(newValue));
+        }
+        else
+        {   console.log("EarthServerGenericClient::SceneManager: Can't find light with index " + lightIndex +".");}
+    };
+
+    /**
      * Update Offset changes the position selected SceneModel on the x-,y- or z-Axis.
      * @param modelIndex - Index of the model that should be altered
      * @param which - Which Axis will be changed (0:X 1:Y 2:Z)
@@ -1432,9 +1655,32 @@ EarthServerGenericClient.SceneManager = function()
      */
     this.updateElevationOfAllModels = function(value)
     {
+        globalElevationValue = value;
+
         for(var i=0; i< models.length; i++)
         {
             this.updateElevation(i,value);
+        }
+    };
+
+    /**
+     * Increases the global elevation by a constant factor.
+     */
+    this.increaseGlobalElevation = function()
+    {
+        globalElevationValue++;
+        this.updateElevationOfAllModels(globalElevationValue);
+    };
+
+    /**
+     * Decreases the global elevation by a constant factor.
+     */
+    this.decreaseGlobalElevation = function()
+    {
+        if(globalElevationValue > 1) // don't let global elevation value get negative or 0
+        {
+            globalElevationValue--;
+            this.updateElevationOfAllModels(globalElevationValue);
         }
     };
 
@@ -1449,8 +1695,8 @@ EarthServerGenericClient.SceneManager = function()
 
         if( trans )
         {
-            var oldTrans = trans.getAttribute("scale");
-            oldTrans = oldTrans.split(" ");
+            var transValue = trans.getAttribute("scale");
+            var oldTrans = transValue.split(" ");
 
             if( baseElevation[modelIndex] === undefined)
             {
@@ -1590,6 +1836,8 @@ EarthServerGenericClient.SceneManager = function()
         EarthServerGenericClient.createBasicUI(domElementID);
     };
 
+    // init keymapping
+    this.initKeyMapping();
 };
 
 // Create main scene
@@ -2230,6 +2478,17 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          * @type {boolean}
          */
         this.colorOnly = false;
+
+        /**
+         * Terrain of the module.
+         */
+        this.terrain = null;
+
+        /**
+         * Index aka. ID of the module.#
+         * @type {Number}
+         */
+        this.index = -1;
     };
 };/**
  * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
@@ -3590,7 +3849,7 @@ EarthServerGenericClient.ServerResponseData = function () {
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
-    this.validateTexture   = false;  // Flag if the texture should be checked in validate().
+    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -5687,7 +5946,6 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
         EarthServerGenericClient.MainScene.setSpecificElement(i,div);
 
         div=null;
-        p=null;
     }
 
     //Create Div for the Cameras

@@ -21,6 +21,20 @@
         // background of the render window
         EarthServerGenericClient.MainScene.setBackground("0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57","0.8 0.8 0.95 0.4 0.5 0.85 0.3 0.5 0.85 0.31 0.52 0.85","0.9 1.5 1.57");
 
+        // custom viewpoints:
+        //"Name","Position","orientation"
+        EarthServerGenericClient.MainScene.addCustomViewPoint("VP1","2055.40031 1493.57514 1595.16861","-0.50542 0.84759 0.16166 1.02493"  );
+        EarthServerGenericClient.MainScene.addCustomViewPoint("VP2","-1591.06055 1190.31804 -2247.59188","0.00992 0.97582 0.21834 3.72105");
+
+        /* Add custom key mapping: "command","key"
+         * "ViewPointX": While x is a number between 1-6. Goes to viewpoint x.
+         * "ShowViewPoint": Prompts the current viewpoint.
+         * "LightDown"/"LightUp": changes the intensity of the light source.
+         * "ElevationDown"/ElevationUp": changes the global elevation.
+         */
+        EarthServerGenericClient.MainScene.setShortCut("Viewpoint1","1"); // change to viewpoint 1 with "1"
+        EarthServerGenericClient.MainScene.setShortCut("ShowViewPoint","b"); // gives an info window with the current viewpoint
+
         // Onclick function example
         EarthServerGenericClient.MainScene.OnClickFunction = function(modelIndex,hitPoint)
         {
