@@ -1,6 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
- * @version 0.7 alpha
+ * @version 0.7 alpha 25.11.1013
  */
 var EarthServerGenericClient =  {};
 
@@ -41,6 +41,17 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
 {
     return str.split(find).join(replace);
+};
+
+/**
+ * @ignore Helper function to check if an input is numeric.
+ * @param input
+ * @returns {boolean}
+ * @constructor
+ */
+EarthServerGenericClient.IsNumeric = function(input)
+{
+    return (input - 0) == input && (input+'').replace(/^\s+|\s+$/g, "").length > 0;
 };
 
 /**
@@ -997,6 +1008,12 @@ EarthServerGenericClient.SceneManager = function()
             this.sceneID = sceneID;
         }
 
+        // Navigation <navigationInfo id="navi" type='"TURNTABLE" "ANY"' typeParams="-0.4, 60, 0.5, 1.55"></navigationInfo>
+        var navigation = document.createElement("navigationInfo");
+        navigation.setAttribute("type",'"TURNTABLE" "ANY"');
+        navigation.setAttribute("typeParams","-0.4, 60, 0.5, 2.55");
+        scene.appendChild(navigation);
+
         // Light
         if( lightInScene)
         {
@@ -1148,7 +1165,7 @@ EarthServerGenericClient.SceneManager = function()
         }
 
         var navigation = document.createElement("navigationInfo");
-        navigation.setAttribute("headlight","false");
+        //navigation.setAttribute("headlight","false");
         navigation.setAttribute("type",'"EXAMINE" "WALK"');
         scene.appendChild(navigation);
 
@@ -1254,13 +1271,11 @@ EarthServerGenericClient.SceneManager = function()
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-       // shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
         shaderPartVertex.innerHTML = vsl;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");
         shaderPartFragment.setAttribute("type","FRAGMENT");
-        //shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
         shaderPartFragment.innerHTML = vsf;
         shaderPartFragment.setAttribute("DEF","frag");
         cShader.appendChild(shaderPartFragment);
@@ -1642,10 +1657,15 @@ EarthServerGenericClient.SceneManager = function()
         {   console.log("EarthServerGenericClient::SceneManager: Can't find transformation for model with index " + modelIndex);}
     };
 
-    this.updateMaxShownElements = function(moduleNumber,value)
+    /**
+     * Updates the model's number of shown elements/layers.
+     * @param moduleIndex - Index of the model
+     * @param value - Number of elements
+     */
+    this.updateMaxShownElements = function(moduleIndex,value)
     {
-        if( moduleNumber <models.length && moduleNumber >=0)
-            models[moduleNumber].updateMaxShownElements(value);
+        if( moduleIndex <models.length && moduleIndex >=0)
+            models[moduleIndex].updateMaxShownElements(value);
     };
 
     /**
@@ -1761,6 +1781,18 @@ EarthServerGenericClient.SceneManager = function()
             trans.setAttribute("scale",oldTrans[0] + " " + oldTrans[1] + " " + oldTrans[2]);
             models[modelIndex].elevationUpdateBinding();
         }
+    };
+
+    /**
+     * Updates the model's size for rendering points.
+     * @param modelIndex - Index of the model that should be altered
+     * @param value - New point size
+     */
+    this.updatePointSize = function(modelIndex,value)
+    {
+        if( modelIndex <models.length && modelIndex >=0)
+            models[modelIndex].updatePointSize(value);
+
     };
 
     /**

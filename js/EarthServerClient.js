@@ -1,6 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
- * @version 0.7 alpha
+ * @version 0.7 alpha 25.11.1013
  */
 var EarthServerGenericClient =  {};
 
@@ -41,6 +41,17 @@ EarthServerGenericClient.arrayRemove = function(array, from, to) {
 EarthServerGenericClient.replaceAllFindsInString = function (str,find,replace)
 {
     return str.split(find).join(replace);
+};
+
+/**
+ * @ignore Helper function to check if an input is numeric.
+ * @param input
+ * @returns {boolean}
+ * @constructor
+ */
+EarthServerGenericClient.IsNumeric = function(input)
+{
+    return (input - 0) == input && (input+'').replace(/^\s+|\s+$/g, "").length > 0;
 };
 
 /**
@@ -676,7 +687,6 @@ EarthServerGenericClient.SceneManager = function()
         {
             var val = [];
             val.push("MainScene::getAnnotationLayerTexts: No Layer with name " + layerName);
-            console.log(val);
             return val;
         }
     };
@@ -998,6 +1008,12 @@ EarthServerGenericClient.SceneManager = function()
             this.sceneID = sceneID;
         }
 
+        // Navigation <navigationInfo id="navi" type='"TURNTABLE" "ANY"' typeParams="-0.4, 60, 0.5, 1.55"></navigationInfo>
+        var navigation = document.createElement("navigationInfo");
+        navigation.setAttribute("type",'"TURNTABLE" "ANY"');
+        navigation.setAttribute("typeParams","-0.4, 60, 0.5, 2.55");
+        scene.appendChild(navigation);
+
         // Light
         if( lightInScene)
         {
@@ -1149,7 +1165,7 @@ EarthServerGenericClient.SceneManager = function()
         }
 
         var navigation = document.createElement("navigationInfo");
-        navigation.setAttribute("headlight","false");
+        //navigation.setAttribute("headlight","false");
         navigation.setAttribute("type",'"EXAMINE" "WALK"');
         scene.appendChild(navigation);
 
@@ -1255,13 +1271,11 @@ EarthServerGenericClient.SceneManager = function()
 
         var shaderPartVertex = document.createElement("shaderPart");
         shaderPartVertex.setAttribute("type","VERTEX");
-       // shaderPartVertex.setAttribute("url","shader/oculusVertexShaderLeft.glsl");
         shaderPartVertex.innerHTML = vsl;
         cShader.appendChild(shaderPartVertex);
 
         var shaderPartFragment = document.createElement("shaderPart");
         shaderPartFragment.setAttribute("type","FRAGMENT");
-        //shaderPartFragment.setAttribute("url","shader/oculusFragmentShader.glsl");
         shaderPartFragment.innerHTML = vsf;
         shaderPartFragment.setAttribute("DEF","frag");
         cShader.appendChild(shaderPartFragment);
@@ -1643,10 +1657,15 @@ EarthServerGenericClient.SceneManager = function()
         {   console.log("EarthServerGenericClient::SceneManager: Can't find transformation for model with index " + modelIndex);}
     };
 
-    this.updateMaxShownElements = function(moduleNumber,value)
+    /**
+     * Updates the model's number of shown elements/layers.
+     * @param moduleIndex - Index of the model
+     * @param value - Number of elements
+     */
+    this.updateMaxShownElements = function(moduleIndex,value)
     {
-        if( moduleNumber <models.length && moduleNumber >=0)
-            models[moduleNumber].updateMaxShownElements(value);
+        if( moduleIndex <models.length && moduleIndex >=0)
+            models[moduleIndex].updateMaxShownElements(value);
     };
 
     /**
@@ -1765,6 +1784,18 @@ EarthServerGenericClient.SceneManager = function()
     };
 
     /**
+     * Updates the model's size for rendering points.
+     * @param modelIndex - Index of the model that should be altered
+     * @param value - New point size
+     */
+    this.updatePointSize = function(modelIndex,value)
+    {
+        if( modelIndex <models.length && modelIndex >=0)
+            models[modelIndex].updatePointSize(value);
+
+    };
+
+    /**
      * Returns the elevation value of a scene model at a specific point in the 3D scene.
      * The point is checked in the current state of the scene with all transformations.
      * @param modelIndex - Index of the model.
@@ -1871,12 +1902,16 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param miny - Minimum/Lower Longitude
      * @param maxx - Maximum/Upper Latitude
      * @param maxy - Maximum/Upper Longitude
+     * @param minh - Minimum/Lower Height
+     * @param maxh - Maximum/Upper Height
      */
-    this.setAreaOfInterest = function(minx,miny,maxx,maxy){
+    this.setAreaOfInterest = function(minx,miny,maxx,maxy,minh,maxh){
         this.minx = minx;
         this.miny = miny;
         this.maxx = maxx;
         this.maxy = maxy;
+        this.minh = minh;
+        this.maxh = maxh;
     };
 
     /**
@@ -2317,25 +2352,31 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param xRes - Size of the received data on the x-axis (e.g. the requested DEM )
      * @param yRes - Size of the received data on the y-axis
      * @param zRes - Size of the received data on the z-axis
-     * @param minvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minHeightvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minXvalue - Minimum Value along the x-axis
+     * @param minZvalue - Minimum Value along the z-axis
      * @return {Element}
      */
-    this.createTransform = function(xRes,yRes,zRes,minvalue){
+    this.createTransform = function(xRes,yRes,zRes,minHeightvalue,minXvalue,minZvalue){
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
         trans.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
 
         this.YResolution = yRes;
-        this.minValue = minvalue;
+        this.minValue = minHeightvalue;
 
-        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(xRes)-1);
+        if(zRes<1) zRes = 2;
+
+       // var scaleX = (this.cubeSizeX*this.xScale)/(Math.ceil(xRes)-1);
+        var scaleX = (this.cubeSizeX*this.xScale)/(xRes-1);
         var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
-        var scaleZ = (this.cubeSizeZ*this.zScale)/(parseInt(zRes)-1);
+        //var scaleZ = (this.cubeSizeZ*this.zScale)/(Math.ceil(zRes)-1);
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(zRes-1);
         trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
-        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
-        var yoff = (this.cubeSizeY * this.yOffset) - (minvalue*scaleY) - (this.cubeSizeY/2.0);
-        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
+        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0) - (scaleX * minXvalue);
+        var yoff = (this.cubeSizeY * this.yOffset) - (minHeightvalue*scaleY) - (this.cubeSizeY/2.0);
+        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0) - (scaleZ * minZvalue);
         trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
 
         return trans;
@@ -2839,6 +2880,12 @@ EarthServerGenericClient.AbstractTerrain = function()
      * @type {Array}
      */
     var AppearanceDefined = [];
+
+    /**
+     * @ignore Empty default stub for nexFrame() function.
+     */
+    this.nextFrame = function()
+    {};
 
     /**
      * Clears the list of already defined appearances.
@@ -3762,11 +3809,18 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
 };
 EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
 
-
+/**
+ * Terrain to display multiple layers.
+ * @param root - Dom Element to append the terrain to.
+ * @param dataArray - Received Data array of the Server requests.
+ * @param index - Index of the model that uses this terrain.
+ * @param noDataValue - No Data Value
+ * @constructor
+ */
 EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataValue)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
-    this.data = dataArray; // Empty data but Abstract Terrain needs it
+    this.data = dataArray;
     this.index = index;
     this.noData = noDataValue;
     this.appearances = [];  // appearances of the layers
@@ -3822,7 +3876,170 @@ EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataVal
         this.setDrawnElements(value,this.focus);
     };
 };
-EarthServerGenericClient.VolumeTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);//Namespace
+EarthServerGenericClient.VolumeTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
+/**
+ * Terrain to display multiple layers.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @param pointSize - Size of the points.
+ * @constructor
+ */
+EarthServerGenericClient.PointCloudTerrain = function(root,data,index,pointSize)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.appearance = null;  // appearance
+    this.data = data;
+    this.index = index;
+    this.pointSize = parseFloat(pointSize);
+    this.transparencyFieldID = "EarthServerGenericClient_model_"+index+"_transparencyField";
+    this.pointSizeFieldID    = "EarthServerGenericClient_model_"+index+"_pointSizeField";
+
+    this.createTerrain = function()
+    {
+        // create material
+        this.appearance = document.createElement("Appearance");
+
+        // create shape,PointSet, etc.
+        var shape = document.createElement("Shape");
+        var pointSet = document.createElement("PointSet");
+        pointSet.setAttribute("solid","false");
+        var coords = document.createElement("coordinate");
+        coords.setAttribute("point", data.pointCloudCoordinates);
+
+        pointSet.appendChild(coords);
+        this.appendShader( this.appearance);
+        shape.appendChild(this.appearance);
+        shape.appendChild(pointSet);
+        root.appendChild(shape);
+
+        coords = null;
+        pointSet = null;
+        shape = null;
+        this.appearance = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    this.appendShader = function(domElement)
+    {
+        var cShader = document.createElement("composedShader");
+        var field1  = document.createElement("field");
+        field1.setAttribute("name","matCol");
+        field1.setAttribute("type","SFVec3f");
+        field1.setAttribute("value",data.diffuseColor);
+        cShader.appendChild(field1);
+        var field2  = document.createElement("field");
+        field2.setAttribute("id", this.transparencyFieldID);
+        field2.setAttribute("name","transparency");
+        field2.setAttribute("type","SFFloat");
+        field2.setAttribute("value",String(1.0 - data.transparency) );
+        cShader.appendChild(field2);
+        var field3  = document.createElement("field");
+        field3.setAttribute("id", this.pointSizeFieldID);
+        field3.setAttribute("name","pointSize");
+        field3.setAttribute("type","SFFloat");
+        field3.setAttribute("value",String(this.pointSize.toFixed(2)) );
+        cShader.appendChild(field3);
+
+        var vertexCode = "attribute vec3 position; \n";
+        vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "varying vec3 fNormal; \n";
+        vertexCode += "uniform float pointSize; \n";
+        vertexCode += "void main() { \n";
+        vertexCode += "fPosition = position; \n";
+        vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = pointSize; } \n";
+
+        /*var vertexCode = "precision highp float; \n";
+        vertexCode += "attribute vec3 position; \n";
+        vertexCode += "attribute vec3 normal; \n";
+        vertexCode += "uniform mat4 modelViewMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "void main() \n";
+        vertexCode += "{ \n";
+        vertexCode += "vec4 pos = modelViewMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = " + pointSize.toFixed(2) +"; \n";
+        vertexCode += "fPosition = pos; \n";
+        vertexCode += "gl_Position = projectionMatrix * pos;} \n";*/
+
+        var shaderPartVertex = document.createElement("shaderPart");
+        shaderPartVertex.setAttribute("type","VERTEX");
+        shaderPartVertex.innerHTML = vertexCode;
+        cShader.appendChild(shaderPartVertex);
+
+        var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec3 matCol; \n";
+        fragmentCode += "uniform float transparency; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "gl_FragColor = vec4(matCol, transparency); } \n";
+
+        /*var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec2 resolution; \n";
+        fragmentCode += "varying vec3 fPosition; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "float k = (fPosition.z) / (5.0); \n";
+        fragmentCode += "vec2 ss = vec2(gl_FragCoord.x / resolution.x, gl_FragCoord.y/resolution.y); \n";
+        fragmentCode += "gl_FragColor = vec4(ss, k, 1.0); \n";
+        //fragmentCode += "if (length(ss - vec2(0.5)) > 10.55) \n";
+        //agmentCode += "discard; \n";
+        fragmentCode += "} \n";*/
+
+
+        var shaderPartFragment = document.createElement("shaderPart");
+        shaderPartFragment.setAttribute("type","FRAGMENT");
+        shaderPartFragment.innerHTML = fragmentCode;
+        cShader.appendChild(shaderPartFragment);
+
+        domElement.appendChild( cShader );
+
+        cShader = null;
+        field1 = null;
+        shaderPartVertex = null;
+        shaderPartFragment = null;
+    };
+
+    /**
+     * Overwrites function from base terrain class. Sets the transparency in the shader.
+     * @param value - Transparency value between 0 (full visible) and 1 (invisible).
+     */
+    this.setTransparency = function(value)
+    {
+        var transparencyField = document.getElementById( this.transparencyFieldID);
+
+        if( transparencyField )
+            transparencyField.setAttribute("value", String(1.0-value) );
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find transparency field.")
+    };
+
+    /**
+     * Sets the size of the drawn points.
+     * @param value - Size if the points.
+     */
+    this.setPointSize = function(value)
+    {
+        var pointSizeField = document.getElementById( this.pointSizeFieldID );
+
+        if( pointSizeField)
+            pointSizeField.setAttribute("value", String(value));
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find point size field.")
+    }
+};
+EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -3832,24 +4049,30 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  */
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          // Heightmap
+    this.pointCloudCoordinates = null; // Point cloud coordinates
     this.noDataValue = undefined;   // The value that should be considered as NODATA.
     this.heightmapUrl = "";         // If available, you can use the link as alternative.
     this.texture = new Image();     // Texture as image object
     this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
     this.textureUrl = "";           // If available, you can use the link as alternative.
-    this.width = 0;                 // Heightmap width
-    this.height = 0;                // Heightmap height
+    this.width = 0;                 // Heightmap or pointcloud width
+    this.height = 0;                // Heightmap or pointcloud height
 
     // The information about the heightmap are used to position a module correctly in the fishtank.
     // The minimum value as offset and the difference between minimum and maximum for scaling.
-    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap
-    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap
-    this.averageHMvalue = 0;        // Average value of the heightmap
+    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap or pointcloud
+    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap or pointcloud
+    this.averageHMvalue = 0;        // Average value of the heightmap or pointcloud
+    this.minXvalue =  Number.MAX_VALUE; // Lowest coordinate value on the X-axis of a pointcloud
+    this.maxXvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
+    this.minZvalue =  Number.MAX_VALUE; // Lowest coordinate value on the Z-axis of a pointcloud
+    this.maxZvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
 
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
-    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
+    this.validateTexture   = true;   // Flag if the texture should be checked in validate().
+    this.validatePointCloud = false; // Flag if the point cloud should be in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -3869,6 +4092,14 @@ EarthServerGenericClient.ServerResponseData = function () {
         if( this.validateHeightMap )
         {
             if( this.heightmap === null){    return false;   }
+            if( this.width === null || this.height === null){    return false;   }
+            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        }
+
+        // point cloud
+        if( this.validatePointCloud )
+        {
+            if( this.pointCloudCoordinates === null) return false;
             if( this.width === null || this.height === null){    return false;   }
             if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
         }
@@ -3994,6 +4225,10 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
 
                 responseData.width = hm.length;
                 responseData.height = hm[0].length;
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
 
                 var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                 var total = 0;
@@ -4106,8 +4341,12 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
 
                 responseData.width = hm.length;
                 responseData.height = hm[0].length;
-
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
                 responseData.heightmap = hm;
+
                 }
                 catch(err)
                 {   alert(err); }
@@ -4118,6 +4357,112 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
             {
                 EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
                 console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
+ * Requests a WCS point cloud and stores the coordinate string in the response data.
+ * @param callback
+ * @param responseData
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var request = 'service=WCS&Request=GetCoverage&version=' + WCSversion + '&CoverageId=' + WCScoverID;
+    request += '&subset=Lat('+minx+','+maxx+')&subset=Long('+miny+','+maxy+')&subset=h('+minh+','+maxh+')';
+
+    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
+    $.ajax(
+        {
+            url: WCSurl,
+            type: 'GET',
+            dataType: 'XML',
+            data: request,
+            success: function(receivedData)
+            {
+
+                //console.log(receivedData);
+
+                try{
+                    EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                    var coords = $(receivedData).find(String("SimpleMultiPoint")).text();
+
+
+                    if(coords && coords.length )
+                    {
+                        while( !EarthServerGenericClient.IsNumeric(coords.charAt(0) ))
+                        {   coords = coords.substr(1);  }
+
+                        var coordsArray = coords.split(" ");
+
+                        // check all coords to set min,max,width&height values
+                        for(var i=0; i+2< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i] ) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1] ))) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            // check min/max value on x axis
+                            if( parseFloat(coordsArray[i]) < responseData.minXvalue) responseData.minXvalue = parseFloat(coordsArray[i]);
+                            if( parseFloat(coordsArray[i]) > responseData.maxXvalue) responseData.maxXvalue = parseFloat(coordsArray[i]);
+                            // check min/max hm value (y-axis)
+                            if( parseFloat(coordsArray[i+2]) < responseData.minHMvalue) responseData.minHMvalue = parseFloat(coordsArray[i+2]);
+                            if( parseFloat(coordsArray[i+2]) > responseData.maxHMvalue) responseData.maxHMvalue = parseFloat(coordsArray[i+2]);
+                            // check min/max value on z axis
+                            if( parseFloat(coordsArray[i+1]) < responseData.minZvalue) responseData.minZvalue = parseFloat(coordsArray[i+1]);
+                            if( parseFloat(coordsArray[i+1]) > responseData.maxZvalue) responseData.maxZvalue = parseFloat(coordsArray[i+1]);
+                        }
+
+                        //switch y/z values and lower the values
+                        var pointCloudCoordinatesArray = [];
+                        for( i=0; i< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i]))  ) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1]) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i  ]) - parseInt(responseData.minXvalue ) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+2]) - parseInt(responseData.minHMvalue) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+1]) - parseInt(responseData.minZvalue ) );
+                        }
+
+                        responseData.maxXvalue -= parseInt( responseData.minXvalue);
+                        responseData.minXvalue -= parseInt( responseData.minXvalue);
+
+                        responseData.maxZvalue -= parseInt( responseData.minZvalue);
+                        responseData.minZvalue -= parseInt( responseData.minZvalue);
+
+                        responseData.maxHMvalue -= parseInt( responseData.minHMvalue );
+                        responseData.minHMvalue -= parseInt( responseData.minHMvalue );
+
+                        responseData.width  = responseData.maxXvalue - responseData.minXvalue + 1;
+                        responseData.height = responseData.maxZvalue - responseData.minZvalue + 1;
+                    }
+                    else
+                        console.log("No coords");
+
+                    responseData.pointCloudCoordinates = pointCloudCoordinatesArray.join(" ");
+                }
+                catch(err)
+                {   alert(err); }
+
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
             }
         }
     );
@@ -4199,6 +4544,11 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                     tuples = null;
                 });
                 DataBlocks = null;
+
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = sizeY;
+                responseData.maxZvalue = sizeX;
                 responseData.heightmap = hm;
                 }
                 catch(err)
@@ -4384,6 +4734,30 @@ EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQue
     {
         EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
     }
+};
+
+/**
+ * TODO:
+ * @param callback
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.requestWCSPointCloud = function(callback,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var data = new EarthServerGenericClient.ServerResponseData;
+    data.validateHeightMap = false;
+    data.validateTexture = false;
+    data.validatePointCloud = true;
+
+    EarthServerGenericClient.getPointCloudWCS(callback,data,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh);
+
 };//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
@@ -4899,7 +5273,7 @@ EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( da
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild(this.transformNode);
 
         //Create Terrain out of the received data
@@ -5103,7 +5477,7 @@ EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild( transform);
 
         //Create Terrain out of the received data
@@ -5297,7 +5671,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild( transform);
 
         //Create Terrain out of the received data
@@ -5326,6 +5700,175 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setSpecificElement= functio
     EarthServerGenericClient.appendElevationSlider(element,this.index);
 };
 //Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCS Point Cloud
+ * 1 URL for the service, 1 Coverage name point cloud
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCSPointCloud = function()
+{
+    this.setDefaults();
+    this.name = "WCS Point Cloud";
+    /**
+     * WCS version for the query.
+     * @default "2.0.0"
+     * @type {String}
+     */
+    this.WCSVersion = "2.0.0";
+    /**
+     * Size of the drawn points.
+     * @default 3.0
+     * @type {number}
+     */
+    this.pointSize = 3.0;
+};
+EarthServerGenericClient.Model_WCSPointCloud.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+/**
+ * Sets the URL for the service.
+ * @param url
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setURL=function(url){
+    /**
+     * URL for the WCS service.
+     * @type {String}
+     */
+    this.URLWCS = String(url);
+};
+/**
+ * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
+ * @param version - String with WCS version number.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+/**
+ * Sets the coverage name.
+ * @param coveragePointCloud - Coverage name for the image data set.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setCoverage = function (coveragePointCloud)
+{
+    /**
+     * Name of the point cloud coverage.
+     * @type {String}
+     */
+    this.coveragePointCloud = String(coveragePointCloud);
+};
+
+/**
+ * Sets the size of the points in the cloud.
+ * @param pointSize - Size of the points in the cloud.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setPointSize = function (pointSize)
+{
+    /**
+     * Size of the points in the cloud.
+     * @type {String}
+     */
+    this.pointSize = pointSize;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    // Check if mandatory values are set
+    if( this.coveragePointCloud === undefined || this.URLWCS === undefined || this.minh === undefined || this.maxh === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
+    {
+        alert("Not all mandatory values are set. WCSPointCloud: " + this.name );
+        console.log(this);
+        return;
+    }
+    // Make ServerRequest and receive data.
+    EarthServerGenericClient.requestWCSPointCloud(this,this.URLWCS,this.WCSVersion,this.coveragePointCloud,
+                    this.minx,this.maxx,this.miny,this.maxy,this.minh,this.maxh);
+};
+
+/**
+ * Updates the size of points for this model.
+ * @param value - Point size
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.updatePointSize = function(value)
+{
+    if( this.terrain )
+        this.terrain.setPointSize(value);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.receiveData = function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //If progressive loading is enabled this function is called multiple times.
+        //The lower resolution version shall be removed and replaced with the new one.
+        //So the old transformNode will be removed and a new one created.
+        if(this.transformNode !== undefined )
+        {   this.root.removeChild(this.transformNode); }
+
+        //In the first receiveData call remove the placeholder.
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+
+        // build transform
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,data.minHMvalue,data.minXvalue,data.minZvalue);
+        /*this.transformNode = document.createElement("transform");
+        this.transformNode.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
+        this.transformNode.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
+
+        var scaleX = (this.cubeSizeX*this.xScale)/(data.width);
+        var scaleY = (this.cubeSizeY*this.yScale)/ YResolution;
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(data.height);
+        this.transformNode.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
+
+        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0) - (scaleX * data.minXvalue);
+        var yoff = (this.cubeSizeY * this.yOffset) - (data.minHMvalue*scaleY) - (this.cubeSizeY/2.0);
+        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0) - (scaleZ * data.minZvalue);
+        this.transformNode.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);*/
+        this.root.appendChild(this.transformNode);
+
+        // create point cloud terrain
+        this.terrain = new EarthServerGenericClient.PointCloudTerrain(this.transformNode,data,this.index,this.pointSize);
+        this.terrain.createTerrain();
+    }
+};
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setSpecificElement= function(element)
+{
+    // change point size
+    var id = "EarthServerGenericClient_SliderCell_ps_"+this.index;
+    EarthServerGenericClient.appendGenericSlider(element,id,"Point Size",this.index,1,10,this.pointSize, EarthServerGenericClient.MainScene.updatePointSize);
+};//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -5468,7 +6011,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild( transform);
 
         //Create Terrain out of the received data
@@ -5666,7 +6209,7 @@ EarthServerGenericClient.Model_WMSDemWCPS.prototype.receiveData= function( data)
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild( transform);
 
         //Create Terrain out of the received data
@@ -6317,8 +6860,9 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
  * @param xSize - The width of the bounding box.
  * @param ySize - The height of the bounding box.
  * @param zSize - The depth of the bounding box.
+ * @param textHover - Distance between the bounding box and the text.
  */
-EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
+EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize, textHover)
 {
     /**
      * @description Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
@@ -6328,11 +6872,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     var fontColor = "0.7 0.7 0.5";
 
     /**
-     * @description Defines the size of the font. Value is always positive!
-     * @default 50.0
+     * Distance between the bounding box and the text.
      * @type {number}
      */
-    var fontSize = 50.0;
+    var hover = textHover || ((xSize + ySize + zSize) / 150);
 
     /**
      * @description Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
@@ -6500,7 +7043,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     {
         //Setup text
         var textTransform = document.createElement('transform');
-        textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
+        textTransform.setAttribute('scale', xSize/5 + " " + ySize/5 + " " + zSize/5);
         var shape = document.createElement('shape');
         var appearance = document.createElement('appearance');
         var material = document.createElement('material');
@@ -6522,7 +7065,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 
         if(axis=="x")
         {
-            textTransform.setAttribute('translation', "0 " + (ySize+fontSize/2) + " " + zSize);
+            textTransform.setAttribute('translation', "0 " + (ySize+hover) + " " + zSize);
 
             if(side=="back")
             {
@@ -6531,18 +7074,18 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
-                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-fontSize/2));
+                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-hover));
             }
             textNodesX[textNodesX.length] = text;
         }
         else if(axis=="y")
         {
-            textTransform.setAttribute('translation', -(xSize+fontSize/2) + " 0 " + zSize);
+            textTransform.setAttribute('translation', -(xSize+hover) + " 0 " + zSize);
             textTransform.setAttribute('rotation', '0 0 1 1.57');
 
             if(side=="back")
             {
-                textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
+                textTransform.setAttribute('translation', (xSize+hover) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
                 rotationTransform.setAttribute('rotation', '1 0 0 3.14');
             }
@@ -6558,7 +7101,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
         else if(axis=="z")
         {
-            textTransform.setAttribute('translation', xSize + " " + (ySize+fontSize/2) + " 0");
+            textTransform.setAttribute('translation', xSize + " " + (ySize+hover) + " 0");
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
@@ -6570,7 +7113,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
                 textTransform.setAttribute('translation', "0 0 0");
 
                 rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + -ySize + " 0");
+                rotationTransform.setAttribute('translation', -(xSize+hover) + " " + -ySize + " 0");
             }
             textNodesZ[textNodesZ.length] = text;
         }

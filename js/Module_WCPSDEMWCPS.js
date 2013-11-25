@@ -165,7 +165,7 @@ EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data
         this.removePlaceHolder();
 
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
         this.root.appendChild( transform);
 
         //Create Terrain out of the received data

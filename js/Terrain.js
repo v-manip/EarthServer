@@ -14,6 +14,12 @@ EarthServerGenericClient.AbstractTerrain = function()
     var AppearanceDefined = [];
 
     /**
+     * @ignore Empty default stub for nexFrame() function.
+     */
+    this.nextFrame = function()
+    {};
+
+    /**
      * Clears the list of already defined appearances.
      */
     this.clearDefinedAppearances = function()
@@ -935,11 +941,18 @@ EarthServerGenericClient.SharadTerrain = function(root,data,index,noData,coordin
 };
 EarthServerGenericClient.SharadTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
 
-
+/**
+ * Terrain to display multiple layers.
+ * @param root - Dom Element to append the terrain to.
+ * @param dataArray - Received Data array of the Server requests.
+ * @param index - Index of the model that uses this terrain.
+ * @param noDataValue - No Data Value
+ * @constructor
+ */
 EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataValue)
 {
     this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
-    this.data = dataArray; // Empty data but Abstract Terrain needs it
+    this.data = dataArray;
     this.index = index;
     this.noData = noDataValue;
     this.appearances = [];  // appearances of the layers
@@ -996,3 +1009,166 @@ EarthServerGenericClient.VolumeTerrain = function(root,dataArray,index,noDataVal
     };
 };
 EarthServerGenericClient.VolumeTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
+/**
+ * Terrain to display multiple layers.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @param pointSize - Size of the points.
+ * @constructor
+ */
+EarthServerGenericClient.PointCloudTerrain = function(root,data,index,pointSize)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.appearance = null;  // appearance
+    this.data = data;
+    this.index = index;
+    this.pointSize = parseFloat(pointSize);
+    this.transparencyFieldID = "EarthServerGenericClient_model_"+index+"_transparencyField";
+    this.pointSizeFieldID    = "EarthServerGenericClient_model_"+index+"_pointSizeField";
+
+    this.createTerrain = function()
+    {
+        // create material
+        this.appearance = document.createElement("Appearance");
+
+        // create shape,PointSet, etc.
+        var shape = document.createElement("Shape");
+        var pointSet = document.createElement("PointSet");
+        pointSet.setAttribute("solid","false");
+        var coords = document.createElement("coordinate");
+        coords.setAttribute("point", data.pointCloudCoordinates);
+
+        pointSet.appendChild(coords);
+        this.appendShader( this.appearance);
+        shape.appendChild(this.appearance);
+        shape.appendChild(pointSet);
+        root.appendChild(shape);
+
+        coords = null;
+        pointSet = null;
+        shape = null;
+        this.appearance = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    this.appendShader = function(domElement)
+    {
+        var cShader = document.createElement("composedShader");
+        var field1  = document.createElement("field");
+        field1.setAttribute("name","matCol");
+        field1.setAttribute("type","SFVec3f");
+        field1.setAttribute("value",data.diffuseColor);
+        cShader.appendChild(field1);
+        var field2  = document.createElement("field");
+        field2.setAttribute("id", this.transparencyFieldID);
+        field2.setAttribute("name","transparency");
+        field2.setAttribute("type","SFFloat");
+        field2.setAttribute("value",String(1.0 - data.transparency) );
+        cShader.appendChild(field2);
+        var field3  = document.createElement("field");
+        field3.setAttribute("id", this.pointSizeFieldID);
+        field3.setAttribute("name","pointSize");
+        field3.setAttribute("type","SFFloat");
+        field3.setAttribute("value",String(this.pointSize.toFixed(2)) );
+        cShader.appendChild(field3);
+
+        var vertexCode = "attribute vec3 position; \n";
+        vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "varying vec3 fNormal; \n";
+        vertexCode += "uniform float pointSize; \n";
+        vertexCode += "void main() { \n";
+        vertexCode += "fPosition = position; \n";
+        vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = pointSize; } \n";
+
+        /*var vertexCode = "precision highp float; \n";
+        vertexCode += "attribute vec3 position; \n";
+        vertexCode += "attribute vec3 normal; \n";
+        vertexCode += "uniform mat4 modelViewMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "void main() \n";
+        vertexCode += "{ \n";
+        vertexCode += "vec4 pos = modelViewMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = " + pointSize.toFixed(2) +"; \n";
+        vertexCode += "fPosition = pos; \n";
+        vertexCode += "gl_Position = projectionMatrix * pos;} \n";*/
+
+        var shaderPartVertex = document.createElement("shaderPart");
+        shaderPartVertex.setAttribute("type","VERTEX");
+        shaderPartVertex.innerHTML = vertexCode;
+        cShader.appendChild(shaderPartVertex);
+
+        var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec3 matCol; \n";
+        fragmentCode += "uniform float transparency; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "gl_FragColor = vec4(matCol, transparency); } \n";
+
+        /*var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec2 resolution; \n";
+        fragmentCode += "varying vec3 fPosition; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "float k = (fPosition.z) / (5.0); \n";
+        fragmentCode += "vec2 ss = vec2(gl_FragCoord.x / resolution.x, gl_FragCoord.y/resolution.y); \n";
+        fragmentCode += "gl_FragColor = vec4(ss, k, 1.0); \n";
+        //fragmentCode += "if (length(ss - vec2(0.5)) > 10.55) \n";
+        //agmentCode += "discard; \n";
+        fragmentCode += "} \n";*/
+
+
+        var shaderPartFragment = document.createElement("shaderPart");
+        shaderPartFragment.setAttribute("type","FRAGMENT");
+        shaderPartFragment.innerHTML = fragmentCode;
+        cShader.appendChild(shaderPartFragment);
+
+        domElement.appendChild( cShader );
+
+        cShader = null;
+        field1 = null;
+        shaderPartVertex = null;
+        shaderPartFragment = null;
+    };
+
+    /**
+     * Overwrites function from base terrain class. Sets the transparency in the shader.
+     * @param value - Transparency value between 0 (full visible) and 1 (invisible).
+     */
+    this.setTransparency = function(value)
+    {
+        var transparencyField = document.getElementById( this.transparencyFieldID);
+
+        if( transparencyField )
+            transparencyField.setAttribute("value", String(1.0-value) );
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find transparency field.")
+    };
+
+    /**
+     * Sets the size of the drawn points.
+     * @param value - Size if the points.
+     */
+    this.setPointSize = function(value)
+    {
+        var pointSizeField = document.getElementById( this.pointSizeFieldID );
+
+        if( pointSizeField)
+            pointSizeField.setAttribute("value", String(value));
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find point size field.")
+    }
+};
+EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);

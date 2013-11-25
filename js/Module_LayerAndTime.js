@@ -165,12 +165,16 @@ EarthServerGenericClient.Model_LayerAndTime.prototype.createModel=function(root,
  */
 EarthServerGenericClient.Model_LayerAndTime.prototype.receiveData = function( data)
 {
+    var failedData = 0;
     for(var i=0;i<data.length;i++)
     {
         // TODO: delete only the one element and UI only if all failed.
         if( !this.checkReceivedData( data[i] ) )
-            return;
+            failedData++;
     }
+
+    // if all data failed return
+    if( failedData == data.length) return;
 
     // create transform
     this.transformNode = this.createTransform(2,this.queriedLayers.length,2,0);

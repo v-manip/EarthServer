@@ -28,12 +28,16 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param miny - Minimum/Lower Longitude
      * @param maxx - Maximum/Upper Latitude
      * @param maxy - Maximum/Upper Longitude
+     * @param minh - Minimum/Lower Height
+     * @param maxh - Maximum/Upper Height
      */
-    this.setAreaOfInterest = function(minx,miny,maxx,maxy){
+    this.setAreaOfInterest = function(minx,miny,maxx,maxy,minh,maxh){
         this.minx = minx;
         this.miny = miny;
         this.maxx = maxx;
         this.maxy = maxy;
+        this.minh = minh;
+        this.maxh = maxh;
     };
 
     /**
@@ -474,25 +478,31 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      * @param xRes - Size of the received data on the x-axis (e.g. the requested DEM )
      * @param yRes - Size of the received data on the y-axis
      * @param zRes - Size of the received data on the z-axis
-     * @param minvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minHeightvalue - Minimum Value along the y-axis (e.g. minimum value in a DEM, so the model starts at it's wished location)
+     * @param minXvalue - Minimum Value along the x-axis
+     * @param minZvalue - Minimum Value along the z-axis
      * @return {Element}
      */
-    this.createTransform = function(xRes,yRes,zRes,minvalue){
+    this.createTransform = function(xRes,yRes,zRes,minHeightvalue,minXvalue,minZvalue){
         var trans = document.createElement('Transform');
         trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
         trans.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
 
         this.YResolution = yRes;
-        this.minValue = minvalue;
+        this.minValue = minHeightvalue;
 
-        var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(xRes)-1);
+        if(zRes<1) zRes = 2;
+
+       // var scaleX = (this.cubeSizeX*this.xScale)/(Math.ceil(xRes)-1);
+        var scaleX = (this.cubeSizeX*this.xScale)/(xRes-1);
         var scaleY = (this.cubeSizeY*this.yScale)/this.YResolution;
-        var scaleZ = (this.cubeSizeZ*this.zScale)/(parseInt(zRes)-1);
+        //var scaleZ = (this.cubeSizeZ*this.zScale)/(Math.ceil(zRes)-1);
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(zRes-1);
         trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
 
-        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
-        var yoff = (this.cubeSizeY * this.yOffset) - (minvalue*scaleY) - (this.cubeSizeY/2.0);
-        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
+        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0) - (scaleX * minXvalue);
+        var yoff = (this.cubeSizeY * this.yOffset) - (minHeightvalue*scaleY) - (this.cubeSizeY/2.0);
+        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0) - (scaleZ * minZvalue);
         trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
 
         return trans;

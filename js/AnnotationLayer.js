@@ -257,8 +257,9 @@ EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor
  * @param xSize - The width of the bounding box.
  * @param ySize - The height of the bounding box.
  * @param zSize - The depth of the bounding box.
+ * @param textHover - Distance between the bounding box and the text.
  */
-EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
+EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize, textHover)
 {
     /**
      * @description Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
@@ -268,11 +269,10 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     var fontColor = "0.7 0.7 0.5";
 
     /**
-     * @description Defines the size of the font. Value is always positive!
-     * @default 50.0
+     * Distance between the bounding box and the text.
      * @type {number}
      */
-    var fontSize = 50.0;
+    var hover = textHover || ((xSize + ySize + zSize) / 150);
 
     /**
      * @description Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
@@ -440,7 +440,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
     {
         //Setup text
         var textTransform = document.createElement('transform');
-        textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
+        textTransform.setAttribute('scale', xSize/5 + " " + ySize/5 + " " + zSize/5);
         var shape = document.createElement('shape');
         var appearance = document.createElement('appearance');
         var material = document.createElement('material');
@@ -462,7 +462,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
 
         if(axis=="x")
         {
-            textTransform.setAttribute('translation', "0 " + (ySize+fontSize/2) + " " + zSize);
+            textTransform.setAttribute('translation', "0 " + (ySize+hover) + " " + zSize);
 
             if(side=="back")
             {
@@ -471,18 +471,18 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
             else if(side=="top")
             {
                 textTransform.setAttribute('rotation', '1 0 0 -1.57');
-                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-fontSize/2));
+                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-hover));
             }
             textNodesX[textNodesX.length] = text;
         }
         else if(axis=="y")
         {
-            textTransform.setAttribute('translation', -(xSize+fontSize/2) + " 0 " + zSize);
+            textTransform.setAttribute('translation', -(xSize+hover) + " 0 " + zSize);
             textTransform.setAttribute('rotation', '0 0 1 1.57');
 
             if(side=="back")
             {
-                textTransform.setAttribute('translation', (xSize+fontSize/2) + " 0 " + zSize);
+                textTransform.setAttribute('translation', (xSize+hover) + " 0 " + zSize);
                 textTransform.setAttribute('rotation', '0 0 1 4.74');
                 rotationTransform.setAttribute('rotation', '1 0 0 3.14');
             }
@@ -498,7 +498,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
         }
         else if(axis=="z")
         {
-            textTransform.setAttribute('translation', xSize + " " + (ySize+fontSize/2) + " 0");
+            textTransform.setAttribute('translation', xSize + " " + (ySize+hover) + " 0");
             textTransform.setAttribute('rotation', '0 1 0 1.57');
             if(side=="back")
             {
@@ -510,7 +510,7 @@ EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize)
                 textTransform.setAttribute('translation', "0 0 0");
 
                 rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rotationTransform.setAttribute('translation', -(xSize+fontSize/2) + " " + -ySize + " 0");
+                rotationTransform.setAttribute('translation', -(xSize+hover) + " " + -ySize + " 0");
             }
             textNodesZ[textNodesZ.length] = text;
         }

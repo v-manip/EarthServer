@@ -8,24 +8,30 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  */
 EarthServerGenericClient.ServerResponseData = function () {
     this.heightmap = null;          // Heightmap
+    this.pointCloudCoordinates = null; // Point cloud coordinates
     this.noDataValue = undefined;   // The value that should be considered as NODATA.
     this.heightmapUrl = "";         // If available, you can use the link as alternative.
     this.texture = new Image();     // Texture as image object
     this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
     this.textureUrl = "";           // If available, you can use the link as alternative.
-    this.width = 0;                 // Heightmap width
-    this.height = 0;                // Heightmap height
+    this.width = 0;                 // Heightmap or pointcloud width
+    this.height = 0;                // Heightmap or pointcloud height
 
     // The information about the heightmap are used to position a module correctly in the fishtank.
     // The minimum value as offset and the difference between minimum and maximum for scaling.
-    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap
-    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap
-    this.averageHMvalue = 0;        // Average value of the heightmap
+    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap or pointcloud
+    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap or pointcloud
+    this.averageHMvalue = 0;        // Average value of the heightmap or pointcloud
+    this.minXvalue =  Number.MAX_VALUE; // Lowest coordinate value on the X-axis of a pointcloud
+    this.maxXvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
+    this.minZvalue =  Number.MAX_VALUE; // Lowest coordinate value on the Z-axis of a pointcloud
+    this.maxZvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
 
     // Flags to customize the server response
     this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
     this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
-    this.validateTexture   = true;  // Flag if the texture should be checked in validate().
+    this.validateTexture   = true;   // Flag if the texture should be checked in validate().
+    this.validatePointCloud = false; // Flag if the point cloud should be in validate().
     this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
 
     /**
@@ -45,6 +51,14 @@ EarthServerGenericClient.ServerResponseData = function () {
         if( this.validateHeightMap )
         {
             if( this.heightmap === null){    return false;   }
+            if( this.width === null || this.height === null){    return false;   }
+            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        }
+
+        // point cloud
+        if( this.validatePointCloud )
+        {
+            if( this.pointCloudCoordinates === null) return false;
             if( this.width === null || this.height === null){    return false;   }
             if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
         }
@@ -170,6 +184,10 @@ EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, quer
 
                 responseData.width = hm.length;
                 responseData.height = hm[0].length;
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
 
                 var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                 var total = 0;
@@ -282,8 +300,12 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
 
                 responseData.width = hm.length;
                 responseData.height = hm[0].length;
-
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
                 responseData.heightmap = hm;
+
                 }
                 catch(err)
                 {   alert(err); }
@@ -294,6 +316,112 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
             {
                 EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
                 console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
+ * Requests a WCS point cloud and stores the coordinate string in the response data.
+ * @param callback
+ * @param responseData
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var request = 'service=WCS&Request=GetCoverage&version=' + WCSversion + '&CoverageId=' + WCScoverID;
+    request += '&subset=Lat('+minx+','+maxx+')&subset=Long('+miny+','+maxy+')&subset=h('+minh+','+maxh+')';
+
+    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
+    $.ajax(
+        {
+            url: WCSurl,
+            type: 'GET',
+            dataType: 'XML',
+            data: request,
+            success: function(receivedData)
+            {
+
+                //console.log(receivedData);
+
+                try{
+                    EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                    var coords = $(receivedData).find(String("SimpleMultiPoint")).text();
+
+
+                    if(coords && coords.length )
+                    {
+                        while( !EarthServerGenericClient.IsNumeric(coords.charAt(0) ))
+                        {   coords = coords.substr(1);  }
+
+                        var coordsArray = coords.split(" ");
+
+                        // check all coords to set min,max,width&height values
+                        for(var i=0; i+2< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i] ) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1] ))) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            // check min/max value on x axis
+                            if( parseFloat(coordsArray[i]) < responseData.minXvalue) responseData.minXvalue = parseFloat(coordsArray[i]);
+                            if( parseFloat(coordsArray[i]) > responseData.maxXvalue) responseData.maxXvalue = parseFloat(coordsArray[i]);
+                            // check min/max hm value (y-axis)
+                            if( parseFloat(coordsArray[i+2]) < responseData.minHMvalue) responseData.minHMvalue = parseFloat(coordsArray[i+2]);
+                            if( parseFloat(coordsArray[i+2]) > responseData.maxHMvalue) responseData.maxHMvalue = parseFloat(coordsArray[i+2]);
+                            // check min/max value on z axis
+                            if( parseFloat(coordsArray[i+1]) < responseData.minZvalue) responseData.minZvalue = parseFloat(coordsArray[i+1]);
+                            if( parseFloat(coordsArray[i+1]) > responseData.maxZvalue) responseData.maxZvalue = parseFloat(coordsArray[i+1]);
+                        }
+
+                        //switch y/z values and lower the values
+                        var pointCloudCoordinatesArray = [];
+                        for( i=0; i< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i]))  ) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1]) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i  ]) - parseInt(responseData.minXvalue ) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+2]) - parseInt(responseData.minHMvalue) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+1]) - parseInt(responseData.minZvalue ) );
+                        }
+
+                        responseData.maxXvalue -= parseInt( responseData.minXvalue);
+                        responseData.minXvalue -= parseInt( responseData.minXvalue);
+
+                        responseData.maxZvalue -= parseInt( responseData.minZvalue);
+                        responseData.minZvalue -= parseInt( responseData.minZvalue);
+
+                        responseData.maxHMvalue -= parseInt( responseData.minHMvalue );
+                        responseData.minHMvalue -= parseInt( responseData.minHMvalue );
+
+                        responseData.width  = responseData.maxXvalue - responseData.minXvalue + 1;
+                        responseData.height = responseData.maxZvalue - responseData.minZvalue + 1;
+                    }
+                    else
+                        console.log("No coords");
+
+                    responseData.pointCloudCoordinates = pointCloudCoordinatesArray.join(" ");
+                }
+                catch(err)
+                {   alert(err); }
+
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
             }
         }
     );
@@ -375,6 +503,11 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
                     tuples = null;
                 });
                 DataBlocks = null;
+
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = sizeY;
+                responseData.maxZvalue = sizeX;
                 responseData.heightmap = hm;
                 }
                 catch(err)
@@ -560,4 +693,28 @@ EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQue
     {
         EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
     }
+};
+
+/**
+ * TODO:
+ * @param callback
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.requestWCSPointCloud = function(callback,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var data = new EarthServerGenericClient.ServerResponseData;
+    data.validateHeightMap = false;
+    data.validateTexture = false;
+    data.validatePointCloud = true;
+
+    EarthServerGenericClient.getPointCloudWCS(callback,data,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh);
+
 };
