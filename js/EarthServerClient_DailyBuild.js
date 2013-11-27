@@ -1,6 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
- * @version 0.7 alpha 25.11.1013
+ * @version 0.7 alpha 27.11.1013
  */
 var EarthServerGenericClient =  {};
 
@@ -6518,26 +6518,6 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
 
     cdiv=null;
     cp=null;
-
-    //Create Div Reset
-    var reset = document.createElement("h3");
-    reset.innerHTML = "Reset";
-    var rdiv = document.createElement("div");
-    var rp   = document.createElement("p");
-
-    var rbutton = document.createElement('button');
-    rbutton.setAttribute("onclick", "EarthServerGenericClient.MainScene.resetScene();return false;");
-    rbutton.innerHTML = "RESET";
-
-   rp.appendChild(rbutton);
-   rbutton = null;
-
-    rdiv.appendChild(rp);
-    UI_DIV.appendChild(reset);
-    UI_DIV.appendChild(rdiv);
-
-    rdiv=null;
-    rp=null;
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
