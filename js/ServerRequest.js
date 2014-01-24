@@ -262,7 +262,7 @@ EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCP
 
                 var sizeX = tuples.length;
                 if( sizeX <=0 || isNaN(sizeX)  )
-                {   throw "getCoverageWCS: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
+                {   throw "getWCPSDemCoverage: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
 
 
                 var hm = new Array(sizeX);
@@ -435,11 +435,22 @@ EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSur
  * @param WCScoverID - ID of the coverage.
  * @param WCSBoundingBox - Bounding Box of the area.
  * @param WCSVersion - Version of used WCS service.
+ * @param WCSFormat - Format of the WCS response.
+ * @param WCSDataType - The requested datatype for WCS response (equals to the 'dataType' field in a $.ajax call, i.e. 'XML', 'text', ...)
  */
-EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
+EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion,WCSFormat,WCSDataType)
 {
     var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
     request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
+    if (WCSFormat) {
+        request += '&format=' + WCSFormat;
+    }
+
+    var datatype = 'XML'; // default value is 'XML' to not break code using previous versions of the EarthServerGenericClient
+    if (WCSDataType) {
+        datatype = WCSDataType;
+        console.log('setting datatype to: ' + datatype);
+    }
 
     EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
 
@@ -447,7 +458,7 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
         {
             url: WCSurl,
             type: 'GET',
-            dataType: 'XML',
+            dataType: datatype,
             data: request,
             success: function(receivedData)
             {
@@ -645,14 +656,39 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
  * @param WCSurl - URL of the WCS service.
  * @param WCScoverID - Coverage ID used in WCS.
  * @param WCSVersion - Version of the WCS service.
+ * @param WCSFormat - Format of the WCS response.
  */
-EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion)
+EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSFormat)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
+};
+
+/**
+ * Requests an image via WMS and a dem via WMS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param ImageFormat - Image format for the WMS response.
+ * @param DEMurl - URL of the WMS service.
+ * @param DEMcoverID - Coverage ID used in WCS.
+ * @param DEMOutputFormat - Output format of the WMS response.
+ */
+EarthServerGenericClient.requestWMSImageWMSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,DEMurl,DEMcoverID,DEMOutputFormat)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,DEMurl,DEMcoverID,BoundingBox,WMSversion);
 };
 
 /**

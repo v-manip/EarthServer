@@ -6,16 +6,10 @@ var EarthServerGenericClient = EarthServerGenericClient || {};
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-EarthServerGenericClient.Model_WMSDemWCS = function()
+EarthServerGenericClient.Model_WMSDemWMS = function()
 {
     this.setDefaults();
-    this.name = "WMS Image with DEM from WCS Query.";
-    /**
-     * WCS version for the query.
-     * @default "2.0.0"
-     * @type {String}
-     */
-    this.WCSVersion = "2.0.0";
+    this.name = "WMS Image with DEM from WMS Query.";
     /**
      * WMS version for the query.
      * @default "1.3"
@@ -23,13 +17,13 @@ EarthServerGenericClient.Model_WMSDemWCS = function()
      */
     this.WMSVersion = "1.3";
 };
-EarthServerGenericClient.Model_WMSDemWCS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+EarthServerGenericClient.Model_WMSDemWMS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
 /**
  * Sets the url for both the WMS and WCS Queries.
  * @param WMSurl - Service URL for the WMS Request
  * @param demurl  - Service URL for the WCS Request
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setURLs=function(WMSurl, demurl){
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setURLs=function(WMSurl, demurl){
     /**
      * URL for the WMS service.
      * @type {String}
@@ -46,7 +40,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setURLs=function(WMSurl, demu
  * @param coverageImage - Coverage name for the image data set.
  * @param coverageDem   - Coverage name for the dem data set.
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoverages = function (coverageImage, coverageDem) {
     /**
      * Name of the image coverage.
      * @type {String}
@@ -59,38 +53,30 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoverages = function (cove
     this.coverageDEM = String(coverageDem);
 };
 /**
- * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
- * @param version - String with WCS version number.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setWCSVersion = function(version)
-{
-    this.WCSVersion = String(version);
-};
-/**
  * Sets the WMS Version for the WMS Query String. Default: "1.3"
  * @param version - String with WMS version number.
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setWMSVersion = function(version)
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWMSVersion = function(version)
 {
     this.WMSVersion = String(version);
 };
 /**
  * Sets the response format for the WCS Queries.
- * @param format - Format string for the WCS Response
+ * @param format - Format string for the WMS Response (default: 'image/x-aaigrid')
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setFormat=function(WCSFormat){
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputFormat=function(outputFormat){
     /**
      * URL for the WMS service.
      * @type {String}
      */
-    this.WCSFormat = String(WCSFormat);
+    this.outputFormat = String(outputFormat);
 };
 /**
  * Sets the Coordinate Reference System.
  * @param System - eg. CRS,SRS
  * @param value - eg. EPSG:4326
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoordinateReferenceSystem = function(System, value)
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoordinateReferenceSystem = function(System, value)
 {
     this.CRS = System + "=" + value;
 };
@@ -98,7 +84,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoordinateReferenceSystem 
  * Sets the output CRS.
  @param outputCRS - The output CRS, e.g. 'http://www.opengis.net/def/crs/EPSG/0/4326'
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setOutputCRS = function(value)
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputCRS = function(value)
 {
     this.outpuCRS = value;
 };
@@ -109,9 +95,10 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setOutputCRS = function(value
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
+EarthServerGenericClient.Model_WMSDemWMS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined) {
+        console.log("root is not defined");
+    }
 
     EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
 
@@ -121,15 +108,18 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cu
 
     this.root = root;
 
+    // FIXXME: this is not the right place for eventually setting the default value:
+    if (!this.outputFormat) {
+        this.outputFormat = 'image/x-aaigrid';
+    }
+
     //Create Placeholder
     this.createPlaceHolder();
 
     //1: Check if mandatory values are set
     if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWMS === undefined || this.URLDEM === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined
-        || this.WCSFormat === undefined)
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined)
     {
-        alert("Not all mandatory values are set. WMSDemWCS: " + this.name );
         console.log(this);
         return;
     }
@@ -142,9 +132,9 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cu
         maxLatitude:  this.maxx
     };
 
-    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
+    EarthServerGenericClient.requestWMSImageWMSDem(this,bb,this.XResolution,this.ZResolution,
                                                 this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
-                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.WCSFormat);
+                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.outputFormat);
 };
 
 /**
@@ -152,7 +142,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cu
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
+EarthServerGenericClient.Model_WMSDemWMS.prototype.receiveData= function( data)
 {
     if( this.checkReceivedData(data))
     {
@@ -182,7 +172,7 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
  */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement= function(element)
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setSpecificElement= function(element)
 {
     EarthServerGenericClient.appendElevationSlider(element,this.index);
 };
