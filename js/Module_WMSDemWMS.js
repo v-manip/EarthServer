@@ -100,6 +100,14 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputCRS = function(value
     this.WCSOutputCRS = value;
 };
 /**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setTimespan = function(timespan)
+{
+    this.timespan = timespan;
+};
+/**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
@@ -146,7 +154,7 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.createModel=function(root, cu
     EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
                                                 this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
                                                 this.URLDEM,this.coverageDEM,this.WCSVersion,this.WCSMimeType,this.WCSDataType, 
-                                                this.WCSOutputFormat, this.WCSOutputCRS);
+                                                this.WCSOutputFormat,this.WCSOutputCRS,this.timespan);
 };
 
 /**
