@@ -259,12 +259,53 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Registers a handler for a specific format for preprocessing data received
+     * by a data request.
+     * @param mimetype - Received data from the server request.
+     * @returns {boolean} - TRUE if a handler for the given format is registered,
+     * FALSE if not
+     */
+    this.registerMIMETypeHandler = function(mimetype, handler)
+    {
+        if (mimetype != "" && handler) {
+            if (!this.mimetypeHandlers) {
+                this.mimetypeHandlers = {};
+            }
+            this.mimetypeHandlers[mimetype] = handler;
+        } else {
+            alert("'registerMIMETypeHandler' called with wrong arguments!");
+            console.log("'registerMIMETypeHandler' called with wrong arguments!");
+        }
+    };
+
+    /**
+     * Preprocesses the received data from the server request to extract the 
+     * heightmap data dependent on the response format.
+     * @param data - Received data from the server request.
+     * @param responseData - Instance of the ServerResponseData which has to be filled.
+     * @param mimetype - type to select the corresponding handler.
+     * @returns {boolean} - TRUE if a handler for the given format is registered,
+     * FALSE if not
+     */
+    this.preprocessReceivedData = function(data, responseData, mimetype)
+    {
+        var mimetypeHandler = this.mimetypeHandlers[mimetype];
+        if (!mimetypeHandler) {
+            return false;
+        } else {
+            mimetypeHandler(data, responseData);
+        }
+
+        return true;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.
      * @returns {boolean} - TRUE if OK, FALSE if some data is missing
      */
-    this.checkReceivedData = function( data)
+    this.checkReceivedData = function(data)
     {
         this.receivedDataCount++;
         this.reportProgress();

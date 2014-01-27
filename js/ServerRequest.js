@@ -113,6 +113,15 @@ EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine,sa
     {
         return callback.getDemNoDataValue();
     };
+
+    /**
+     * @ignore
+     * @returns {undefined|float} - Returns the noData value of the dem from the module.
+     */
+    this.getModel = function()
+    {
+        return callback;
+    };
 };
 
 /**
@@ -435,15 +444,21 @@ EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSur
  * @param WCScoverID - ID of the coverage.
  * @param WCSBoundingBox - Bounding Box of the area.
  * @param WCSVersion - Version of used WCS service.
- * @param WCSFormat - Format of the WCS response.
+ * @param WCSMimeType - MIME type of the WCS response (i.e. 'image/x-aaigrid').
  * @param WCSDataType - The requested datatype for WCS response (equals to the 'dataType' field in a $.ajax call, i.e. 'XML', 'text', ...)
  */
-EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion,WCSFormat,WCSDataType)
+EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,ResX,ResY,WCSOutputCRS)
 {
     var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
-    request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
-    if (WCSFormat) {
-        request += '&format=' + WCSFormat;
+    //var WCSOutputCRS = 'http://www.opengis.net/def/crs/EPSG/0/4326';
+    if (typeof WCSOutputCRS !== 'undefined') {
+        request += '&subsetx=x,' + WCSOutputCRS + '(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y,' + WCSOutputCRS + '(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
+    } else {
+        request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
+    }
+    request += '&size=x(' + ResX + ')&size=y(' + ResY + ')';
+    if (WCSMimeType) {
+        request += '&format=' + WCSMimeType;
     }
 
     var datatype = 'XML'; // default value is 'XML' to not break code using previous versions of the EarthServerGenericClient
@@ -453,6 +468,9 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
     }
 
     EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
+    // request = 'service=wcs&version=2.0.0&request=GetCoverage&outputCRS=http://www.opengis.net/def/crs/EPSG/0/4326&size=x(33)&size=y(33)&coverageid=ACE2&format=image/x-aaigrid&subset=x,http://www.opengis.net/def/crs/EPSG/0/4326(-22.5,-11.25)&subset=y,http://www.opengis.net/def/crs/EPSG/0/4326(33.75,45)';
+    //request = 'service=wcs&version=2.0.0&request=GetCoverage&outputCRS=http://www.opengis.net/def/crs/EPSG/0/4326&size=x(500)&size=y(500)&coverageid=ACE2&format=image/x-aaigrid&subset=x,http://www.opengis.net/def/crs/EPSG/0/4326(-22.5,-11.25)&subset=y,http://www.opengis.net/def/crs/EPSG/0/4326(33.75,45)';
 
     $.ajax(
         {
@@ -464,62 +482,67 @@ EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,
             {
                 try{
                 EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
-                var Grid = $(receivedData).find('GridEnvelope');
-                var low  = $(Grid).find('low').text().split(" ");
-                var high = $(Grid).find('high').text().split(" ");
 
-                var sizeX = high[0] - low[0] + 1;
-                var sizeY = high[1] - low[1] + 1;
+                var didHandle = callback.getModel().preprocessReceivedData(receivedData, responseData, WCSMimeType);
+                // Defaults to the following implementation to not break old code:
+                if (!didHandle) {
+                    var Grid = $(receivedData).find('GridEnvelope');
+                    var low  = $(Grid).find('low').text().split(" ");
+                    var high = $(Grid).find('high').text().split(" ");
 
-                if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
-                {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
+                    var sizeX = high[0] - low[0] + 1;
+                    var sizeY = high[1] - low[1] + 1;
 
-                responseData.height = sizeX;
-                responseData.width  = sizeY;
+                    if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
+                    {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
 
-                console.log(sizeX,sizeY);
+                    responseData.height = sizeX;
+                    responseData.width  = sizeY;
 
-                var hm = new Array(sizeX);
-                for(var index=0; index<hm.length; index++)
-                {
-                    hm[index] = new Array(sizeY);
-                }
+                    console.log(sizeX,sizeY);
 
-                var DataBlocks = $(receivedData).find('DataBlock');
-                DataBlocks.each(function () {
-                    var tuples = $(this).find("tupleList").text().split('},');
-                    for (var i = 0; i < tuples.length; i++) {
-                        var tmp = tuples[i].substr(1);
-                        var valuesList = tmp.split(",");
+                    var hm = new Array(sizeX);
+                    for(var index=0; index<hm.length; index++)
+                    {
+                        hm[index] = new Array(sizeY);
+                    }
 
-                        for (var k = 0; k < valuesList.length; k++) {
-                            tmp = parseFloat(valuesList[k]);
+                    var DataBlocks = $(receivedData).find('DataBlock');
+                    DataBlocks.each(function () {
+                        var tuples = $(this).find("tupleList").text().split('},');
+                        for (var i = 0; i < tuples.length; i++) {
+                            var tmp = tuples[i].substr(1);
+                            var valuesList = tmp.split(",");
 
-                            hm[parseInt(k/(sizeX))][parseInt(k%(sizeX))] = tmp;
+                            for (var k = 0; k < valuesList.length; k++) {
+                                tmp = parseFloat(valuesList[k]);
 
-                            if (responseData.maxHMvalue < tmp)
-                            {
-                                responseData.maxHMvalue = parseFloat(tmp);
-                            }
-                            if (responseData.minHMvalue > tmp)
-                            {
-                                responseData.minHMvalue = parseFloat(tmp);
+                                hm[parseInt(k/(sizeX))][parseInt(k%(sizeX))] = tmp;
+
+                                if (responseData.maxHMvalue < tmp)
+                                {
+                                    responseData.maxHMvalue = parseFloat(tmp);
+                                }
+                                if (responseData.minHMvalue > tmp)
+                                {
+                                    responseData.minHMvalue = parseFloat(tmp);
+                                }
                             }
                         }
-                    }
-                    if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
-                    {
-                        responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
-                    }
-                    tuples = null;
-                });
-                DataBlocks = null;
+                        if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
+                        {
+                            responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
+                        }
+                        tuples = null;
+                    });
+                    DataBlocks = null;
 
-                responseData.minXvalue = 0;
-                responseData.minZvalue = 0;
-                responseData.maxXvalue = sizeY;
-                responseData.maxZvalue = sizeX;
-                responseData.heightmap = hm;
+                    responseData.minXvalue = 0;
+                    responseData.minZvalue = 0;
+                    responseData.maxXvalue = sizeY;
+                    responseData.maxZvalue = sizeX;
+                    responseData.heightmap = hm;
+                    }
                 }
                 catch(err)
                 {   alert(err); }
@@ -658,13 +681,13 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
  * @param WCSVersion - Version of the WCS service.
  * @param WCSFormat - Format of the WCS response.
  */
-EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSFormat)
+EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,WCSOutputCRS)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
-    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,ResX,ResY,WCSOutputCRS);
 };
 
 /**

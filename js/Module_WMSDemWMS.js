@@ -56,20 +56,31 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoverages = function (cove
  * Sets the WMS Version for the WMS Query String. Default: "1.3"
  * @param version - String with WMS version number.
  */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+/**
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
+ */
 EarthServerGenericClient.Model_WMSDemWMS.prototype.setWMSVersion = function(version)
 {
     this.WMSVersion = String(version);
 };
 /**
- * Sets the response format for the WCS Queries.
- * @param format - Format string for the WMS Response (default: 'image/x-aaigrid')
+ * Sets the data type for the ajax call executing the WCS query.
+ * @param type - Datatype for the ajax call (default: 'XML')
  */
-EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputFormat=function(outputFormat){
-    /**
-     * URL for the WMS service.
-     * @type {String}
-     */
-    this.outputFormat = String(outputFormat);
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSDataType =function(type){
+    this.WCSDataType = String(type);
+};
+/**
+ * Sets the desired MIME type for the response of the WCS Queries.
+ * @param type - MIME string for the WCS Response (i.e.: 'image/x-aaigrid')
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSMimeType =function(type){
+    this.WCSMimeType = String(type);
 };
 /**
  * Sets the Coordinate Reference System.
@@ -86,7 +97,7 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoordinateReferenceSystem 
  */
 EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputCRS = function(value)
 {
-    this.outpuCRS = value;
+    this.WCSOutputCRS = value;
 };
 /**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
@@ -109,8 +120,8 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.createModel=function(root, cu
     this.root = root;
 
     // FIXXME: this is not the right place for eventually setting the default value:
-    if (!this.outputFormat) {
-        this.outputFormat = 'image/x-aaigrid';
+    if (!this.WCSMimeType) {
+        this.WCSMimeType = 'image/x-aaigrid';
     }
 
     //Create Placeholder
@@ -132,9 +143,10 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.createModel=function(root, cu
         maxLatitude:  this.maxx
     };
 
-    EarthServerGenericClient.requestWMSImageWMSDem(this,bb,this.XResolution,this.ZResolution,
+    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
                                                 this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
-                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.outputFormat);
+                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.WCSMimeType,this.WCSDataType, 
+                                                this.WCSOutputFormat, this.WCSOutputCRS);
 };
 
 /**
