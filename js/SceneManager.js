@@ -1482,7 +1482,11 @@ EarthServerGenericClient.SceneManager = function()
         if( nextFrameCallback.length !== 0)
         {
             var element = document.getElementById("x3d");
-            element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
+            // NOTE: If the 'x3d' element gets hidden while there are nextFrameCallbacks the element will not be found.
+            // In this case we can do nothing else than try it again:
+            if (element) {
+                element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
+            }
         }
     };
 
