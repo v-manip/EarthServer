@@ -1,6 +1,6 @@
 /**
  * @namespace Namespace for the Earth Server Generic Client
- * @version 0.7 alpha 27.11.1013
+ * @version 0.7 alpha 25.11.1013
  */
 var EarthServerGenericClient =  {};
 
@@ -1482,7 +1482,11 @@ EarthServerGenericClient.SceneManager = function()
         if( nextFrameCallback.length !== 0)
         {
             var element = document.getElementById("x3d");
-            element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
+            // NOTE: If the 'x3d' element gets hidden while there are nextFrameCallbacks the element will not be found.
+            // In this case we can do nothing else than try it again:
+            if (element) {
+                element.runtime.canvas.doc.needRender = 1; //set this to true to render even without movement
+            }
         }
     };
 
@@ -1872,7 +1876,867 @@ EarthServerGenericClient.SceneManager = function()
 };
 
 // Create main scene
-EarthServerGenericClient.MainScene = new EarthServerGenericClient.SceneManager();//Namespace
+EarthServerGenericClient.MainScene = new EarthServerGenericClient.SceneManager();
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Annotation Layer to create multiple Annotations with the same style who belong together.
+ * @param Name - Name of the Layer. To be displayed and to add annotations to it.
+ * @param root - X3dom element to append the annotations.
+ * @param fontSize - Font size of the annotations.
+ * @param fontColor - Font color of the annotations
+ * @param fontHover - The annotations hovers above the marker by this value.
+ * @param markerSize - Size of the annotations marker.
+ * @param markerColor - Color of the annotations marker.
+ * @constructor
+ */
+EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
+{
+
+    this.name = Name;   // Name of this layer
+    var annotationTransforms = []; // Array with all annotation text transforms
+    var annotations = [];   // The text of the annotations (displayed in the UI)
+    var markerTransforms = []; // Array with all marker transforms
+    var modelIndex = -1;    // Index of the model this layer is bound to (-1 for unbound)
+
+    /**
+     * Sets the index of the scene model this annotation layer is bound to.
+     * @param index - Index of the scene model.
+     */
+    this.setBoundModuleIndex = function(index)
+    {
+        modelIndex = index;
+    };
+
+    /**
+     * Returns the index of the model this layer is bound to.
+     * @returns {number} - Index of the model or -1 if unbound.
+     */
+    this.getBoundModuleIndex = function()
+    {
+        return modelIndex;
+    };
+
+    /**
+     * Resets the modelIndex this annotation layer is bound to back to -1 and marks it as unbound.
+     */
+    this.releaseBinding = function()
+    {
+        modelIndex = -1;
+    };
+
+    /**
+     * If the annotation layer is bound to a module the annotations shall move when the module is moved.
+     * This function shall receive the delta of the positions every time the module is moved.
+     * @param axis - Axis of the movement.
+     * @param delta - Delta to the last position.
+     */
+    this.movementUpdateBoundModule = function(axis,delta)
+    {
+        if( axis >= 0 && axis < 3)
+        {
+            for(var i=0; i<annotationTransforms.length;i++)
+            {
+                var trans = annotationTransforms[i].getAttribute("translation");
+                var transValue = trans.split(" ");
+
+                if( transValue.length < 3)
+                { transValue = trans.split(",");}
+
+                if(i%2 === 0 || axis === 1)
+                {   transValue[axis] = parseInt(transValue[axis]) - parseInt(delta); }
+                else
+                {   transValue[axis] = parseInt(transValue[axis]) + parseInt(delta); }
+
+                annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+            }
+            for( i=0; i<markerTransforms.length;i++)
+            {
+                trans = markerTransforms[i].getAttribute("translation");
+                transValue = trans.split(" ");
+
+                if( transValue.length < 3)
+                { transValue = trans.split(",");}
+
+                transValue[axis] = parseInt(transValue[axis]) - parseInt(delta);
+                markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+            }
+        }
+
+
+    };
+
+    /**
+     * This function notifies the annotation layer that the scene model's elevation was changed.
+     * All annotation will be checked and altered in their position.
+     */
+    this.elevationUpdateBoundModule = function()
+    {
+        for(var i=0; i<annotationTransforms.length;i++)
+        {
+            var trans = annotationTransforms[i].getAttribute("translation");
+            var transValue = trans.split(" ");
+            var mirror = 1;//We have to multiply the backside text positions with -1
+
+            if( transValue.length < 3)
+            { transValue = trans.split(",");}
+
+
+            if(i%2 === 1)
+            {   mirror = -1;    }
+
+            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0])*mirror,parseInt(transValue[2])*mirror) + fontHover;
+            annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+        }
+
+        for( i=0; i<markerTransforms.length;i++)
+        {
+            trans = markerTransforms[i].getAttribute("translation");
+            transValue = trans.split(" ");
+
+            if( transValue.length < 3)
+            { transValue = trans.split(",");}
+
+            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0]),parseInt(transValue[2]));
+            markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+        }
+
+    };
+
+    /**
+     * Adds an annotation marker and -text to the annotation layer.
+     * @param xPos - Position on the X-Axis of the marker and center of the annotation.
+     * @param yPos - Position on the Y-Axis of the marker and center of the annotation.
+     * @param zPos - Position on the Z-Axis of the marker and center of the annotation.
+     * @param Text - Text for the annotation.
+     */
+    this.addAnnotation = function(xPos,yPos,zPos,Text)
+    {
+
+        annotations.push(Text);//save the text for later queries
+
+        //We draw 2 texts without their back faces.
+        //So the user can see the text from most angles and not mirror inverted.
+        for(var i=0;i<2;i++)
+        {
+            var textTransform = document.createElement('transform');
+            textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
+            var shape = document.createElement('shape');
+            var appearance = document.createElement('appearance');
+            appearance.setAttribute("id","Layer_Appearance_"+Name);
+            var material = document.createElement('material');
+            material.setAttribute('emissiveColor', fontColor);
+            material.setAttribute('diffuseColor', fontColor);
+            var text = document.createElement('text');
+            text.setAttribute('string', Text);
+            var fontStyle = document.createElement('fontStyle');
+            fontStyle.setAttribute('family', 'calibri');
+            fontStyle.setAttribute('style', 'bold');
+            text.appendChild(fontStyle);
+            appearance.appendChild(material);
+            shape.appendChild(appearance);
+            shape.appendChild(text);
+            textTransform.appendChild(shape);
+
+            //one marker is enough
+            if(i===0)
+            {
+                var sphere_trans = document.createElement("Transform");
+                sphere_trans.setAttribute("scale",markerSize + " " + markerSize + " "+markerSize);
+                sphere_trans.setAttribute('translation', xPos + " " + yPos + " " + zPos);
+                var sphere_shape = document.createElement("Shape");
+                var sphere = document.createElement("Sphere");
+                var sphere_app = document.createElement("Appearance");
+                var sphere_material = document.createElement('material');
+                sphere_material.setAttribute('diffusecolor', markerColor);
+                sphere_app.appendChild(sphere_material);
+                sphere_shape.appendChild(sphere_app);
+                sphere_shape.appendChild(sphere);
+                sphere_trans.appendChild(sphere_shape);
+
+                root.appendChild(sphere_trans);
+                //annotationTransforms.push(sphere_trans);
+                markerTransforms.push(sphere_trans);
+
+                sphere_trans = null;
+                sphere_shape = null;
+                sphere = null;
+                sphere_app = null;
+                sphere_material = null;
+            }
+
+            var rootTransform = document.createElement('transform');
+
+            textTransform.setAttribute('translation', xPos + " " + (yPos+fontHover) + " " + zPos);
+            textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
+
+            //One text "normal" and one "mirror inverted"
+            if(i===0)
+            {
+                textTransform.setAttribute('rotation', '0 0 1 3.14');
+            }
+            else
+            {
+                textTransform.setAttribute('rotation', '0 0 1 3.14');
+                textTransform.setAttribute('translation', -xPos + " " + (yPos+fontHover) + " " + -zPos);
+                rootTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+
+            //annotationTransforms.push(rootTransform);//save the transform to toggle rendering
+            annotationTransforms.push(textTransform);
+            rootTransform.appendChild(textTransform);
+            root.appendChild( rootTransform );
+        }
+
+        textTransform = null;
+        shape = null;
+        appearance = null;
+        material = null;
+        text = null;
+        fontStyle = null;
+    };
+
+    /**
+     * Determine the rendering of this layer.
+     * @param value - boolean
+     */
+    this.renderLayer = function( value )
+    {
+        for(var i=0; i<annotationTransforms.length;i++)
+        {
+            annotationTransforms[i].setAttribute("render",value);
+        }
+        for(i=0; i<markerTransforms.length;i++)
+        {
+            markerTransforms[i].setAttribute("render",value);
+        }
+    };
+
+
+    /**
+     * Returns an array with the annotation text.
+     * @returns {Array}
+     */
+    this.getAnnotationTexts = function()
+    {
+        var arrayReturn = [];
+
+        for(var i=0; i<annotations.length;i++)
+        {   arrayReturn.push(annotations[i]);    }
+
+        return arrayReturn;
+    };
+};
+
+/**
+ * @class AxisLabels
+ * @description This class generates labels for each axis and side (except bottom) of the bounding box.
+ *
+ * @param xSize - The width of the bounding box.
+ * @param ySize - The height of the bounding box.
+ * @param zSize - The depth of the bounding box.
+ * @param textHover - Distance between the bounding box and the text.
+ */
+EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize, textHover)
+{
+    /**
+     * @description Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
+     * @type {string}
+     * @default "0.7 0.7 0.5"
+     */
+    var fontColor = "0.7 0.7 0.5";
+
+    /**
+     * Distance between the bounding box and the text.
+     * @type {number}
+     */
+    var hover = textHover || ((xSize + ySize + zSize) / 150);
+
+    /**
+     * @description Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
+     * @type {Array}
+     * @default Empty
+     */
+    var transforms = [];
+    /**
+     * @description Array stores all text nodes of the x-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesX = [];
+    /**
+     * @description Array stores all text nodes of the y-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesY = [];
+    /**
+     * @description Array stores all text nodes of the z-axis.
+     * @type {Array}
+     * @default Empty
+     */
+    var textNodesZ = [];
+
+    /**
+     * @description This function changes the text size of each label independent of its axis.
+     * @param size
+     * The parameter (positive value expected) represents the desired size of the font.
+     * Remember, the parameter represents the size in x3dom units not in pt like css.
+     * Hence the size value could be large.
+     */
+    this.changeFontSize = function(size)
+    {
+        size = Math.abs(size);
+        for(var i=0; i<transforms.length; i++)
+        {
+            var scale =x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
+
+            if(scale.x>=0) scale.x = size; else scale.x = -1 * size;
+            if(scale.y>=0) scale.y = size; else scale.y = -1 * size;
+            if(scale.z>=0) scale.z = size; else scale.z = -1 * size;
+
+            transforms[i].setAttribute('scale', scale.x + " " + scale.y + " " + scale.z);
+        }
+    };
+
+    /**
+     * This function changes the color of each label independent of its axis.
+     * @param color
+     * This parameter changes the current color value of each label.
+     * It expects a string in x3d color format.
+     * E.g. "1.0 1.0 1.0" for white and "0.0 0.0 0.0" for black.
+     */
+    this.changeColor = function(color)
+    {
+        for(var i=0; i<transforms.length; i++)
+        {
+            var material = transforms[i].getElementsByTagName('material');
+
+            for(var j=0; j<material.length; j++)
+            {
+                material[j].setAttribute('emissiveColor', color);
+                material[j].setAttribute('diffuseColor', color);
+            }
+        }
+    };
+
+    /**
+     * @description This function changes the text of each label on the x-axis.
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameX = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesX.length; i++)
+        {
+            textNodesX[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @description This function changes the text of each label on the y-axis.
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameY = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesY.length; i++)
+        {
+            textNodesY[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @param string
+     * Defines the new text.
+     */
+    this.changeLabelNameZ = function(string)
+    {
+        //Prevent multi line!
+        while(string.search("'")!=-1 || string.search("\"")!=-1)
+        {
+            string = string.replace("'", " ");
+            string = string.replace("\"", " ");
+        }
+
+        for(var i=0; i<textNodesZ.length; i++)
+        {
+            textNodesZ[i].setAttribute('string', string);
+        }
+    };
+
+    /**
+     * @description This function generates labels on all three axis (x,y,z). The labels will be
+     * added on each side (except bottom).
+     */
+    this.createAxisLabels = function(xLabel,yLabel,zLabel)
+    {
+        createLabel("x", "front", xLabel);
+        createLabel("x", "back",  xLabel);
+        createLabel("x", "top",   xLabel);
+
+        createLabel("y", "front", yLabel);
+        createLabel("y", "back",  yLabel);
+        createLabel("y", "left",  yLabel);
+        createLabel("y", "right", yLabel);
+
+        createLabel("z", "front", zLabel);
+        createLabel("z", "back",  zLabel);
+        createLabel("z", "top",   zLabel);
+    };
+
+    /**
+     * @description This (private) function creates the needed x3dom nodes.
+     *
+     * @param axis
+     * Which axis do you want? Available: x, y, z
+     *
+     * @param side
+     * Choose the side of the axis. <br>
+     * Available for x: front (default), back and top. <br>
+     * Available for y: front (default), back, left and right. <br>
+     * Available for z: front (default), back and top.
+     *
+     * @param label
+     * This text will appear at the given axis.
+     */
+    function createLabel(axis, side, label)
+    {
+        //Setup text
+        var textTransform = document.createElement('transform');
+        textTransform.setAttribute('scale', xSize/5 + " " + ySize/5 + " " + zSize/5);
+        var shape = document.createElement('shape');
+        var appearance = document.createElement('appearance');
+        var material = document.createElement('material');
+        material.setAttribute('emissiveColor', fontColor);
+        var text = document.createElement('text');
+        text.setAttribute('string', label);
+        var fontStyle = document.createElement('fontStyle');
+        fontStyle.setAttribute('family', 'calibri');
+        fontStyle.setAttribute('style', 'bold');
+        text.appendChild(fontStyle);
+        appearance.appendChild(material);
+        shape.appendChild(appearance);
+        shape.appendChild(text);
+        textTransform.appendChild(shape);
+
+        //var home = document.getElementById('x3dScene');
+        var home = document.getElementById('AnnotationsGroup');
+        var rotationTransform = document.createElement('transform');
+
+        if(axis=="x")
+        {
+            textTransform.setAttribute('translation', "0 " + (ySize+hover) + " " + zSize);
+
+            if(side=="back")
+            {
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '1 0 0 -1.57');
+                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-hover));
+            }
+            textNodesX[textNodesX.length] = text;
+        }
+        else if(axis=="y")
+        {
+            textTransform.setAttribute('translation', -(xSize+hover) + " 0 " + zSize);
+            textTransform.setAttribute('rotation', '0 0 1 1.57');
+
+            if(side=="back")
+            {
+                textTransform.setAttribute('translation', (xSize+hover) + " 0 " + zSize);
+                textTransform.setAttribute('rotation', '0 0 1 4.74');
+                rotationTransform.setAttribute('rotation', '1 0 0 3.14');
+            }
+            else if(side=="left")
+            {
+                rotationTransform.setAttribute('rotation', '0 1 0 -1.57');
+            }
+            else if(side=="right")
+            {
+                rotationTransform.setAttribute('rotation', '0 1 0 1.57');
+            }
+            textNodesY[textNodesY.length] = text;
+        }
+        else if(axis=="z")
+        {
+            textTransform.setAttribute('translation', xSize + " " + (ySize+hover) + " 0");
+            textTransform.setAttribute('rotation', '0 1 0 1.57');
+            if(side=="back")
+            {
+                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
+            }
+            else if(side=="top")
+            {
+                textTransform.setAttribute('rotation', '0 1 0 1.57');
+                textTransform.setAttribute('translation', "0 0 0");
+
+                rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
+                rotationTransform.setAttribute('translation', -(xSize+hover) + " " + -ySize + " 0");
+            }
+            textNodesZ[textNodesZ.length] = text;
+        }
+
+        transforms[transforms.length]=textTransform;
+        rotationTransform.appendChild(textTransform);
+        home.appendChild(rotationTransform);
+    }
+};
+/**
+ * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
+ * For every appearance in the appearances parameter one level is built with 25% size of the last level.
+ * @param parentNode - Dom element to append the elevation grids to.
+ * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
+ * @param hf - The height map to be used for the elevation grid.
+ * @param appearances - Array of appearances. For every appearance one level for LOD is built. 1 Level = no LOD.
+ * @constructor
+ */
+function ElevationGrid(parentNode,info, hf,appearances)
+{
+    /**
+     * Creates and inserts elevation grid (terrain chunk) into the DOM.
+     */
+    function setupChunk()
+    {
+
+        try
+        {
+            var elevationGrid, shape, shf;
+
+            // We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
+            for(var i=0; i<appearances.length; i++)
+            {
+                // All none full resolutions needs to be one element bigger to keep the desired length
+                var add = 0;
+                if(i !== 0)
+                { add = 1;  }
+
+                // Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
+                shape = document.createElement('Shape');
+                shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
+
+                // Build the Elevation Grids
+                // shrink the heightfield to the correct size for this detail level
+                shf = shrinkHeightMap(hf, info.chunkWidth, info.chunkHeight,Math.pow(2,i));
+                elevationGrid = document.createElement('ElevationGrid');
+                elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
+                elevationGrid.setAttribute("solid", "false");
+                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));// To keep the same size with fewer elements increase the space of one element
+                elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
+                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));// fewer elements in every step
+                elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
+                elevationGrid.setAttribute("height", shf );
+                elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,i)));
+
+                shape.appendChild(appearances[i]);
+                shape.appendChild(elevationGrid);
+
+                parentNode.appendChild(shape);
+
+                // set vars null
+                shf = null;
+                shape = null;
+                elevationGrid = null;
+            }
+            hf = null;
+            parentNode = null;
+            info = null;
+            appearances = null;
+        }
+        catch(error)
+        {
+            alert('ElevationGrid::setupChunk(): ' + error);
+        }
+    }
+
+    /**
+     * Shrinks the heightfield with the given factor
+     * @param heightfield - The used heihgfield.
+     * @param sizex - Width of the heightfield.
+     * @param sizey - Height of the heightfield.
+     * @param shrinkfactor - Factor to shrink the heightmap. 1:Full heightmap 2: 25% (scaled 50% on each side)
+     * @returns {string}
+     */
+    function shrinkHeightMap(heightfield, sizex, sizey, shrinkfactor)
+    {
+        var smallGrid, smallx, smally, val,i,k,l,o,div;
+
+        smallGrid = [];
+        smallx = parseInt(sizex/shrinkfactor);
+        smally = parseInt(sizey/shrinkfactor);
+        //IF shrunk, the heightfield needs one more element than the desired length (63 elements for a length of 62)
+        if( shrinkfactor !== 1)
+        {
+            smallx++;
+            smally++;
+            div=shrinkfactor*shrinkfactor;
+
+            for(i=0; i<smally; i++)
+            {
+                var i_sf = (i*shrinkfactor);
+
+                for(k=0; k<smallx; k++)
+                {
+                    var k_sf = (k*shrinkfactor);
+                    val = 0;
+                    for(l=0; l<shrinkfactor; l++)
+                    {
+                        for(o=0; o<shrinkfactor; o++)
+                        {
+                            var x = k_sf + l;
+                            var y = i_sf + o;
+                            if(x >= sizex) x = sizex -1;
+                            if(y >= sizey) y = sizey -1;
+                            var tmp = heightfield[y][x];
+                            val = val + parseFloat(tmp);
+                        }
+                    }
+                    val = val/div;
+                    smallGrid.push(val+ " ");
+                }
+            }
+        }
+        else
+        {
+            for(i=0; i<smally; i++)
+            {
+                for(k=0; k<smallx; k++)
+                {
+                    val = parseFloat( heightfield[i][k]);
+                    smallGrid.push(val+" ");
+                }
+            }
+        }
+        return smallGrid.join(" ");
+    }
+
+    /**
+     * Calcs the TextureCoordinates for the elevation grid(s).
+     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
+     * @param xpos - Start position of the elevation grid within the terrain.
+     * @param ypos - Start position of the elevation grid within the terrain.
+     * @param sizex - Size of the elevation grid on the x-Axis.
+     * @param sizey - Size of the elevation grid on the x-Axis.
+     * @param terrainWidth - Size of the whole terrain on the x-Axis.
+     * @param terrainHeight - Size of the whole terrain on the y-Axis.
+     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
+     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
+     */
+    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
+    {
+        var tmpx, tmpy;
+
+        var smallx = parseInt(sizex/shrinkfactor);
+        var smally = parseInt(sizey/shrinkfactor);
+
+        if( shrinkfactor !== 1)
+        {
+            smallx++;
+            smally++;
+        }
+
+        var buffer = [];
+        //Create Node
+        var tcnode = document.createElement("TextureCoordinate");
+
+        //File string
+        for (var i = 0; i < smally; i++)
+        {
+            for (var k = 0; k < smallx; k++)
+            {
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
+
+                buffer.push(tmpx + " ");
+                buffer.push(tmpy + " ");
+            }
+        }
+        var tc = buffer.join("");
+
+        tcnode.setAttribute("point", tc);
+
+        return tcnode;
+    }
+
+    setupChunk();
+}
+/**
+ * @class Builds one grid that contains gaps (NODATA zones) into a chunk.
+ * @param parentNode - Dom element to append the gap grid to.
+ * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
+ * @param hf - The height map to be used for the elevation grid.
+ * @param appearances - Appearances for the Gap Grid.
+ * @param NODATA - The NODATA value. Parts with this values are left as a gap in the grid.
+ * @constructor
+ */
+function GapGrid(parentNode,info, hf,appearances,NODATA)
+{
+    /**
+     * Creates and inserts elevation grid (terrain chunk) into the DOM.
+     */
+    function setupChunk()
+    {
+
+        try
+        {
+            var grid, shape, coords, coordsNode;
+
+            shape = document.createElement('Shape');
+            shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+0);
+
+            coords = buildCoordinates(hf, info.chunkWidth, info.chunkHeight,NODATA);
+            coordsNode = document.createElement('Coordinate');
+            coordsNode.setAttribute("point", coords.coords);
+
+            grid = document.createElement('IndexedFaceSet');
+            grid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+0);
+            grid.setAttribute("solid", "false");
+            grid.setAttribute("colorPerVertex", "false");
+
+            grid.setAttribute("creaseAngle", "0.01");
+            grid.setAttribute("ccw", "true");
+
+            grid.setAttribute("coordIndex", coords.index);
+            grid.appendChild( coordsNode );
+            grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
+
+            if(appearances.length )
+            {   shape.appendChild(appearances[0]);  }
+            shape.appendChild(grid);
+
+            parentNode.appendChild(shape);
+
+            // set vars null
+            coords = null;
+            coordsNode = null;
+            shape = null;
+            grid = null;
+
+            hf = null;
+            parentNode = null;
+            info = null;
+            appearances = null;
+        }
+        catch(error)
+        {
+            alert('GapGrid::setupChunk(): ' + error);
+        }
+    }
+
+    /**
+     * Shrinks the heightfield with the given factor
+     * @param heightfield - The used heightfield.
+     * @param sizex - Width of the heightfield.
+     * @param sizey - Height of the heightfield.
+     * @param NODATA - The value that a considered as NODATA available and shall be left as a gap
+     * @returns {Object}
+     */
+    function buildCoordinates(heightfield, sizex, sizey, NODATA)
+    {
+        var coords = {};
+        coords.coords = [];
+        coords.index  = [];
+
+        // add the coords
+        for(var o=0; o< sizey; o++)
+        {
+            for(var j=0; j<sizex; j++)
+            {
+                coords.coords.push(""+ j + " " + heightfield[o][j] + " " + o + " ");
+            }
+        }
+
+        for(var i=0; i+1< sizey; i++)
+        {
+            for(var k=0; k+1<sizex; k++)
+            {
+                // check if NONE of the four vertices used for this face as a NODATA value
+                if( heightfield[i][k] !== NODATA && heightfield[i+1][k] !== NODATA
+                     && heightfield[i+1][k+1] !== NODATA && heightfield[i][k+1] !== NODATA)
+                {
+                    // add indices
+                    coords.index.push( (i*sizex)+k );
+                    coords.index.push( ((i*sizex)+1)+k );
+                    coords.index.push( (((i+1)*sizex)+1)+k );
+                    coords.index.push( ((i+1)*sizex)+k );
+
+                    coords.index.push( -1 );
+                }
+            }
+        }
+
+        return coords;
+    }
+
+
+    /**
+     * Calcs the TextureCoordinates for the elevation grid(s).
+     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
+     * @param xpos - Start position of the elevation grid within the terrain.
+     * @param ypos - Start position of the elevation grid within the terrain.
+     * @param sizex - Size of the elevation grid on the x-Axis.
+     * @param sizey - Size of the elevation grid on the x-Axis.
+     * @param terrainWidth - Size of the whole terrain on the x-Axis.
+     * @param terrainHeight - Size of the whole terrain on the y-Axis.
+     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
+     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
+     */
+    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
+    {
+        var tmpx, tmpy;
+
+        var smallx = parseInt(sizex/shrinkfactor);
+        var smally = parseInt(sizey/shrinkfactor);
+
+        if( shrinkfactor !== 1)
+        {
+            smallx++;
+            smally++;
+        }
+
+        var buffer = [];
+        //Create Node
+        var tcnode = document.createElement("TextureCoordinate");
+
+        //File string
+        for (var i = 0; i < smally; i++)
+        {
+            for (var k = 0; k < smallx; k++)
+            {
+                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
+                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
+
+                buffer.push(tmpx + " ");
+                buffer.push(tmpy + " ");
+            }
+        }
+        var tc = buffer.join("");
+
+        tcnode.setAttribute("point", tc);
+
+        return tcnode;
+    }
+
+    setupChunk();
+}
+//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -2133,12 +2997,53 @@ EarthServerGenericClient.AbstractSceneModel = function(){
     };
 
     /**
+     * Registers a handler for a specific format for preprocessing data received
+     * by a data request.
+     * @param mimetype - Received data from the server request.
+     * @returns {boolean} - TRUE if a handler for the given format is registered,
+     * FALSE if not
+     */
+    this.registerMIMETypeHandler = function(mimetype, handler)
+    {
+        if (mimetype != "" && handler) {
+            if (!this.mimetypeHandlers) {
+                this.mimetypeHandlers = {};
+            }
+            this.mimetypeHandlers[mimetype] = handler;
+        } else {
+            alert("'registerMIMETypeHandler' called with wrong arguments!");
+            console.log("'registerMIMETypeHandler' called with wrong arguments!");
+        }
+    };
+
+    /**
+     * Preprocesses the received data from the server request to extract the 
+     * heightmap data dependent on the response format.
+     * @param data - Received data from the server request.
+     * @param responseData - Instance of the ServerResponseData which has to be filled.
+     * @param mimetype - type to select the corresponding handler.
+     * @returns {boolean} - TRUE if a handler for the given format is registered,
+     * FALSE if not
+     */
+    this.preprocessReceivedData = function(data, responseData, mimetype)
+    {
+        var mimetypeHandler = this.mimetypeHandlers[mimetype];
+        if (!mimetypeHandler) {
+            return false;
+        } else {
+            mimetypeHandler(data, responseData);
+        }
+
+        return true;
+    };
+
+    /**
      * Validates the received data from the server request.
      * Checks if a texture and a heightmap are available at the moment.
      * @param data - Received data from the server request.
      * @returns {boolean} - TRUE if OK, FALSE if some data is missing
      */
-    this.checkReceivedData = function( data)
+    this.checkReceivedData = function(data)
     {
         this.receivedDataCount++;
         this.reportProgress();
@@ -2531,342 +3436,2804 @@ EarthServerGenericClient.AbstractSceneModel = function(){
          */
         this.index = -1;
     };
-};/**
- * @class Builds one elevation grid chunk. It can consists of several elevation grids to be used in a LOD.
- * For every appearance in the appearances parameter one level is built with 25% size of the last level.
- * @param parentNode - Dom element to append the elevation grids to.
- * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
- * @param hf - The height map to be used for the elevation grid.
- * @param appearances - Array of appearances. For every appearance one level for LOD is built. 1 Level = no LOD.
- * @constructor
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: Layer and Time. TODO: Add better description
+ * 1 URL for the service, 1 Coverage name data.
+ * @augments EarthServerGenericClient.AbstractSceneModel
  */
-function ElevationGrid(parentNode,info, hf,appearances)
+EarthServerGenericClient.Model_LayerAndTime = function()
 {
+    this.setDefaults();
+    this.name = "Coverage with layers and time.";
+   
     /**
-     * Creates and inserts elevation grid (terrain chunk) into the DOM.
+     * The custom or default WCPS Queries.
+     * @type {Array}
      */
-    function setupChunk()
+    this.WCPSQuery  = [];
+    /**
+     * Data modifier for the data query. Should be a number as a string.
+     * @default: Empty String
+     * @type {string}
+     */
+    this.dataModifier = "";
+};
+EarthServerGenericClient.Model_LayerAndTime.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+/**
+ * Sets the URL for the service.
+ * @param url
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setURL=function(url){
+    /**
+     * URL for the WCPS service.
+     * @type {String}
+     */
+    this.URLWCPS = String(url);
+};
+/**
+ * Sets the coverage name.
+ * @param coverageLayer - Coverage name for the layered data set.
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setCoverage = function (coverageLayer) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageLayer = String(coverageLayer);
+};
+/**
+ * Sets the queried layers. E.g. 1:3
+ * @param Layers
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setLayers = function (Layers) {
+    /**
+     * Queried Layers.
+     * @type {String}
+     */
+    this.queriedLayers = [];
+
+    var tmpLayers = String(Layers);
+    tmpLayers = tmpLayers.split(":");
+
+    if( tmpLayers.length === 1)
+    {   this.queriedLayers = tmpLayers; }
+    else
     {
-
-        try
-        {
-            var elevationGrid, shape, shf;
-
-            // We build one level of a LOD for every appearance. Example: With 3 children means: [Full Resolution, 1/2 Resolution, 1/4 Resolution]
-            for(var i=0; i<appearances.length; i++)
-            {
-                // All none full resolutions needs to be one element bigger to keep the desired length
-                var add = 0;
-                if(i !== 0)
-                { add = 1;  }
-
-                // Set up: Shape-> Appearance -> ImageTexture +  Texturetransform
-                shape = document.createElement('Shape');
-                shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+i);
-
-                // Build the Elevation Grids
-                // shrink the heightfield to the correct size for this detail level
-                shf = shrinkHeightMap(hf, info.chunkWidth, info.chunkHeight,Math.pow(2,i));
-                elevationGrid = document.createElement('ElevationGrid');
-                elevationGrid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+i);
-                elevationGrid.setAttribute("solid", "false");
-                elevationGrid.setAttribute("xSpacing", String(parseInt(Math.pow(2,i))));// To keep the same size with fewer elements increase the space of one element
-                elevationGrid.setAttribute("zSpacing", String(parseInt(Math.pow(2,i))));
-                elevationGrid.setAttribute("xDimension", String(info.chunkWidth/Math.pow(2,i)+add));// fewer elements in every step
-                elevationGrid.setAttribute("zDimension", String(info.chunkHeight/Math.pow(2,i)+add));
-                elevationGrid.setAttribute("height", shf );
-                elevationGrid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,i)));
-
-                shape.appendChild(appearances[i]);
-                shape.appendChild(elevationGrid);
-
-                parentNode.appendChild(shape);
-
-                // set vars null
-                shf = null;
-                shape = null;
-                elevationGrid = null;
-            }
-            hf = null;
-            parentNode = null;
-            info = null;
-            appearances = null;
-        }
-        catch(error)
-        {
-            alert('ElevationGrid::setupChunk(): ' + error);
-        }
+        for(var i=parseInt(tmpLayers[0]);i<=parseInt(tmpLayers[1]);i++)
+        {   this.queriedLayers.push(i);  }
     }
 
+    this.requests = this.queriedLayers.length;
+};
+/**
+ * Sets the coverage time.
+ * @param coverageTime
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setCoverageTime = function (coverageTime) {
     /**
-     * Shrinks the heightfield with the given factor
-     * @param heightfield - The used heihgfield.
-     * @param sizex - Width of the heightfield.
-     * @param sizey - Height of the heightfield.
-     * @param shrinkfactor - Factor to shrink the heightmap. 1:Full heightmap 2: 25% (scaled 50% on each side)
-     * @returns {string}
+     *
+     * @type {String}
      */
-    function shrinkHeightMap(heightfield, sizex, sizey, shrinkfactor)
+    this.coverageTime = String(coverageTime);
+};
+
+/**
+ * Sets the data modifier to be multiplied with the data. Eg: 10000
+ * @param modifier
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setDataModifier = function( modifier )
+{
+    this.dataModifier = String(modifier) + "*";
+};
+
+/**
+ * Sets a specific querystring for the data query.
+ * @param queryString - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setWCPSForChannelALPHA = function(queryString)
+{
+    this.WCPSQuery = queryString;
+};
+
+/**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    // Check if mandatory values are set
+    if( this.coverageLayer === undefined || this.URLWCPS === undefined ||
+        this.coverageTime === undefined || this.queriedLayers === undefined  )
     {
-        var smallGrid, smallx, smally, val,i,k,l,o,div;
+        alert("Not all mandatory values are set. LayerAndTime: " + this.name );
+        console.log(this);
+        return;
+    }
 
-        smallGrid = [];
-        smallx = parseInt(sizex/shrinkfactor);
-        smally = parseInt(sizey/shrinkfactor);
-        //IF shrunk, the heightfield needs one more element than the desired length (63 elements for a length of 62)
-        if( shrinkfactor !== 1)
+    //IF something is not defined use standard query.
+    if( this.WCPSQuery.length === 0 )
+    {
+        for(var i=0; i< this.queriedLayers.length;i++)
         {
-            smallx++;
-            smally++;
-            div=shrinkfactor*shrinkfactor;
+            this.WCPSQuery[i]  = "for data in (" + this.coverageLayer +")";
+            this.WCPSQuery[i] += "return encode(("+ this.dataModifier +"data[t(" + this.coverageTime +"),";
+            this.WCPSQuery[i] += 'd4('+ this.queriedLayers[i]+ ')]),"png")';
+        }
+    }
+    else //ALL set so use custom query
+    {
+        this.replaceSymbolsInString(this.WCPSQuery);
+    }
 
-            for(i=0; i<smally; i++)
-            {
-                var i_sf = (i*shrinkfactor);
+    // request data
+    EarthServerGenericClient.requestWCPSImages(this,this.URLWCPS,this.WCPSQuery);
+};
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data array(!) from the ServerRequest.
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.receiveData = function( data)
+{
+    var failedData = 0;
+    for(var i=0;i<data.length;i++)
+    {
+        // TODO: delete only the one element and UI only if all failed.
+        if( !this.checkReceivedData( data[i] ) )
+            failedData++;
+    }
 
-                for(k=0; k<smallx; k++)
-                {
-                    var k_sf = (k*shrinkfactor);
-                    val = 0;
-                    for(l=0; l<shrinkfactor; l++)
-                    {
-                        for(o=0; o<shrinkfactor; o++)
-                        {
-                            var x = k_sf + l;
-                            var y = i_sf + o;
-                            if(x >= sizex) x = sizex -1;
-                            if(y >= sizey) y = sizey -1;
-                            var tmp = heightfield[y][x];
-                            val = val + parseFloat(tmp);
-                        }
-                    }
-                    val = val/div;
-                    smallGrid.push(val+ " ");
-                }
-            }
+    // if all data failed return
+    if( failedData == data.length) return;
+
+    // create transform
+    this.transformNode = this.createTransform(2,this.queriedLayers.length,2,0);
+    this.root.appendChild(this.transformNode);
+
+    // create terrain
+    EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+    this.terrain = new EarthServerGenericClient.VolumeTerrain(this.transformNode,data,this.index,this.noDataValue);
+    EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+
+};
+
+EarthServerGenericClient.Model_LayerAndTime.prototype.updateMaxShownElements = function(value)
+{
+    if( this.terrain !== undefined )
+        this.terrain.updateMaxShownElements(value);
+};
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_LayerAndTime.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendMaxShownElementsSlider(element,this.index,this.requests);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: Module for underground data.
+ * One service URL, one coverage
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Module_Sharad = function()
+{
+    this.setDefaults();
+    this.boundModelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
+    this.name = "Sharad Underground";
+};
+EarthServerGenericClient.Module_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+
+EarthServerGenericClient.Module_Sharad.prototype.setURL=function(serviceURL)
+{
+    this.serviceURL = serviceURL;
+};
+
+
+EarthServerGenericClient.Module_Sharad.prototype.setCoverages = function (coverage)
+{
+    this.coverage = coverage;
+};
+
+/**
+ * Sets a complete custom querystring.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Module_Sharad.prototype.setWCPSQuery = function(querystring)
+{
+    /**
+     * The custom query.
+     * @type {String}
+     */
+    this.WCPSQuery = String(querystring);
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+    {   alert("root is not defined");    }
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.serviceURL === undefined || this.coverage === undefined || this.WCPSQuery === undefined )
+    {
+        alert("Not all mandatory values are set. Sharad: " + this.name );
+        console.log(this);
+        return;
+    }
+
+    //Replace $ symbols with the actual values
+    this.WCPSQuery = this.WCPSQuery.replace("$CI",this.coverage);
+    this.WCPSQuery = this.WCPSQuery.replace("$MINX",this.minx);
+    this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
+    this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
+    this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
+    this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
+    this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
+    this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
+    this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
+
+    //2: Make ServerRequest
+    EarthServerGenericClient.requestWCPSImage(this,this.serviceURL,this.WCPSQuery);
+};
+
+EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
+{
+
+    function getBinary(file)
+    {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", file, false);
+        xhr.overrideMimeType("text/plain; charset=x-user-defined");
+        xhr.send(null);
+        return xhr.responseText;
+    }
+
+    var descov = getBinary(link);
+
+    if(descov)
+    {
+        descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/);
+        if(descov !== null)
+        {
+            descov = descov[0];
+            descov = descov.replace('coords','"coords"');
+            descov = '' + descov.substring(16,descov.length - 18);
+            var metadata = JSON.parse(descov);
+
+            if( metadata.coords.length > 0)
+            {   this.coords = metadata.coords; }
         }
         else
         {
-            for(i=0; i<smally; i++)
-            {
-                for(k=0; k<smallx; k++)
-                {
-                    val = parseFloat( heightfield[i][k]);
-                    smallGrid.push(val+" ");
-                }
-            }
+            console.log("EarthServerGenericClient::Module_Sharad: Error in meta data response.") ;
         }
-        return smallGrid.join(" ");
     }
-
-    /**
-     * Calcs the TextureCoordinates for the elevation grid(s).
-     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
-     * @param xpos - Start position of the elevation grid within the terrain.
-     * @param ypos - Start position of the elevation grid within the terrain.
-     * @param sizex - Size of the elevation grid on the x-Axis.
-     * @param sizey - Size of the elevation grid on the x-Axis.
-     * @param terrainWidth - Size of the whole terrain on the x-Axis.
-     * @param terrainHeight - Size of the whole terrain on the y-Axis.
-     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
-     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
-     */
-    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
+    else
     {
-        var tmpx, tmpy;
-
-        var smallx = parseInt(sizex/shrinkfactor);
-        var smally = parseInt(sizey/shrinkfactor);
-
-        if( shrinkfactor !== 1)
-        {
-            smallx++;
-            smally++;
-        }
-
-        var buffer = [];
-        //Create Node
-        var tcnode = document.createElement("TextureCoordinate");
-
-        //File string
-        for (var i = 0; i < smally; i++)
-        {
-            for (var k = 0; k < smallx; k++)
-            {
-                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
-                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
-
-                buffer.push(tmpx + " ");
-                buffer.push(tmpy + " ");
-            }
-        }
-        var tc = buffer.join("");
-
-        tcnode.setAttribute("point", tc);
-
-        return tcnode;
+        console.log("EarthServerGenericClient::Module_Sharad: Can't access meta data.") ;
     }
+};
 
-    setupChunk();
-}/**
- * @class Builds one grid that contains gaps (NODATA zones) into a chunk.
- * @param parentNode - Dom element to append the gap grid to.
- * @param info - Information about the ID,position of the chunk, the height map's size and the modelIndex.
- * @param hf - The height map to be used for the elevation grid.
- * @param appearances - Appearances for the Gap Grid.
- * @param NODATA - The NODATA value. Parts with this values are left as a gap in the grid.
- * @constructor
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
  */
-function GapGrid(parentNode,info, hf,appearances,NODATA)
+EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
+{
+    if( this.checkReceivedData(data))
+    {
+        // Remove the placeHolder
+        this.removePlaceHolder();
+
+        // This modules creates it's own transformation.
+        var trans = document.createElement('Transform');
+        trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
+
+        if(this.coords === undefined)
+        {
+            var width = Math.pow(2, Math.round(Math.log(data.texture.width)/Math.log(2)));
+            var height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
+
+            if( width  > x3dom.caps.MAX_TEXTURE_SIZE) width  = x3dom.caps.MAX_TEXTURE_SIZE;
+            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
+
+            this.YResolution = 1000;
+
+            var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(width)-1);
+            var scaleY = (this.cubeSizeY*this.yScale)/1000;
+            var scaleZ = (this.cubeSizeY*this.yScale)/(parseInt(height)-1);
+
+            trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
+
+            var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
+            var yoff = (this.cubeSizeY * this.yOffset) + (height*scaleY) - (this.cubeSizeY/2.0);
+            var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
+            trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
+
+            // turn upright
+            trans.setAttribute("rotation","1 0 0 1.57");
+        }
+        else
+        {
+            height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
+            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
+
+            scaleY = (this.cubeSizeY*this.yScale)/height;
+            trans.setAttribute("scale", "1 " + scaleY + " 1");
+
+            this.YResolution = height;
+
+            var min = (-this.cubeSizeY/2.0) + EarthServerGenericClient.MainScene.getModelOffsetY(this.index) * this.cubeSizeY;
+            yoff = (this.cubeSizeY * this.yOffset) - (min*scaleY) - (this.cubeSizeY/2.0);
+            trans.setAttribute("translation", "0 " + yoff  + " 0");
+        }
+
+
+        this.root.appendChild( trans);
+
+        // Create terrain
+        var area = {};
+        area.minx = this.minx;
+        area.miny = this.miny;
+        area.maxx = this.maxx;
+        area.maxy = this.maxy;
+        this.terrain = new EarthServerGenericClient.SharadTerrain(trans, data, this.index,this.noData,this.coords,area);
+        this.terrain.createTerrain();
+    }
+};
+
+/**
+ * Sets the index of the scene model the sharad module is bound to.
+ * @param index - Index of the scene model.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.setBoundModuleIndex = function(index)
+{
+    if(index === this.index)//prevent to bind this module to itself
+    {
+        console.log("Module_Sharad: Can't bind module to itself.");
+    }
+    else
+    {
+        console.log("Module_Sharad: Bound to model: " + index);
+        this.boundModelIndex = index;
+    }
+};
+
+/**
+ * Returns the index of the model sharad module is bound to.
+ * @returns {number} - Index of the model or -1 if unbound.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.getBoundModuleIndex = function()
+{
+    return this.boundModelIndex;
+};
+
+/**
+ * Resets the modelIndex sharad module is bound to back to -1 and marks it as unbound.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.releaseBinding = function()
+{
+    this.boundModelIndex = -1;
+};
+
+/**
+ * If sharad module is bound to another module the sharad module shall move when the other module is moved.
+ * This function shall receive the delta of the positions every time the module is moved.
+ * @param axis - Axis of the movement.
+ * @param delta - Delta to the last position.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.movementUpdateBoundModule = function(axis,delta)
+{
+   EarthServerGenericClient.MainScene.updateOffsetByDelta(this.index,axis,delta);
+};
+
+/**
+ * This function notifies sharad module that the bound module's elevation was changed.
+ * All annotation will be checked and altered in their position.
+ */
+EarthServerGenericClient.Module_Sharad.prototype.elevationUpdateBoundModule = function(value)
+{
+    if(this.boundModelIndex >= 0)
+    {
+        var x = 0;
+        var z = 0;
+
+        // call elevation update to it self
+        EarthServerGenericClient.MainScene.updateElevation(this.index,value);
+        // get height of the bound module. (for now at the center of the cube
+        var value = EarthServerGenericClient.MainScene.getHeightAt3DPosition(this.boundModelIndex,x,z);
+        console.log(value);
+        // get own transformation by name "EarthServerGenericClient_modelTransform"+this.index);
+        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
+        if( trans)
+        {
+            var scale = trans.getAttribute("scale");
+            scale = scale.split(" ");
+            // determine exact value
+            value = value + (this.cubeSizeY/2) - ( this.YResolution * scale[1] * this.yScale );
+            //update offset
+            EarthServerGenericClient.MainScene.updateOffset(this.index,1,value);
+        }
+        else
+        {   console.log("EarthServerClient::Module_Sharad not able to find transform.");    }
+
+        trans = null;
+    }
+    else
+    {   console.log("EarthServerClient::Module_Sharad not bound to a model.");  }
+};
+
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model
+ */
+EarthServerGenericClient.Module_Sharad.prototype.setSpecificElement= function(element)
+{
+    // updateLength() is called for elevation because the model is rotated. Scaling it's length
+    // scales the size on the y-axis in fact.
+    if(this.coords === undefined)
+    {
+        EarthServerGenericClient.appendGenericSlider(element,"EarthServerGenericClient_Slider_E_"+this.index,"Elevation",
+                                                this.index,0,100,10,EarthServerGenericClient.MainScene.updateLength);
+    }
+    else//normal elevation
+    {   EarthServerGenericClient.appendElevationSlider(element,this.index); }
+};
+
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @ignore <-- REMOVE ME FOR DOCUMENTATION
+ * @class Scene Model: <Add Description>
+ * <amount of service urls + coverages>
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_Name = function()
+{
+    this.setDefaults();
+    this.name = "Some Name";
+
+    //Initialise variables her
+    //this.var = 0;
+};
+EarthServerGenericClient.Model_Name.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+//A function for URL(s)
+//EarthServerGenericClient.Model_Name.prototype.setURLs=function(URL1,..)
+
+//A function for Coverage(s)
+//EarthServerGenericClient.Model_Name.prototype.setCoverages = function (coverage1, ...)
+
+//A function for Version(s)
+//EarthServerGenericClient.Model_Name.prototype.setxxxVersion = function (version)
+
+//Any additional functions
+//EarthServerGenericClient.Model_Name.prototype.functionName = function(parameters)
+
+/**
+ * @ignore <-- REMOVE ME FOR DOCUMENTATION
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_Name.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    /*if( this.var === undefined || ....)
+    {
+        alert("Not all mandatory values are set. ModuleDescription: " + this.name );
+        console.log(this);
+        return;
+    }*/
+
+    //2: Make ServerRequest
+    /* Exmaple:
+    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
+        this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
+        this.URLDEM,this.coverageDEM,this.WCSVersion);
+        */
+};
+
+/**
+ * @ignore <-- REMOVE ME FOR DOCUMENTATION
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_Name.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue));
+        this.root.appendChild( transform);
+
+        //Set transparency
+        data.transparency = this.transparency;
+
+        //Create Terrain out of the received data
+        //Example LOD Terrain
+        //this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index);
+        //this.terrain.createTerrain();
+
+    }
+};
+
+
+/**
+ * @ignore <-- REMOVE ME FOR DOCUMENTATION
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model
+ */
+EarthServerGenericClient.Model_Name.prototype.setSpecificElement= function(element)
+{
+    //Example:
+    //EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCPS Image with DEM from second WCPS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS = function()
+{
+    this.setDefaults();
+    this.name = "WCPS Image with DEM from second WCPS Query.";
+};
+EarthServerGenericClient.Model_WCPSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the urls for both WCPS Queries. If only one url is given it is used for both requests.
+ * @param imageURL - Service URL for the WCPS Image Request
+ * @param demURL - Service URL for the WCPS Dem Request
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setURLs=function(imageURL, demURL){
+    /**
+     * URL for the WCPS image service.
+     * @type {String}
+     */
+    this.imageURL = String(imageURL);
+    /**
+     * URL for the WCPS Dem service.
+     * @type {String}
+     */
+    this.demURL;
+    if(demURL === undefined) // if demURL is not defined use imageURL
+    {   this.demURL = String(imageURL); }
+    else
+    {   this.demURL  = String(demURL);  }
+};
+/**
+ * Sets both coveragenames
+ * @param coverageImage - Coverage name for the image dataset.
+ * @param coverageDem   - Coverage name for the dem dataset.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets a complete custom querystring.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSImageQuery = function(querystring)
 {
     /**
-     * Creates and inserts elevation grid (terrain chunk) into the DOM.
+     * The custom WCPS image query.
+     * @type {String}
      */
-    function setupChunk()
+    this.WCPSImageQuery = String(querystring);
+};
+
+/**
+ * Sets a custom query for the WCPS Dem request.
+ * @param querystring - WCPS as a string.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
+{
+    /**
+     * The custom WCPS Dem query.
+     * @type {String}
+     */
+    this.WCPSDemQuery = String(querystring);
+};
+
+
+/**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
     {
+        alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
+        console.log(this);
+        return;
+    }
 
-        try
+    //2: create wcps queries
+    //If no query was defined use standard query.
+    if( this.WCPSImageQuery === undefined)
+    {
+        this.WCPSImageQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
+        this.WCPSImageQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSImageQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSImageQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
+        this.WCPSImageQuery += '}, "' + this.imageFormat +'" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
+    }
+
+    if( this.WCPSDemQuery === undefined)
+    {
+        var currentXRes = this.XResolution;
+        var currentZRes = this.ZResolution;
+        this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
+        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
+        this.WCPSDemQuery += ', "csv" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
+    }
+
+    EarthServerGenericClient.requestWCPSImageWCPSDem(this,this.imageURL,this.WCPSImageQuery,this.demURL,this.WCPSDemQuery);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
+
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
+
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(transform,1); }
+
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCPS Image with DEM in Alpha Channel
+ * 1 URL for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha = function()
+{
+    this.setDefaults();
+    this.name = "WCPS Image with DEM in alpha channel.";
+    /**
+     * Determines if progressive or complete loading of the model is used.
+     * @default false
+     * @type {Boolean}
+     */
+    this.progressiveLoading = false;
+
+    /**
+     * The custom or default WCPS Queries. The array contains either one element for complete loading
+     * or multiple (3) queries for progressive loading of the model.
+     * @type {Array}
+     */
+    this.WCPSQuery  = [];
+};
+EarthServerGenericClient.Model_WCPSDemAlpha.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Enables/Disables the progressive loading of the model.
+ * @param value - True or False
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setProgressiveLoading=function(value){
+    this.progressiveLoading = value;
+
+    //Progressive Loading creates 3 requests while normal loading 1
+    if( this.progressiveLoading){ this.requests = 3; }
+    else{   this.requests = 1;  }
+};
+/**
+ * Sets the URL for the service.
+ * @param url
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setURL=function(url){
+    /**
+     * URL for the WCPS service.
+     * @type {String}
+     */
+    this.URLWCPS = String(url);
+};
+/**
+ * Sets both coverage names.
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * name of the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets a specific querystring for the RED channel of the WCPS query.
+ * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelRED = function(querystring)
+{
+    this.WCPSQuery[0] = querystring;
+};
+/**
+ * Sets a specific querystring for the GREEN channel of the WCPS query.
+ * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelGREEN = function(querystring)
+{
+    this.WCPSQuery[1] = querystring;
+};
+/**
+ * Sets a specific querystring for the BLUE channel of the WCPS query.
+ * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelBLUE = function(querystring)
+{
+    this.WCPSQuery[2] = querystring;
+};
+/**
+ * Sets a specific querystring for the ALPHA channel of the WCPS query.
+ * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelALPHA = function(querystring)
+{
+    this.WCPSQuery[3] = querystring;
+};
+
+/**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+*/
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.CRS === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
+    {
+        alert("Not all mandatory values are set. WCPSDemAlpha: " + this.name );
+        console.log(this);
+        return;
+    }
+
+    //2: create wcps query/queries
+    //Either the user query if all query strings are set. Or standard wcps query if wcps channels are not set.
+    //Build one query for complete loading and multiple queries for progressive loading
+
+    //IF something is not defined use standard query.
+    if( this.WCPSQuery[0] === undefined || this.WCPSQuery[1] === undefined || this.WCPSQuery[2] === undefined || this.WCPSQuery[3] === undefined)
+    {
+        for(var i=0; i<this.requests; i++)
         {
-            var grid, shape, coords, coordsNode;
-
-            shape = document.createElement('Shape');
-            shape.setAttribute("id",info.modelIndex+"_shape_"+info.ID+"_"+0);
-
-            coords = buildCoordinates(hf, info.chunkWidth, info.chunkHeight,NODATA);
-            coordsNode = document.createElement('Coordinate');
-            coordsNode.setAttribute("point", coords.coords);
-
-            grid = document.createElement('IndexedFaceSet');
-            grid.setAttribute("id", info.modelIndex+"hm"+ info.ID+"_"+0);
-            grid.setAttribute("solid", "false");
-            grid.setAttribute("colorPerVertex", "false");
-
-            grid.setAttribute("creaseAngle", "0.01");
-            grid.setAttribute("ccw", "true");
-
-            grid.setAttribute("coordIndex", coords.index);
-            grid.appendChild( coordsNode );
-            grid.appendChild(calcTexCoords(info.xpos, info.ypos, info.chunkWidth, info.chunkHeight, info.terrainWidth, info.terrainHeight,Math.pow(2,0)));
-
-            if(appearances.length )
-            {   shape.appendChild(appearances[0]);  }
-            shape.appendChild(grid);
-
-            parentNode.appendChild(shape);
-
-            // set vars null
-            coords = null;
-            coordsNode = null;
-            shape = null;
-            grid = null;
-
-            hf = null;
-            parentNode = null;
-            info = null;
-            appearances = null;
+            var currentXRes = parseInt(this.XResolution / Math.pow(2,i) );
+            var currentZRes = parseInt(this.ZResolution / Math.pow(2,i) );
+            this.WCPSQuery[i] =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
+            this.WCPSQuery[i] += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
+            this.WCPSQuery[i] += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
+            this.WCPSQuery[i] += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {});";
+            this.WCPSQuery[i] += 'alpha: (char) (((scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})) / 1349) * 255)";
+            this.WCPSQuery[i] += '}, "' + this.imageFormat +'" )';
         }
-        catch(error)
+    }
+    else //ALL set so use custom query
+    {
+        //Create multiple queries if progressive loading is set or one if not.
+        for(var j=0; j<this.requests; j++)
         {
-            alert('GapGrid::setupChunk(): ' + error);
+            //Replace $ symbols with the actual values
+            var tmpString = [];
+            for(i=0; i<4; i++)
+            {
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI","image");
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD","dtm");
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXY",this.maxy);
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CRS" ,'"' + this.CRS + '"');
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
+                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
+            }
+            this.WCPSQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
+            this.WCPSQuery[j] += "red: " + tmpString[0] + " ";
+            this.WCPSQuery[j] += "green: " + tmpString[1]+ " ";
+            this.WCPSQuery[j] += "blue: " + tmpString[2] + " ";
+            this.WCPSQuery[j] += "alpha: " + tmpString[3];
+            this.WCPSQuery[j] += '}, "' + this.imageFormat +'" )';
         }
     }
 
-    /**
-     * Shrinks the heightfield with the given factor
-     * @param heightfield - The used heightfield.
-     * @param sizex - Width of the heightfield.
-     * @param sizey - Height of the heightfield.
-     * @param NODATA - The value that a considered as NODATA available and shall be left as a gap
-     * @returns {Object}
-     */
-    function buildCoordinates(heightfield, sizex, sizey, NODATA)
+    //3: Make ServerRequest and receive data.
+    if( !this.progressiveLoading)
+    {   EarthServerGenericClient.requestWCPSImageAlphaDem(this,this.URLWCPS,this.WCPSQuery[0]);  }
+    else
+    {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.URLWCPS,this.WCPSQuery,true);   }
+};
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( data)
+{
+    if( this.checkReceivedData(data))
     {
-        var coords = {};
-        coords.coords = [];
-        coords.index  = [];
+        //If progressive loading is enabled this function is called multiple times.
+        //The lower resolution version shall be removed and replaced with the new one.
+        //So the old transformNode will be removed and a new one created.
+        if(this.transformNode !== undefined )
+        {   this.root.removeChild(this.transformNode); }
 
-        // add the coords
-        for(var o=0; o< sizey; o++)
+        //In the first receiveData call remove the placeholder.
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild(this.transformNode);
+
+        //Create Terrain out of the received data
+        if( !this.progressiveLoading)
         {
-            for(var j=0; j<sizex; j++)
-            {
-                coords.coords.push(""+ j + " " + heightfield[o][j] + " " + o + " ");
-            }
+            EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+            this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index, this.noData, this.demNoData);
+            this.terrain.createTerrain();
+            EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+            this.elevationUpdateBinding();
+            if(this.sidePanels)
+            {   this.terrain.createSidePanels(this.transformNode,1);    }
+            EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+        }
+        else
+        {
+            //Check if terrain is already created. Create it in the first function call.
+            if( this.terrain === undefined )
+            {   this.terrain = new EarthServerGenericClient.ProgressiveTerrain(this.index); }
+
+            //Add new data (with higher resolution) to the terrain
+            EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+            this.terrain.insertLevel(this.transformNode,data,this.noData, this.demNoData);
+            this.elevationUpdateBinding();
+            if(this.sidePanels)
+            {   this.terrain.createSidePanels(this.transformNode,1);    }
+            EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+
+            if( this.receivedDataCount === this.requests)
+            {   EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);   }
         }
 
-        for(var i=0; i+1< sizey; i++)
+        //Delete transformNode when the last response call is done.
+        //Until that the pointer is needed to delete the old terrain just before the new terrain is build.
+        if( this.receivedDataCount === this.requests )
+        {   this.transformNode = null;  }
+    }
+};
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCPS Image with DEM from WCS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCPSDemWCS = function()
+{
+    this.setDefaults();
+    this.name = "WCPS Image with DEM from WCS Query.";
+    /**
+     * WCS version for the query.
+     * @default "2.0.0"
+     * @type {String}
+     */
+    this.WCSVersion = "2.0.0";
+};
+EarthServerGenericClient.Model_WCPSDemWCS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the url for both the WCPS and WCS Queries.
+ * @param wcpsurl - Service URL for the WCPS Request
+ * @param demurl  - Service URL for the WCS Request
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setURLs=function(wcpsurl, demurl){
+    /**
+     * URL for the WCPS service.
+     * @type {String}
+     */
+    this.URLWCPS = String(wcpsurl);
+    /**
+     * URL for the WCS service.
+     * @type {String}
+     */
+    this.URLDEM  = String(demurl);
+};
+/**
+ * Sets both coveragenames
+ * @param coverageImage - Coverage name for the image dataset.
+ * @param coverageDem   - Coverage name for the dem dataset.
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets a complete custom querystring.
+ * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
+ * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
+ * Examples: $CI.red , x($MINX:$MINY)
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCPSQuery = function(querystring)
+{
+    /**
+     * The custom query.
+     * @type {String}
+     */
+    this.WCPSQuery = String(querystring);
+};
+
+/**
+ * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
+ * @param version - String with WCS version number.
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+
+/**
+ * Sets the Coordinate Reference System.
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setCoordinateReferenceSystem = function(value)
+{
+    this.CRS = value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.URLDEM === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
+    {
+        alert("Not all mandatory values are set. WCPSDemWCS: " + this.name );
+        console.log(this);
+        return;
+    }
+
+    //2: create wcps query
+    //If no query was defined use standard query.
+    if( this.WCPSQuery === undefined)
+    {
+        this.WCPSQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
+        this.WCPSQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
+        this.WCPSQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
+        this.WCPSQuery += '}, "' + this.imageFormat +'" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSQuery = this.replaceSymbolsInString(this.WCPSQuery);
+        console.log(this.WCPSQuery);
+    }
+    //3: Make ServerRequest and receive data.
+    var bb = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+    EarthServerGenericClient.requestWCPSImageWCSDem(this,this.URLWCPS,this.WCPSQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
+
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding();
+
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(transform,1); }
+
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCPSDemWCS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WCS Point Cloud
+ * 1 URL for the service, 1 Coverage name point cloud
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WCSPointCloud = function()
+{
+    this.setDefaults();
+    this.name = "WCS Point Cloud";
+    /**
+     * WCS version for the query.
+     * @default "2.0.0"
+     * @type {String}
+     */
+    this.WCSVersion = "2.0.0";
+    /**
+     * Size of the drawn points.
+     * @default 3.0
+     * @type {number}
+     */
+    this.pointSize = 3.0;
+};
+EarthServerGenericClient.Model_WCSPointCloud.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+
+/**
+ * Sets the URL for the service.
+ * @param url
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setURL=function(url){
+    /**
+     * URL for the WCS service.
+     * @type {String}
+     */
+    this.URLWCS = String(url);
+};
+/**
+ * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
+ * @param version - String with WCS version number.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+/**
+ * Sets the coverage name.
+ * @param coveragePointCloud - Coverage name for the image data set.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setCoverage = function (coveragePointCloud)
+{
+    /**
+     * Name of the point cloud coverage.
+     * @type {String}
+     */
+    this.coveragePointCloud = String(coveragePointCloud);
+};
+
+/**
+ * Sets the size of the points in the cloud.
+ * @param pointSize - Size of the points in the cloud.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setPointSize = function (pointSize)
+{
+    /**
+     * Size of the points in the cloud.
+     * @type {String}
+     */
+    this.pointSize = pointSize;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    // Check if mandatory values are set
+    if( this.coveragePointCloud === undefined || this.URLWCS === undefined || this.minh === undefined || this.maxh === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
+    {
+        alert("Not all mandatory values are set. WCSPointCloud: " + this.name );
+        console.log(this);
+        return;
+    }
+    // Make ServerRequest and receive data.
+    EarthServerGenericClient.requestWCSPointCloud(this,this.URLWCS,this.WCSVersion,this.coveragePointCloud,
+                    this.minx,this.maxx,this.miny,this.maxy,this.minh,this.maxh);
+};
+
+/**
+ * Updates the size of points for this model.
+ * @param value - Point size
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.updatePointSize = function(value)
+{
+    if( this.terrain )
+        this.terrain.setPointSize(value);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.receiveData = function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //If progressive loading is enabled this function is called multiple times.
+        //The lower resolution version shall be removed and replaced with the new one.
+        //So the old transformNode will be removed and a new one created.
+        if(this.transformNode !== undefined )
+        {   this.root.removeChild(this.transformNode); }
+
+        //In the first receiveData call remove the placeholder.
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+
+        // build transform
+        this.transformNode = this.createTransform(data.width,YResolution,data.height,data.minHMvalue,data.minXvalue,data.minZvalue);
+        /*this.transformNode = document.createElement("transform");
+        this.transformNode.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
+        this.transformNode.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
+
+        var scaleX = (this.cubeSizeX*this.xScale)/(data.width);
+        var scaleY = (this.cubeSizeY*this.yScale)/ YResolution;
+        var scaleZ = (this.cubeSizeZ*this.zScale)/(data.height);
+        this.transformNode.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
+
+        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0) - (scaleX * data.minXvalue);
+        var yoff = (this.cubeSizeY * this.yOffset) - (data.minHMvalue*scaleY) - (this.cubeSizeY/2.0);
+        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0) - (scaleZ * data.minZvalue);
+        this.transformNode.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);*/
+        this.root.appendChild(this.transformNode);
+
+        // create point cloud terrain
+        this.terrain = new EarthServerGenericClient.PointCloudTerrain(this.transformNode,data,this.index,this.pointSize);
+        this.terrain.createTerrain();
+    }
+};
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WCSPointCloud.prototype.setSpecificElement= function(element)
+{
+    // change point size
+    var id = "EarthServerGenericClient_SliderCell_ps_"+this.index;
+    EarthServerGenericClient.appendGenericSlider(element,id,"Point Size",this.index,1,10,this.pointSize, EarthServerGenericClient.MainScene.updatePointSize);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WMS Image with DEM from WCPS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WMSDemWCPS = function()
+{
+    this.setDefaults();
+    this.name = "WMS Image with DEM from WCPS Query.";
+
+    /**
+     * WMS version for the query.
+     * @default "1.3"
+     * @type {String}
+     */
+    this.WMSVersion = "1.3";
+};
+EarthServerGenericClient.Model_WMSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the urls for the WMS and WCPS Queries. If only one url is given it is used for both requests.
+ * @param imageURL - Service URL for the WCPS Image Request
+ * @param demURL - Service URL for the WCPS Dem Request
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setURLs=function(imageURL, demURL){
+    /**
+     * URL for the WCPS image service.
+     * @type {String}
+     */
+    this.imageURL = String(imageURL);
+    /**
+     * URL for the WCPS Dem service.
+     * @type {String}
+     */
+    this.demURL;
+    if(demURL === undefined) // if demURL is not defined use imageURL
+    {   this.demURL = String(imageURL); }
+    else
+    {   this.demURL  = String(demURL);  }
+};
+/**
+ * Sets both coveragenames
+ * @param coverageImage - Coverage name for the image dataset.
+ * @param coverageDem   - Coverage name for the dem dataset.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+
+/**
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSVersion = function(version)
+{
+    this.WMSVersion = String(version);
+};
+
+/**
+ * Sets a custom query for the WCPS Dem request.
+ * @param querystring - WCPS as a string.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
+{
+    /**
+     * The custom WCPS Dem query.
+     * @type {String}
+     */
+    this.WCPSDemQuery = String(querystring);
+};
+
+
+/**
+ * Sets the Coordinate Reference System for the WCPS Query
+ * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSCoordinateReferenceSystem = function(value)
+{
+    this.WCPSCRS = value;
+};
+
+/**
+* Sets the Coordinate Reference System for the WMS Image.
+* @param System - eg. CRS,SRS
+* @param value - eg. EPSG:4326
+*/
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSCoordinateReferenceSystem = function(System,value)
+{
+    this.WMSCRS = System + "=" + value;
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.WMSCRS === undefined || this.WCPSCRS === undefined )
+    {
+        alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
+        console.log(this);
+        return;
+    }
+
+
+    if( this.WCPSDemQuery === undefined)
+    {
+        var currentXRes = this.XResolution;
+        var currentZRes = this.ZResolution;
+        this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
+        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.WCPSCRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.WCPSCRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
+        this.WCPSDemQuery += ', "csv" )';
+    }
+    else //A custom query was defined so use it
+    {
+        //Replace $ symbols with the actual values
+        this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
+    }
+
+    var bb = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+
+    // Request
+    EarthServerGenericClient.requestWMSImageWCPSDem(this,bb,this.XResolution,this.ZResolution,
+        this.imageURL,this.coverageImage,this.WMSVersion,this.WMSCRS,this.imageFormat,this.demURL,this.WCPSDemQuery);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
+
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
+
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(transform,1); }
+
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WMSDemWCPS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Scene Model: WMS Image with DEM from WCS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WMSDemWCS = function()
+{
+    this.setDefaults();
+    this.name = "WMS Image with DEM from WCS Query.";
+    /**
+     * WCS version for the query.
+     * @default "2.0.0"
+     * @type {String}
+     */
+    this.WCSVersion = "2.0.0";
+    /**
+     * WMS version for the query.
+     * @default "1.3"
+     * @type {String}
+     */
+    this.WMSVersion = "1.3";
+};
+EarthServerGenericClient.Model_WMSDemWCS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the url for both the WMS and WCS Queries.
+ * @param WMSurl - Service URL for the WMS Request
+ * @param demurl  - Service URL for the WCS Request
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setURLs=function(WMSurl, demurl){
+    /**
+     * URL for the WMS service.
+     * @type {String}
+     */
+    this.URLWMS = String(WMSurl);
+    /**
+     * URL for the WCS service.
+     * @type {String}
+     */
+    this.URLDEM  = String(demurl);
+};
+/**
+ * Sets both coverage names
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
+ * @param version - String with WCS version number.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+/**
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setWMSVersion = function(version)
+{
+    this.WMSVersion = String(version);
+};
+/**
+ * Sets the response format for the WCS Queries.
+ * @param format - Format string for the WCS Response
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setFormat=function(WCSFormat){
+    /**
+     * URL for the WMS service.
+     * @type {String}
+     */
+    this.WCSFormat = String(WCSFormat);
+};
+/**
+ * Sets the Coordinate Reference System.
+ * @param System - eg. CRS,SRS
+ * @param value - eg. EPSG:4326
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoordinateReferenceSystem = function(System, value)
+{
+    this.CRS = System + "=" + value;
+};
+/**
+ * Sets the output CRS.
+ @param outputCRS - The output CRS, e.g. 'http://www.opengis.net/def/crs/EPSG/0/4326'
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setOutputCRS = function(value)
+{
+    this.outpuCRS = value;
+};
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined)
+        alert("root is not defined");
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWMS === undefined || this.URLDEM === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined
+        || this.WCSFormat === undefined)
+    {
+        alert("Not all mandatory values are set. WMSDemWCS: " + this.name );
+        console.log(this);
+        return;
+    }
+
+    //2: Make ServerRequest and receive data.
+    var bb = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+
+    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
+                                                this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
+                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.WCSFormat);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
+
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding();
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(this.transformNode,1);    }
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+"HA::P"
+
+/**
+ * @class Scene Model: WMS Image with DEM from WCS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_WMSDemWMS = function()
+{
+    this.setDefaults();
+    this.name = "WMS Image with DEM from WMS Query.";
+    /**
+     * WMS version for the query.
+     * @default "1.3"
+     * @type {String}
+     */
+    this.WMSVersion = "1.3";
+};
+EarthServerGenericClient.Model_WMSDemWMS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the url for both the WMS and WCS Queries.
+ * @param WMSurl - Service URL for the WMS Request
+ * @param demurl  - Service URL for the WCS Request
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setURLs=function(WMSurl, demurl){
+    /**
+     * URL for the WMS service.
+     * @type {String}
+     */
+    this.URLWMS = String(WMSurl);
+    /**
+     * URL for the WCS service.
+     * @type {String}
+     */
+    this.URLDEM  = String(demurl);
+};
+/**
+ * Sets both coverage names
+ * @param coverageImage - Coverage name for the image data set.
+ * @param coverageDem   - Coverage name for the dem data set.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoverages = function (coverageImage, coverageDem) {
+    /**
+     * Name of the image coverage.
+     * @type {String}
+     */
+    this.coverageImage = String(coverageImage);
+    /**
+     * Name if the dem coverage.
+     * @type {String}
+     */
+    this.coverageDEM = String(coverageDem);
+};
+/**
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSVersion = function(version)
+{
+    this.WCSVersion = String(version);
+};
+/**
+ * Sets the WMS Version for the WMS Query String. Default: "1.3"
+ * @param version - String with WMS version number.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWMSVersion = function(version)
+{
+    this.WMSVersion = String(version);
+};
+/**
+ * Sets the data type for the ajax call executing the WCS query.
+ * @param type - Datatype for the ajax call (default: 'XML')
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSDataType =function(type){
+    this.WCSDataType = String(type);
+};
+/**
+ * Sets the desired MIME type for the response of the WCS Queries.
+ * @param type - MIME string for the WCS Response (i.e.: 'image/x-aaigrid')
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setWCSMimeType =function(type){
+    this.WCSMimeType = String(type);
+};
+/**
+ * Sets the Coordinate Reference System.
+ * @param System - eg. CRS,SRS
+ * @param value - eg. EPSG:4326
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setCoordinateReferenceSystem = function(System, value)
+{
+    this.CRS = System + "=" + value;
+};
+/**
+ * Sets the output CRS.
+ @param outputCRS - The output CRS, e.g. 'http://www.opengis.net/def/crs/EPSG/0/4326'
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setOutputCRS = function(value)
+{
+    this.WCSOutputCRS = value;
+};
+/**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setTimespan = function(timespan)
+{
+    this.timespan = timespan;
+};
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
+    if( root === undefined) {
+        console.log("root is not defined");
+    }
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    // FIXXME: this is not the right place for eventually setting the default value:
+    if (!this.WCSMimeType) {
+        this.WCSMimeType = 'image/x-aaigrid';
+    }
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    //1: Check if mandatory values are set
+    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWMS === undefined || this.URLDEM === undefined
+        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined)
+    {
+        console.log(this);
+        return;
+    }
+
+    //2: Make ServerRequest and receive data.
+    var bb = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+
+    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
+                                                this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
+                                                this.URLDEM,this.coverageDEM,this.WCSVersion,this.WCSMimeType,this.WCSDataType, 
+                                                this.WCSOutputFormat,this.WCSOutputCRS,this.timespan);
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.receiveData= function( data)
+{
+    if( this.checkReceivedData(data))
+    {
+        //Remove the placeHolder
+        this.removePlaceHolder();
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
+
+        //Create Terrain out of the received data
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+        this.elevationUpdateBinding();
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(this.transformNode,1);    }
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setSpecificElement= function(element)
+{
+    EarthServerGenericClient.appendElevationSlider(element,this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Generic Server Response Data object. All requests store the response in an instance of this object.
+ * One instance can be given as parameter for different requests if all requests writes different fields.
+ * Example: One WMS request for the texture and one WCS request for the heightmap.
+ */
+EarthServerGenericClient.ServerResponseData = function () {
+    this.heightmap = null;          // Heightmap
+    this.pointCloudCoordinates = null; // Point cloud coordinates
+    this.noDataValue = undefined;   // The value that should be considered as NODATA.
+    this.heightmapUrl = "";         // If available, you can use the link as alternative.
+    this.texture = new Image();     // Texture as image object
+    this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
+    this.textureUrl = "";           // If available, you can use the link as alternative.
+    this.width = 0;                 // Heightmap or pointcloud width
+    this.height = 0;                // Heightmap or pointcloud height
+
+    // The information about the heightmap are used to position a module correctly in the fishtank.
+    // The minimum value as offset and the difference between minimum and maximum for scaling.
+    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap or pointcloud
+    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap or pointcloud
+    this.averageHMvalue = 0;        // Average value of the heightmap or pointcloud
+    this.minXvalue =  Number.MAX_VALUE; // Lowest coordinate value on the X-axis of a pointcloud
+    this.maxXvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
+    this.minZvalue =  Number.MAX_VALUE; // Lowest coordinate value on the Z-axis of a pointcloud
+    this.maxZvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
+
+    // Flags to customize the server response
+    this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
+    this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
+    this.validateTexture   = true;   // Flag if the texture should be checked in validate().
+    this.validatePointCloud = false; // Flag if the point cloud should be in validate().
+    this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
+
+    /**
+     * Validates if the response full successfully: Was an image and a height map received?
+     * @returns {boolean} - True if both image and heightmap are present, false if not.
+     */
+    this.validate = function()
+    {
+        //Texture
+        if( this.validateTexture )
         {
-            for(var k=0; k+1<sizex; k++)
+            if( this.texture === undefined){    return false;   }
+            if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
+        }
+
+        //Heightmap
+        if( this.validateHeightMap )
+        {
+            if( this.heightmap === null){    return false;   }
+            if( this.width === null || this.height === null){    return false;   }
+            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        }
+
+        // point cloud
+        if( this.validatePointCloud )
+        {
+            if( this.pointCloudCoordinates === null) return false;
+            if( this.width === null || this.height === null){    return false;   }
+            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
+        }
+
+        //Everything OK
+        return true;
+    };
+};
+
+/**
+ * Small helper to synchronise multiple request callbacks. After all callbacks to this helper
+ * are received the ResponseData object with all response data is send to the module.
+ * After each request is received a progress update is send to the module.
+ * @param callback - Module which requests the data.
+ * @param numberToCombine - Number of callbacks that shall be received.
+ * @param saveDataInArray - In most cases one responseData is used. If set true the data is stored in an array.
+ */
+EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine,saveDataInArray)
+{
+    var counter = 0;
+    this.name = "Combined Callback: " + callback.name;
+    this.dataArray = [];
+    EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
+
+    /**
+     * @ignore
+     * @param data - Server response data object
+     */
+    this.receiveData = function(data)
+    {
+        counter++;
+
+        if(saveDataInArray)
+            this.dataArray.push(data);
+
+        if( counter ==  numberToCombine)
+        {
+            EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
+
+            if(saveDataInArray)// callback with the 1 responseData or the array
+                callback.receiveData(this.dataArray);
+            else
+                callback.receiveData(data);
+        }
+    };
+
+    /**
+     * @ignore
+     * @returns {undefined|float} - Returns the noData value of the dem from the module.
+     */
+    this.getDemNoDataValue = function()
+    {
+        return callback.getDemNoDataValue();
+    };
+
+    /**
+     * @ignore
+     * @returns {undefined|float} - Returns the noData value of the dem from the module.
+     */
+    this.getModel = function()
+    {
+        return callback;
+    };
+};
+
+/**
+ * Requests a WMS image, stores it in the responseData and make the callback once it is loaded.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Coverage/Layer ID.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - The image format that should be returned.
+ * @param BoundingBox - The bounding box of the image.
+ * @param WMSVersion - WMS Version that should be used.
+ * @param width - Width of the response image.
+ * @param height - Height of the response image.
+ */
+EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSVersion,width,height,timespan)
+{
+    responseData.textureUrl = WMSurl + "?service=WMS&version=" + WMSVersion +"&request=Getmap&layers=" + WMScoverID;
+    responseData.textureUrl += "&" + WMSCRS + "&format=image/" + WMSImageFormat;
+    responseData.textureUrl += "&bbox=" + BoundingBox.minLatitude + "," + BoundingBox.minLongitude + ","+ BoundingBox.maxLatitude + "," + BoundingBox.maxLongitude;
+    responseData.textureUrl += "&width="+width+"&height="+height;
+    if (timespan) {
+        responseData.textureUrl += "&time="+timespan;
+    }
+
+    responseData.texture.onload = function()
+    {
+        callback.receiveData(responseData);
+    };
+    responseData.texture.onerror = function()
+    {
+        x3dom.debug.logInfo("Could not load Image.");
+        callback.receiveData(responseData);
+    };
+    responseData.texture.src = responseData.textureUrl;
+
+};
+
+/**
+ * Starts a WCPS query and stores the received image in the responseData.
+ * If a dem is encoded in the alpha channel it will be extracted and also stored. Set DemInAlpha Flag in this case.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param url - URL of the WCPS service.
+ * @param query - The WCPS query.
+ * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
+ */
+EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, query, DemInAlpha)
+{
+    try
+    {
+        responseData.texture.onload = function()
+        {
+            EarthServerGenericClient.MainScene.timeLogEnd("WCPS: " + callback.name);
+            if(DemInAlpha)
             {
-                // check if NONE of the four vertices used for this face as a NODATA value
-                if( heightfield[i][k] !== NODATA && heightfield[i+1][k] !== NODATA
-                     && heightfield[i+1][k+1] !== NODATA && heightfield[i][k+1] !== NODATA)
+                responseData.heightmapUrl = responseData.texture.src;
+                var demNoData = callback.getDemNoDataValue();
+
+                var canvas = document.createElement('canvas');
+                canvas.width = responseData.texture.width;
+                canvas.height = responseData.texture.height;
+
+                var context = canvas.getContext('2d');
+                context.drawImage(responseData.texture, 0, 0);
+
+                var hm = new Array(canvas.width);
+                for(var k=0; k<canvas.width; k++)
                 {
-                    // add indices
-                    coords.index.push( (i*sizex)+k );
-                    coords.index.push( ((i*sizex)+1)+k );
-                    coords.index.push( (((i+1)*sizex)+1)+k );
-                    coords.index.push( ((i+1)*sizex)+k );
-
-                    coords.index.push( -1 );
+                    hm[k] = new Array(canvas.height);
                 }
+
+                responseData.width = hm.length;
+                responseData.height = hm[0].length;
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
+
+                var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                var total = 0;
+                for(var i=3; i<imageData.data.length; i+=4)
+                {
+                    var index = i/4;
+                    hm[parseInt(index%hm.length)][parseInt(index/hm.length)] = imageData.data[i];
+
+                    if(imageData.data[i] !== demNoData)
+                    {
+                        if( responseData.minHMvalue > imageData.data[i] )
+                        { responseData.minHMvalue = imageData.data[i]  }
+                        if( responseData.maxHMvalue < imageData.data[i] )
+                        { responseData.maxHMvalue = imageData.data[i]  }
+                        total = total + parseFloat(imageData.data[i]);
+                    }
+
+                }
+                responseData.averageHMvalue = parseFloat(total / imageData.data.length);
+                responseData.heightmap = hm;
+
+                context = null;
+                canvas = null;
+            }
+
+            callback.receiveData(responseData);
+        };
+        responseData.texture.onerror = function()
+        {
+            responseData.texture = new Image();
+            responseData.texture.onload = callback.receiveData(responseData);
+            responseData.texture.src="defaultTexture.png";
+            console.log("ServerRequest::wcpsRequest(): Could not load Image from url " + url);
+        };
+
+        responseData.textureUrl = url + "?query=" + encodeURIComponent(query);
+        EarthServerGenericClient.MainScene.timeLogStart("WCPS: " + callback.name);
+        responseData.texture.src = responseData.textureUrl;
+    }
+    catch(error)
+    {
+        x3dom.debug.logInfo('ServerRequest::getWCPSImage(): ' + error);
+        callback.receiveData(responseData);
+    }
+};
+
+/**
+ * This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WCPSurl - URl of the WCPS service.
+ * @param WCPSquery - The WCPS request query.
+ */
+EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCPSurl,WCPSquery)
+{
+    EarthServerGenericClient.MainScene.timeLogStart("WCPS DEM Coverage: " + callback.name );
+    var query = "query=" + encodeURIComponent(WCPSquery);
+
+    $.ajax(
+        {
+            url: WCPSurl,
+            type: 'GET',
+            dataType: 'text',
+            data: query,
+            success: function(receivedData)
+            {
+                try{
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                var demNoData = callback.getDemNoDataValue();
+                //The received data is a list of tuples: {value,value},{value,value},.....
+                var tuples = receivedData.split('},');
+
+                var sizeX = tuples.length;
+                if( sizeX <=0 || isNaN(sizeX)  )
+                {   throw "getWCPSDemCoverage: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
+
+
+                var hm = new Array(sizeX);
+                for(var o=0; o<sizeX;o++)
+                {   hm[o] = []; }
+
+                for (var i = 0; i < tuples.length; i++)
+                {
+                    var tmp = tuples[i].substr(1);
+                    var valuesList = tmp.split(",");
+
+                    for (var k = 0; k < valuesList.length; k++)
+                    {
+                        tmp = parseFloat(valuesList[k]);
+                        hm[i][k] = tmp;
+
+                        if( tmp !== demNoData)
+                        {
+                            if (responseData.maxHMvalue < tmp)
+                            {
+                                responseData.maxHMvalue = parseFloat(tmp);
+                            }
+                            if (responseData.minHMvalue > tmp)
+                            {
+                                responseData.minHMvalue = parseFloat(tmp);
+                            }
+                        }
+                    }
+                }
+                if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
+                {
+                    responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
+                }
+                tuples = null;
+
+                responseData.width = hm.length;
+                responseData.height = hm[0].length;
+                responseData.minXvalue = 0;
+                responseData.minZvalue = 0;
+                responseData.maxXvalue = hm.length;
+                responseData.maxZvalue = hm[0].length;
+                responseData.heightmap = hm;
+
+                }
+                catch(err)
+                {   alert(err); }
+
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
+                console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
             }
         }
+    );
+};
 
-        return coords;
+/**
+ * Requests a WCS point cloud and stores the coordinate string in the response data.
+ * @param callback
+ * @param responseData
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var request = 'service=WCS&Request=GetCoverage&version=' + WCSversion + '&CoverageId=' + WCScoverID;
+    request += '&subset=Lat('+minx+','+maxx+')&subset=Long('+miny+','+maxy+')&subset=h('+minh+','+maxh+')';
+
+    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
+    $.ajax(
+        {
+            url: WCSurl,
+            type: 'GET',
+            dataType: 'XML',
+            data: request,
+            success: function(receivedData)
+            {
+
+                //console.log(receivedData);
+
+                try{
+                    EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                    var coords = $(receivedData).find(String("SimpleMultiPoint")).text();
+
+
+                    if(coords && coords.length )
+                    {
+                        while( !EarthServerGenericClient.IsNumeric(coords.charAt(0) ))
+                        {   coords = coords.substr(1);  }
+
+                        var coordsArray = coords.split(" ");
+
+                        // check all coords to set min,max,width&height values
+                        for(var i=0; i+2< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i] ) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1] ))) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            // check min/max value on x axis
+                            if( parseFloat(coordsArray[i]) < responseData.minXvalue) responseData.minXvalue = parseFloat(coordsArray[i]);
+                            if( parseFloat(coordsArray[i]) > responseData.maxXvalue) responseData.maxXvalue = parseFloat(coordsArray[i]);
+                            // check min/max hm value (y-axis)
+                            if( parseFloat(coordsArray[i+2]) < responseData.minHMvalue) responseData.minHMvalue = parseFloat(coordsArray[i+2]);
+                            if( parseFloat(coordsArray[i+2]) > responseData.maxHMvalue) responseData.maxHMvalue = parseFloat(coordsArray[i+2]);
+                            // check min/max value on z axis
+                            if( parseFloat(coordsArray[i+1]) < responseData.minZvalue) responseData.minZvalue = parseFloat(coordsArray[i+1]);
+                            if( parseFloat(coordsArray[i+1]) > responseData.maxZvalue) responseData.maxZvalue = parseFloat(coordsArray[i+1]);
+                        }
+
+                        //switch y/z values and lower the values
+                        var pointCloudCoordinatesArray = [];
+                        for( i=0; i< coordsArray.length; i+=3)
+                        {
+                            if( isNaN( parseFloat(coordsArray[i]))  ) continue;
+                            if( isNaN( parseFloat(coordsArray[i+1]) )) continue;
+                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
+
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i  ]) - parseInt(responseData.minXvalue ) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+2]) - parseInt(responseData.minHMvalue) );
+                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+1]) - parseInt(responseData.minZvalue ) );
+                        }
+
+                        responseData.maxXvalue -= parseInt( responseData.minXvalue);
+                        responseData.minXvalue -= parseInt( responseData.minXvalue);
+
+                        responseData.maxZvalue -= parseInt( responseData.minZvalue);
+                        responseData.minZvalue -= parseInt( responseData.minZvalue);
+
+                        responseData.maxHMvalue -= parseInt( responseData.minHMvalue );
+                        responseData.minHMvalue -= parseInt( responseData.minHMvalue );
+
+                        responseData.width  = responseData.maxXvalue - responseData.minXvalue + 1;
+                        responseData.height = responseData.maxZvalue - responseData.minZvalue + 1;
+                    }
+                    else
+                        console.log("No coords");
+
+                    responseData.pointCloudCoordinates = pointCloudCoordinatesArray.join(" ");
+                }
+                catch(err)
+                {   alert(err); }
+
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
+                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
+ * Requests a WCS coverage and stores is the heightmap field of the responseData.
+ * @param callback - Object to do the callback.
+ * @param responseData - Instance of the ServerResponseData.
+ * @param WCSurl - URl of the WCS service.
+ * @param WCScoverID - ID of the coverage.
+ * @param WCSBoundingBox - Bounding Box of the area.
+ * @param WCSVersion - Version of used WCS service.
+ * @param WCSMimeType - MIME type of the WCS response (i.e. 'image/x-aaigrid').
+ * @param WCSDataType - The requested datatype for WCS response (equals to the 'dataType' field in a $.ajax call, i.e. 'XML', 'text', ...)
+ */
+EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,ResX,ResY,WCSOutputCRS)
+{
+    var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
+    //var WCSOutputCRS = 'http://www.opengis.net/def/crs/EPSG/0/4326';
+    if (typeof WCSOutputCRS !== 'undefined') {
+        request += '&subsetx=x,' + WCSOutputCRS + '(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y,' + WCSOutputCRS + '(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
+    } else {
+        request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
+    }
+    request += '&size=x(' + ResX + ')&size=y(' + ResY + ')';
+    if (WCSMimeType) {
+        request += '&format=' + WCSMimeType;
     }
 
+    var datatype = 'XML'; // default value is 'XML' to not break code using previous versions of the EarthServerGenericClient
+    if (WCSDataType) {
+        datatype = WCSDataType;
+    }
+
+    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
+
+    // request = 'service=wcs&version=2.0.0&request=GetCoverage&outputCRS=http://www.opengis.net/def/crs/EPSG/0/4326&size=x(33)&size=y(33)&coverageid=ACE2&format=image/x-aaigrid&subset=x,http://www.opengis.net/def/crs/EPSG/0/4326(-22.5,-11.25)&subset=y,http://www.opengis.net/def/crs/EPSG/0/4326(33.75,45)';
+    //request = 'service=wcs&version=2.0.0&request=GetCoverage&outputCRS=http://www.opengis.net/def/crs/EPSG/0/4326&size=x(500)&size=y(500)&coverageid=ACE2&format=image/x-aaigrid&subset=x,http://www.opengis.net/def/crs/EPSG/0/4326(-22.5,-11.25)&subset=y,http://www.opengis.net/def/crs/EPSG/0/4326(33.75,45)';
+
+    $.ajax(
+        {
+            url: WCSurl,
+            type: 'GET',
+            dataType: datatype,
+            data: request,
+            success: function(receivedData)
+            {
+                try{
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
+
+                var didHandle = callback.getModel().preprocessReceivedData(receivedData, responseData, WCSMimeType);
+                // Defaults to the following implementation to not break old code:
+                if (!didHandle) {
+                    var Grid = $(receivedData).find('GridEnvelope');
+                    var low  = $(Grid).find('low').text().split(" ");
+                    var high = $(Grid).find('high').text().split(" ");
+
+                    var sizeX = high[0] - low[0] + 1;
+                    var sizeY = high[1] - low[1] + 1;
+
+                    if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
+                    {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
+
+                    responseData.height = sizeX;
+                    responseData.width  = sizeY;
+
+                    console.log(sizeX,sizeY);
+
+                    var hm = new Array(sizeX);
+                    for(var index=0; index<hm.length; index++)
+                    {
+                        hm[index] = new Array(sizeY);
+                    }
+
+                    var DataBlocks = $(receivedData).find('DataBlock');
+                    DataBlocks.each(function () {
+                        var tuples = $(this).find("tupleList").text().split('},');
+                        for (var i = 0; i < tuples.length; i++) {
+                            var tmp = tuples[i].substr(1);
+                            var valuesList = tmp.split(",");
+
+                            for (var k = 0; k < valuesList.length; k++) {
+                                tmp = parseFloat(valuesList[k]);
+
+                                hm[parseInt(k/(sizeX))][parseInt(k%(sizeX))] = tmp;
+
+                                if (responseData.maxHMvalue < tmp)
+                                {
+                                    responseData.maxHMvalue = parseFloat(tmp);
+                                }
+                                if (responseData.minHMvalue > tmp)
+                                {
+                                    responseData.minHMvalue = parseFloat(tmp);
+                                }
+                            }
+                        }
+                        if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
+                        {
+                            responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
+                        }
+                        tuples = null;
+                    });
+                    DataBlocks = null;
+
+                    responseData.minXvalue = 0;
+                    responseData.minZvalue = 0;
+                    responseData.maxXvalue = sizeY;
+                    responseData.maxZvalue = sizeX;
+                    responseData.heightmap = hm;
+                    }
+                }
+                catch(err)
+                {   alert(err); }
+
+                callback.receiveData(responseData);
+            },
+            error: function(xhr, ajaxOptions, thrownError)
+            {
+                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
+                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
+            }
+        }
+    );
+};
+
+/**
+ * Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
+ * If not the terrain is flat.
+ * @param callback - Module that requests the image.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - The WCPS query.
+ */
+EarthServerGenericClient.requestWCPSImageAlphaDem = function(callback,WCPSurl,WCPSquery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    responseData.removeAlphaChannel = true; // Remove the alpha channel for the final texture
+    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
+};
+
+/**
+ * Requests one image via WCSPS.
+ * @param callback - Module that requests the image.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - The WCPS query.
+ */
+EarthServerGenericClient.requestWCPSImage = function(callback,WCPSurl,WCPSquery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    responseData.validateHeightMap = false; // No heightmap in this response intended so don't check it in validate()
+    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,false);
+};
+
+/**
+ * The progressive WCPS loader initiate multiple queries consecutively. As soon as one response is received the
+ * next query is executed. Every response is given to the given callback.
+ * Note: The WCPS loader starts with the last query in the array (LIFO).
+ * @param callback - Module that requests the WCPS images.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSqueries - Array of WCPS queries. (LIFO)
+ * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
+ */
+EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,WCPSqueries,DemInAlpha)
+{
+    var which = WCPSqueries.length -1;
+    //We need one responseData for every query in WCPSqueries
+    var responseData = [];
+    //For time logging.
+    this.name = "Progressive WCPS Loader: " + callback.name;
+
+    for(var i=0;i<WCPSqueries.length;i++)
+    {
+        responseData[i] = new EarthServerGenericClient.ServerResponseData();
+        responseData[i].removeAlphaChannel = DemInAlpha; // Should the alpha channel be removed for the final texture?
+    }
 
     /**
-     * Calcs the TextureCoordinates for the elevation grid(s).
-     * Use the values of the full/most detailed version if using for LOD and adjust only the shrinkfactor parameter.
-     * @param xpos - Start position of the elevation grid within the terrain.
-     * @param ypos - Start position of the elevation grid within the terrain.
-     * @param sizex - Size of the elevation grid on the x-Axis.
-     * @param sizey - Size of the elevation grid on the x-Axis.
-     * @param terrainWidth - Size of the whole terrain on the x-Axis.
-     * @param terrainHeight - Size of the whole terrain on the y-Axis.
-     * @param shrinkfactor - The factor the heightmap this TextureCoordinates are was shrunk.
-     * @returns {HTMLElement} - X3DOM TextureCoordinate Node.
+     * @ignore
+     * @param which - index of the request to make.
      */
-    function calcTexCoords(xpos,ypos,sizex,sizey,terrainWidth, terrainHeight, shrinkfactor)
+    this.makeRequest =  function(which)
     {
-        var tmpx, tmpy;
-
-        var smallx = parseInt(sizex/shrinkfactor);
-        var smally = parseInt(sizey/shrinkfactor);
-
-        if( shrinkfactor !== 1)
+        if(which >= 0)
         {
-            smallx++;
-            smally++;
+            EarthServerGenericClient.MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
+            EarthServerGenericClient.getWCPSImage(this,responseData[which],WCPSurl,WCPSqueries[which],DemInAlpha);
         }
+        else
+        {   responseData = null;  }
+    };
+    /**
+     * @ignore
+     * @param data - Server response data object
+     */
+    this.receiveData = function(data)
+    {
+        EarthServerGenericClient.MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
+        which--;
+        this.makeRequest(which);
+        callback.receiveData(data);
+    };
+    this.makeRequest(which);
+};
 
-        var buffer = [];
-        //Create Node
-        var tcnode = document.createElement("TextureCoordinate");
+/**
+ * Requests an image via WCPS and a dem via WCS.
+ * @param callback - Module requesting this data.
+ * @param WCPSurl - URL of the WCPS service.
+ * @param WCPSquery - WCPS Query for the image.
+ * @param WCSurl - URL of the WCS service.
+ * @param WCScoverID - Coverage ID for the WCS height data.
+ * @param WCSBoundingBox - Bounding box of the area used in WCS.
+ * @param WCSVersion - Version of the used WCS.
+ */
+EarthServerGenericClient.requestWCPSImageWCSDem = function(callback,WCPSurl,WCPSquery,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
-        //File string
-        for (var i = 0; i < smally; i++)
-        {
-            for (var k = 0; k < smallx; k++)
-            {
-                tmpx = parseFloat((xpos+(k*shrinkfactor))/(terrainWidth-1));
-                tmpy = parseFloat((ypos+(i*shrinkfactor))/(terrainHeight-1));
+    EarthServerGenericClient.getWCPSImage(combine,responseData,WCPSurl,WCPSquery,false);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
+};
 
-                buffer.push(tmpx + " ");
-                buffer.push(tmpy + " ");
-            }
-        }
-        var tc = buffer.join("");
 
-        tcnode.setAttribute("point", tc);
+EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,imageQuery,demURL,demQuery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
-        return tcnode;
+    EarthServerGenericClient.getWCPSImage(combine,responseData,imageURL,imageQuery,false);
+    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
+};
+
+/**
+ * Requests an image via WMS and a dem via WCS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - Image format for the WMS response.
+ * @param WCSurl - URL of the WCS service.
+ * @param WCScoverID - Coverage ID used in WCS.
+ * @param WCSVersion - Version of the WCS service.
+ * @param WCSFormat - Format of the WCS response.
+ */
+EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,WCSOutputCRS,timespan)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY,timespan);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,ResX,ResY,WCSOutputCRS);
+};
+
+/**
+ * Requests an image via WMS and a dem via WMS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param ImageFormat - Image format for the WMS response.
+ * @param DEMurl - URL of the WMS service.
+ * @param DEMcoverID - Coverage ID used in WCS.
+ * @param DEMOutputFormat - Output format of the WMS response.
+ */
+EarthServerGenericClient.requestWMSImageWMSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,DEMurl,DEMcoverID,DEMOutputFormat)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
+    EarthServerGenericClient.getCoverageWCS(combine,responseData,DEMurl,DEMcoverID,BoundingBox,WMSversion);
+};
+
+/**
+ * Requests an image via WMS and a dem via WCPS.
+ * @param callback - Module requesting this data.
+ * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
+ * @param ResX - Width of the response image via WMS.
+ * @param ResY - Height of the response image via WMS.
+ * @param WMSurl - URL of the WMS service.
+ * @param WMScoverID - Layer ID used in WMS.
+ * @param WMSversion - Version of the WMS service.
+ * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
+ * @param WMSImageFormat - Image format for the WMS response.
+ * @param WCPSurl - URL for the WCPS Query
+ * @param WCPSquery - WCPS DEM Query
+ */
+EarthServerGenericClient.requestWMSImageWCPSDem = function( callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCPSurl,WCPSquery)
+{
+    var responseData = new EarthServerGenericClient.ServerResponseData();
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
+
+    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
+    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,WCPSurl,WCPSquery);
+};
+
+EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQuery)
+{
+    var combine = new EarthServerGenericClient.combinedCallBack(callback,WCPSQuery.length,true);
+    var responseDataArray = [];
+
+    for(var o=0; o< WCPSQuery.length;o++)
+    {
+        responseDataArray.push( new EarthServerGenericClient.ServerResponseData() );
+        responseDataArray[o].validateHeightMap = false; // no height map will be received
     }
 
-    setupChunk();
-}//Namespace
+    for(var i=0; i< WCPSQuery.length;i++)
+    {
+        EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
+    }
+};
+
+/**
+ * TODO:
+ * @param callback
+ * @param WCSurl
+ * @param WCSversion
+ * @param WCScoverID
+ * @param minx
+ * @param maxx
+ * @param miny
+ * @param maxy
+ * @param minh
+ * @param maxh
+ */
+EarthServerGenericClient.requestWCSPointCloud = function(callback,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
+{
+    var data = new EarthServerGenericClient.ServerResponseData;
+    data.validateHeightMap = false;
+    data.validateTexture = false;
+    data.validatePointCloud = true;
+
+    EarthServerGenericClient.getPointCloudWCS(callback,data,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh);
+
+};
+//Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
@@ -4039,2406 +7406,7 @@ EarthServerGenericClient.PointCloudTerrain = function(root,data,index,pointSize)
             console.log("EarthServerGenericClient.PointCloudTerrain: Can't find point size field.")
     }
 };
-EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Generic Server Response Data object. All requests store the response in an instance of this object.
- * One instance can be given as parameter for different requests if all requests writes different fields.
- * Example: One WMS request for the texture and one WCS request for the heightmap.
- */
-EarthServerGenericClient.ServerResponseData = function () {
-    this.heightmap = null;          // Heightmap
-    this.pointCloudCoordinates = null; // Point cloud coordinates
-    this.noDataValue = undefined;   // The value that should be considered as NODATA.
-    this.heightmapUrl = "";         // If available, you can use the link as alternative.
-    this.texture = new Image();     // Texture as image object
-    this.texture.crossOrigin = '';  // Enable Texture to be edited (for alpha values for example)
-    this.textureUrl = "";           // If available, you can use the link as alternative.
-    this.width = 0;                 // Heightmap or pointcloud width
-    this.height = 0;                // Heightmap or pointcloud height
-
-    // The information about the heightmap are used to position a module correctly in the fishtank.
-    // The minimum value as offset and the difference between minimum and maximum for scaling.
-    this.minHMvalue =  Number.MAX_VALUE;// Lowest value in the heightmap or pointcloud
-    this.maxHMvalue = -Number.MAX_VALUE;// Highest value in the heigtmap or pointcloud
-    this.averageHMvalue = 0;        // Average value of the heightmap or pointcloud
-    this.minXvalue =  Number.MAX_VALUE; // Lowest coordinate value on the X-axis of a pointcloud
-    this.maxXvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
-    this.minZvalue =  Number.MAX_VALUE; // Lowest coordinate value on the Z-axis of a pointcloud
-    this.maxZvalue = -Number.MAX_VALUE; // Highest coordinate value on the X-axis of a pointcloud
-
-    // Flags to customize the server response
-    this.heightmapAsString = false;  // Flag if heightmap is encoded as a array of arrays(default) or as a string with csv.
-    this.validateHeightMap = true;   // Flag if heightmap should be checked in validate().
-    this.validateTexture   = true;   // Flag if the texture should be checked in validate().
-    this.validatePointCloud = false; // Flag if the point cloud should be in validate().
-    this.removeAlphaChannel = false; // Flag if the alpha channel contains e.g. height data it should be removed for the texture
-
-    /**
-     * Validates if the response full successfully: Was an image and a height map received?
-     * @returns {boolean} - True if both image and heightmap are present, false if not.
-     */
-    this.validate = function()
-    {
-        //Texture
-        if( this.validateTexture )
-        {
-            if( this.texture === undefined){    return false;   }
-            if( this.texture.width <= 0 || this.texture.height <=0){    return false;   }
-        }
-
-        //Heightmap
-        if( this.validateHeightMap )
-        {
-            if( this.heightmap === null){    return false;   }
-            if( this.width === null || this.height === null){    return false;   }
-            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
-        }
-
-        // point cloud
-        if( this.validatePointCloud )
-        {
-            if( this.pointCloudCoordinates === null) return false;
-            if( this.width === null || this.height === null){    return false;   }
-            if( this.minHMvalue === Number.MAX_VALUE || this.maxHMvalue === -Number.MAX_VALUE){    return false;   }
-        }
-
-        //Everything OK
-        return true;
-    };
-};
-
-/**
- * Small helper to synchronise multiple request callbacks. After all callbacks to this helper
- * are received the ResponseData object with all response data is send to the module.
- * After each request is received a progress update is send to the module.
- * @param callback - Module which requests the data.
- * @param numberToCombine - Number of callbacks that shall be received.
- * @param saveDataInArray - In most cases one responseData is used. If set true the data is stored in an array.
- */
-EarthServerGenericClient.combinedCallBack = function(callback,numberToCombine,saveDataInArray)
-{
-    var counter = 0;
-    this.name = "Combined Callback: " + callback.name;
-    this.dataArray = [];
-    EarthServerGenericClient.MainScene.timeLogStart("Combine: " + callback.name);
-
-    /**
-     * @ignore
-     * @param data - Server response data object
-     */
-    this.receiveData = function(data)
-    {
-        counter++;
-
-        if(saveDataInArray)
-            this.dataArray.push(data);
-
-        if( counter ==  numberToCombine)
-        {
-            EarthServerGenericClient.MainScene.timeLogEnd("Combine: " + callback.name);
-
-            if(saveDataInArray)// callback with the 1 responseData or the array
-                callback.receiveData(this.dataArray);
-            else
-                callback.receiveData(data);
-        }
-    };
-
-    /**
-     * @ignore
-     * @returns {undefined|float} - Returns the noData value of the dem from the module.
-     */
-    this.getDemNoDataValue = function()
-    {
-        return callback.getDemNoDataValue();
-    };
-};
-
-/**
- * Requests a WMS image, stores it in the responseData and make the callback once it is loaded.
- * @param callback - Object to do the callback.
- * @param responseData - Instance of the ServerResponseData.
- * @param WMSurl - URL of the WMS service.
- * @param WMScoverID - Coverage/Layer ID.
- * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
- * @param WMSImageFormat - The image format that should be returned.
- * @param BoundingBox - The bounding box of the image.
- * @param WMSVersion - WMS Version that should be used.
- * @param width - Width of the response image.
- * @param height - Height of the response image.
- */
-EarthServerGenericClient.getCoverageWMS = function(callback,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSVersion,width,height)
-{
-    responseData.textureUrl = WMSurl + "?service=WMS&version=" + WMSVersion +"&request=Getmap&layers=" + WMScoverID;
-    responseData.textureUrl += "&" + WMSCRS + "&format=image/" + WMSImageFormat;
-    responseData.textureUrl += "&bbox=" + BoundingBox.minLatitude + "," + BoundingBox.minLongitude + ","+ BoundingBox.maxLatitude + "," + BoundingBox.maxLongitude;
-    responseData.textureUrl += "&width="+width+"&height="+height;
-
-    responseData.texture.onload = function()
-    {
-        callback.receiveData(responseData);
-    };
-    responseData.texture.onerror = function()
-    {
-        x3dom.debug.logInfo("Could not load Image.");
-        callback.receiveData(responseData);
-    };
-    responseData.texture.src = responseData.textureUrl;
-
-};
-
-/**
- * Starts a WCPS query and stores the received image in the responseData.
- * If a dem is encoded in the alpha channel it will be extracted and also stored. Set DemInAlpha Flag in this case.
- * @param callback - Object to do the callback.
- * @param responseData - Instance of the ServerResponseData.
- * @param url - URL of the WCPS service.
- * @param query - The WCPS query.
- * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
- */
-EarthServerGenericClient.getWCPSImage = function(callback,responseData,url, query, DemInAlpha)
-{
-    try
-    {
-        responseData.texture.onload = function()
-        {
-            EarthServerGenericClient.MainScene.timeLogEnd("WCPS: " + callback.name);
-            if(DemInAlpha)
-            {
-                responseData.heightmapUrl = responseData.texture.src;
-                var demNoData = callback.getDemNoDataValue();
-
-                var canvas = document.createElement('canvas');
-                canvas.width = responseData.texture.width;
-                canvas.height = responseData.texture.height;
-
-                var context = canvas.getContext('2d');
-                context.drawImage(responseData.texture, 0, 0);
-
-                var hm = new Array(canvas.width);
-                for(var k=0; k<canvas.width; k++)
-                {
-                    hm[k] = new Array(canvas.height);
-                }
-
-                responseData.width = hm.length;
-                responseData.height = hm[0].length;
-                responseData.minXvalue = 0;
-                responseData.minZvalue = 0;
-                responseData.maxXvalue = hm.length;
-                responseData.maxZvalue = hm[0].length;
-
-                var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                var total = 0;
-                for(var i=3; i<imageData.data.length; i+=4)
-                {
-                    var index = i/4;
-                    hm[parseInt(index%hm.length)][parseInt(index/hm.length)] = imageData.data[i];
-
-                    if(imageData.data[i] !== demNoData)
-                    {
-                        if( responseData.minHMvalue > imageData.data[i] )
-                        { responseData.minHMvalue = imageData.data[i]  }
-                        if( responseData.maxHMvalue < imageData.data[i] )
-                        { responseData.maxHMvalue = imageData.data[i]  }
-                        total = total + parseFloat(imageData.data[i]);
-                    }
-
-                }
-                responseData.averageHMvalue = parseFloat(total / imageData.data.length);
-                responseData.heightmap = hm;
-
-                context = null;
-                canvas = null;
-            }
-
-            callback.receiveData(responseData);
-        };
-        responseData.texture.onerror = function()
-        {
-            responseData.texture = new Image();
-            responseData.texture.onload = callback.receiveData(responseData);
-            responseData.texture.src="defaultTexture.png";
-            console.log("ServerRequest::wcpsRequest(): Could not load Image from url " + url);
-        };
-
-        responseData.textureUrl = url + "?query=" + encodeURIComponent(query);
-        EarthServerGenericClient.MainScene.timeLogStart("WCPS: " + callback.name);
-        responseData.texture.src = responseData.textureUrl;
-    }
-    catch(error)
-    {
-        x3dom.debug.logInfo('ServerRequest::getWCPSImage(): ' + error);
-        callback.receiveData(responseData);
-    }
-};
-
-/**
- * This function sends the WCPS query to the specified service and tries to interpret the received data as a DEM.
- * @param callback - Object to do the callback.
- * @param responseData - Instance of the ServerResponseData.
- * @param WCPSurl - URl of the WCPS service.
- * @param WCPSquery - The WCPS request query.
- */
-EarthServerGenericClient.getWCPSDemCoverage = function(callback,responseData,WCPSurl,WCPSquery)
-{
-    EarthServerGenericClient.MainScene.timeLogStart("WCPS DEM Coverage: " + callback.name );
-    var query = "query=" + encodeURIComponent(WCPSquery);
-
-    $.ajax(
-        {
-            url: WCPSurl,
-            type: 'GET',
-            dataType: 'text',
-            data: query,
-            success: function(receivedData)
-            {
-                try{
-                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
-                var demNoData = callback.getDemNoDataValue();
-                //The received data is a list of tuples: {value,value},{value,value},.....
-                var tuples = receivedData.split('},');
-
-                var sizeX = tuples.length;
-                if( sizeX <=0 || isNaN(sizeX)  )
-                {   throw "getCoverageWCS: "+WCPSurl+": Invalid data size ("+sizeX+")"; }
-
-
-                var hm = new Array(sizeX);
-                for(var o=0; o<sizeX;o++)
-                {   hm[o] = []; }
-
-                for (var i = 0; i < tuples.length; i++)
-                {
-                    var tmp = tuples[i].substr(1);
-                    var valuesList = tmp.split(",");
-
-                    for (var k = 0; k < valuesList.length; k++)
-                    {
-                        tmp = parseFloat(valuesList[k]);
-                        hm[i][k] = tmp;
-
-                        if( tmp !== demNoData)
-                        {
-                            if (responseData.maxHMvalue < tmp)
-                            {
-                                responseData.maxHMvalue = parseFloat(tmp);
-                            }
-                            if (responseData.minHMvalue > tmp)
-                            {
-                                responseData.minHMvalue = parseFloat(tmp);
-                            }
-                        }
-                    }
-                }
-                if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
-                {
-                    responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
-                }
-                tuples = null;
-
-                responseData.width = hm.length;
-                responseData.height = hm[0].length;
-                responseData.minXvalue = 0;
-                responseData.minZvalue = 0;
-                responseData.maxXvalue = hm.length;
-                responseData.maxZvalue = hm[0].length;
-                responseData.heightmap = hm;
-
-                }
-                catch(err)
-                {   alert(err); }
-
-                callback.receiveData(responseData);
-            },
-            error: function(xhr, ajaxOptions, thrownError)
-            {
-                EarthServerGenericClient.MainScene.timeLogEnd("WCPS DEM Coverage: " + callback.name );
-                console.log('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
-            }
-        }
-    );
-};
-
-/**
- * Requests a WCS point cloud and stores the coordinate string in the response data.
- * @param callback
- * @param responseData
- * @param WCSurl
- * @param WCSversion
- * @param WCScoverID
- * @param minx
- * @param maxx
- * @param miny
- * @param maxy
- * @param minh
- * @param maxh
- */
-EarthServerGenericClient.getPointCloudWCS = function(callback,responseData,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
-{
-    var request = 'service=WCS&Request=GetCoverage&version=' + WCSversion + '&CoverageId=' + WCScoverID;
-    request += '&subset=Lat('+minx+','+maxx+')&subset=Long('+miny+','+maxy+')&subset=h('+minh+','+maxh+')';
-
-    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
-
-    $.ajax(
-        {
-            url: WCSurl,
-            type: 'GET',
-            dataType: 'XML',
-            data: request,
-            success: function(receivedData)
-            {
-
-                //console.log(receivedData);
-
-                try{
-                    EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
-                    var coords = $(receivedData).find(String("SimpleMultiPoint")).text();
-
-
-                    if(coords && coords.length )
-                    {
-                        while( !EarthServerGenericClient.IsNumeric(coords.charAt(0) ))
-                        {   coords = coords.substr(1);  }
-
-                        var coordsArray = coords.split(" ");
-
-                        // check all coords to set min,max,width&height values
-                        for(var i=0; i+2< coordsArray.length; i+=3)
-                        {
-                            if( isNaN( parseFloat(coordsArray[i] ) )) continue;
-                            if( isNaN( parseFloat(coordsArray[i+1] ))) continue;
-                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
-
-                            // check min/max value on x axis
-                            if( parseFloat(coordsArray[i]) < responseData.minXvalue) responseData.minXvalue = parseFloat(coordsArray[i]);
-                            if( parseFloat(coordsArray[i]) > responseData.maxXvalue) responseData.maxXvalue = parseFloat(coordsArray[i]);
-                            // check min/max hm value (y-axis)
-                            if( parseFloat(coordsArray[i+2]) < responseData.minHMvalue) responseData.minHMvalue = parseFloat(coordsArray[i+2]);
-                            if( parseFloat(coordsArray[i+2]) > responseData.maxHMvalue) responseData.maxHMvalue = parseFloat(coordsArray[i+2]);
-                            // check min/max value on z axis
-                            if( parseFloat(coordsArray[i+1]) < responseData.minZvalue) responseData.minZvalue = parseFloat(coordsArray[i+1]);
-                            if( parseFloat(coordsArray[i+1]) > responseData.maxZvalue) responseData.maxZvalue = parseFloat(coordsArray[i+1]);
-                        }
-
-                        //switch y/z values and lower the values
-                        var pointCloudCoordinatesArray = [];
-                        for( i=0; i< coordsArray.length; i+=3)
-                        {
-                            if( isNaN( parseFloat(coordsArray[i]))  ) continue;
-                            if( isNaN( parseFloat(coordsArray[i+1]) )) continue;
-                            if( isNaN( parseFloat(coordsArray[i+2] ))) continue;
-
-                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i  ]) - parseInt(responseData.minXvalue ) );
-                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+2]) - parseInt(responseData.minHMvalue) );
-                            pointCloudCoordinatesArray.push( parseFloat(coordsArray[i+1]) - parseInt(responseData.minZvalue ) );
-                        }
-
-                        responseData.maxXvalue -= parseInt( responseData.minXvalue);
-                        responseData.minXvalue -= parseInt( responseData.minXvalue);
-
-                        responseData.maxZvalue -= parseInt( responseData.minZvalue);
-                        responseData.minZvalue -= parseInt( responseData.minZvalue);
-
-                        responseData.maxHMvalue -= parseInt( responseData.minHMvalue );
-                        responseData.minHMvalue -= parseInt( responseData.minHMvalue );
-
-                        responseData.width  = responseData.maxXvalue - responseData.minXvalue + 1;
-                        responseData.height = responseData.maxZvalue - responseData.minZvalue + 1;
-                    }
-                    else
-                        console.log("No coords");
-
-                    responseData.pointCloudCoordinates = pointCloudCoordinatesArray.join(" ");
-                }
-                catch(err)
-                {   alert(err); }
-
-                callback.receiveData(responseData);
-            },
-            error: function(xhr, ajaxOptions, thrownError)
-            {
-                EarthServerGenericClient.MainScene.timeLogEnd("WCS PointCloud Coverage: " + callback.name );
-                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
-            }
-        }
-    );
-};
-
-/**
- * Requests a WCS coverage and stores is the heightmap field of the responseData.
- * @param callback - Object to do the callback.
- * @param responseData - Instance of the ServerResponseData.
- * @param WCSurl - URl of the WCS service.
- * @param WCScoverID - ID of the coverage.
- * @param WCSBoundingBox - Bounding Box of the area.
- * @param WCSVersion - Version of used WCS service.
- */
-EarthServerGenericClient.getCoverageWCS = function(callback,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
-{
-    var request = 'service=WCS&Request=GetCoverage&version=' + WCSVersion + '&CoverageId=' + WCScoverID;
-    request += '&subsetx=x(' + WCSBoundingBox.minLatitude + ',' + WCSBoundingBox.maxLatitude + ')&subsety=y(' + WCSBoundingBox.minLongitude + ',' + WCSBoundingBox.maxLongitude + ')';
-
-    EarthServerGenericClient.MainScene.timeLogStart("WCS Coverage: " + callback.name );
-
-    $.ajax(
-        {
-            url: WCSurl,
-            type: 'GET',
-            dataType: 'XML',
-            data: request,
-            success: function(receivedData)
-            {
-                try{
-                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
-                var Grid = $(receivedData).find('GridEnvelope');
-                var low  = $(Grid).find('low').text().split(" ");
-                var high = $(Grid).find('high').text().split(" ");
-
-                var sizeX = high[0] - low[0] + 1;
-                var sizeY = high[1] - low[1] + 1;
-
-                if( sizeX <=0 || sizeY <=0 || isNaN(sizeX) || isNaN(sizeY) )
-                {   throw "getCoverageWCS: "+WCSurl+"/"+WCScoverID+": Invalid grid size ("+sizeX+","+sizeY+")"; }
-
-                responseData.height = sizeX;
-                responseData.width  = sizeY;
-
-                console.log(sizeX,sizeY);
-
-                var hm = new Array(sizeX);
-                for(var index=0; index<hm.length; index++)
-                {
-                    hm[index] = new Array(sizeY);
-                }
-
-                var DataBlocks = $(receivedData).find('DataBlock');
-                DataBlocks.each(function () {
-                    var tuples = $(this).find("tupleList").text().split('},');
-                    for (var i = 0; i < tuples.length; i++) {
-                        var tmp = tuples[i].substr(1);
-                        var valuesList = tmp.split(",");
-
-                        for (var k = 0; k < valuesList.length; k++) {
-                            tmp = parseFloat(valuesList[k]);
-
-                            hm[parseInt(k/(sizeX))][parseInt(k%(sizeX))] = tmp;
-
-                            if (responseData.maxHMvalue < tmp)
-                            {
-                                responseData.maxHMvalue = parseFloat(tmp);
-                            }
-                            if (responseData.minHMvalue > tmp)
-                            {
-                                responseData.minHMvalue = parseFloat(tmp);
-                            }
-                        }
-                    }
-                    if(responseData.minHMvalue!=0 && responseData.maxHMvalue!=0)
-                    {
-                        responseData.averageHMvalue = (responseData.minHMvalue+responseData.maxHMvalue)/2;
-                    }
-                    tuples = null;
-                });
-                DataBlocks = null;
-
-                responseData.minXvalue = 0;
-                responseData.minZvalue = 0;
-                responseData.maxXvalue = sizeY;
-                responseData.maxZvalue = sizeX;
-                responseData.heightmap = hm;
-                }
-                catch(err)
-                {   alert(err); }
-
-                callback.receiveData(responseData);
-            },
-            error: function(xhr, ajaxOptions, thrownError)
-            {
-                EarthServerGenericClient.MainScene.timeLogEnd("WCS Coverage: " + callback.name );
-                x3dom.debug.logInfo('\t' + xhr.status +" " + ajaxOptions + " " + thrownError);
-            }
-        }
-    );
-};
-
-/**
- * Requests one image via WCSPS. It is assumed that the image has a dem encoded in the alpha channel.
- * If not the terrain is flat.
- * @param callback - Module that requests the image.
- * @param WCPSurl - URL of the WCPS service.
- * @param WCPSquery - The WCPS query.
- */
-EarthServerGenericClient.requestWCPSImageAlphaDem = function(callback,WCPSurl,WCPSquery)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    responseData.removeAlphaChannel = true; // Remove the alpha channel for the final texture
-    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,true);
-};
-
-/**
- * Requests one image via WCSPS.
- * @param callback - Module that requests the image.
- * @param WCPSurl - URL of the WCPS service.
- * @param WCPSquery - The WCPS query.
- */
-EarthServerGenericClient.requestWCPSImage = function(callback,WCPSurl,WCPSquery)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    responseData.validateHeightMap = false; // No heightmap in this response intended so don't check it in validate()
-    EarthServerGenericClient.getWCPSImage(callback,responseData,WCPSurl,WCPSquery,false);
-};
-
-/**
- * The progressive WCPS loader initiate multiple queries consecutively. As soon as one response is received the
- * next query is executed. Every response is given to the given callback.
- * Note: The WCPS loader starts with the last query in the array (LIFO).
- * @param callback - Module that requests the WCPS images.
- * @param WCPSurl - URL of the WCPS service.
- * @param WCPSqueries - Array of WCPS queries. (LIFO)
- * @param DemInAlpha - Flag if a dem is encoded in the alpha channel.
- */
-EarthServerGenericClient.progressiveWCPSImageLoader = function(callback,WCPSurl,WCPSqueries,DemInAlpha)
-{
-    var which = WCPSqueries.length -1;
-    //We need one responseData for every query in WCPSqueries
-    var responseData = [];
-    //For time logging.
-    this.name = "Progressive WCPS Loader: " + callback.name;
-
-    for(var i=0;i<WCPSqueries.length;i++)
-    {
-        responseData[i] = new EarthServerGenericClient.ServerResponseData();
-        responseData[i].removeAlphaChannel = DemInAlpha; // Should the alpha channel be removed for the final texture?
-    }
-
-    /**
-     * @ignore
-     * @param which - index of the request to make.
-     */
-    this.makeRequest =  function(which)
-    {
-        if(which >= 0)
-        {
-            EarthServerGenericClient.MainScene.timeLogStart("Progressive WCPS: " + WCPSurl + "_Query_" +which);
-            EarthServerGenericClient.getWCPSImage(this,responseData[which],WCPSurl,WCPSqueries[which],DemInAlpha);
-        }
-        else
-        {   responseData = null;  }
-    };
-    /**
-     * @ignore
-     * @param data - Server response data object
-     */
-    this.receiveData = function(data)
-    {
-        EarthServerGenericClient.MainScene.timeLogEnd("Progressive WCPS: " + WCPSurl + "_Query_" +which);
-        which--;
-        this.makeRequest(which);
-        callback.receiveData(data);
-    };
-    this.makeRequest(which);
-};
-
-/**
- * Requests an image via WCPS and a dem via WCS.
- * @param callback - Module requesting this data.
- * @param WCPSurl - URL of the WCPS service.
- * @param WCPSquery - WCPS Query for the image.
- * @param WCSurl - URL of the WCS service.
- * @param WCScoverID - Coverage ID for the WCS height data.
- * @param WCSBoundingBox - Bounding box of the area used in WCS.
- * @param WCSVersion - Version of the used WCS.
- */
-EarthServerGenericClient.requestWCPSImageWCSDem = function(callback,WCPSurl,WCPSquery,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
-
-    EarthServerGenericClient.getWCPSImage(combine,responseData,WCPSurl,WCPSquery,false);
-    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,WCSBoundingBox,WCSVersion);
-};
-
-
-EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,imageQuery,demURL,demQuery)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
-
-    EarthServerGenericClient.getWCPSImage(combine,responseData,imageURL,imageQuery,false);
-    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
-};
-
-/**
- * Requests an image via WMS and a dem via WCS.
- * @param callback - Module requesting this data.
- * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
- * @param ResX - Width of the response image via WMS.
- * @param ResY - Height of the response image via WMS.
- * @param WMSurl - URL of the WMS service.
- * @param WMScoverID - Layer ID used in WMS.
- * @param WMSversion - Version of the WMS service.
- * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
- * @param WMSImageFormat - Image format for the WMS response.
- * @param WCSurl - URL of the WCS service.
- * @param WCScoverID - Coverage ID used in WCS.
- * @param WCSVersion - Version of the WCS service.
- */
-EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
-
-    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
-    EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion);
-};
-
-/**
- * Requests an image via WMS and a dem via WCPS.
- * @param callback - Module requesting this data.
- * @param BoundingBox - Bounding box of the area, used in both WMS and WCS requests.
- * @param ResX - Width of the response image via WMS.
- * @param ResY - Height of the response image via WMS.
- * @param WMSurl - URL of the WMS service.
- * @param WMScoverID - Layer ID used in WMS.
- * @param WMSversion - Version of the WMS service.
- * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
- * @param WMSImageFormat - Image format for the WMS response.
- * @param WCPSurl - URL for the WCPS Query
- * @param WCPSquery - WCPS DEM Query
- */
-EarthServerGenericClient.requestWMSImageWCPSDem = function( callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCPSurl,WCPSquery)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
-
-    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
-    EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,WCPSurl,WCPSquery);
-};
-
-EarthServerGenericClient.requestWCPSImages = function(callback, URLWCPS, WCPSQuery)
-{
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,WCPSQuery.length,true);
-    var responseDataArray = [];
-
-    for(var o=0; o< WCPSQuery.length;o++)
-    {
-        responseDataArray.push( new EarthServerGenericClient.ServerResponseData() );
-        responseDataArray[o].validateHeightMap = false; // no height map will be received
-    }
-
-    for(var i=0; i< WCPSQuery.length;i++)
-    {
-        EarthServerGenericClient.getWCPSImage(combine,responseDataArray[i],URLWCPS,WCPSQuery[i],false);
-    }
-};
-
-/**
- * TODO:
- * @param callback
- * @param WCSurl
- * @param WCSversion
- * @param WCScoverID
- * @param minx
- * @param maxx
- * @param miny
- * @param maxy
- * @param minh
- * @param maxh
- */
-EarthServerGenericClient.requestWCSPointCloud = function(callback,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh)
-{
-    var data = new EarthServerGenericClient.ServerResponseData;
-    data.validateHeightMap = false;
-    data.validateTexture = false;
-    data.validatePointCloud = true;
-
-    EarthServerGenericClient.getPointCloudWCS(callback,data,WCSurl,WCSversion,WCScoverID,minx,maxx,miny,maxy,minh,maxh);
-
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: Layer and Time. TODO: Add better description
- * 1 URL for the service, 1 Coverage name data.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_LayerAndTime = function()
-{
-    this.setDefaults();
-    this.name = "Coverage with layers and time.";
-   
-    /**
-     * The custom or default WCPS Queries.
-     * @type {Array}
-     */
-    this.WCPSQuery  = [];
-    /**
-     * Data modifier for the data query. Should be a number as a string.
-     * @default: Empty String
-     * @type {string}
-     */
-    this.dataModifier = "";
-};
-EarthServerGenericClient.Model_LayerAndTime.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-
-/**
- * Sets the URL for the service.
- * @param url
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setURL=function(url){
-    /**
-     * URL for the WCPS service.
-     * @type {String}
-     */
-    this.URLWCPS = String(url);
-};
-/**
- * Sets the coverage name.
- * @param coverageLayer - Coverage name for the layered data set.
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setCoverage = function (coverageLayer) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageLayer = String(coverageLayer);
-};
-/**
- * Sets the queried layers. E.g. 1:3
- * @param Layers
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setLayers = function (Layers) {
-    /**
-     * Queried Layers.
-     * @type {String}
-     */
-    this.queriedLayers = [];
-
-    var tmpLayers = String(Layers);
-    tmpLayers = tmpLayers.split(":");
-
-    if( tmpLayers.length === 1)
-    {   this.queriedLayers = tmpLayers; }
-    else
-    {
-        for(var i=parseInt(tmpLayers[0]);i<=parseInt(tmpLayers[1]);i++)
-        {   this.queriedLayers.push(i);  }
-    }
-
-    this.requests = this.queriedLayers.length;
-};
-/**
- * Sets the coverage time.
- * @param coverageTime
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setCoverageTime = function (coverageTime) {
-    /**
-     *
-     * @type {String}
-     */
-    this.coverageTime = String(coverageTime);
-};
-
-/**
- * Sets the data modifier to be multiplied with the data. Eg: 10000
- * @param modifier
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setDataModifier = function( modifier )
-{
-    this.dataModifier = String(modifier) + "*";
-};
-
-/**
- * Sets a specific querystring for the data query.
- * @param queryString - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setWCPSForChannelALPHA = function(queryString)
-{
-    this.WCPSQuery = queryString;
-};
-
-/**
- * Sets the Coordinate Reference System.
- * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setCoordinateReferenceSystem = function(value)
-{
-    this.CRS = value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    // Check if mandatory values are set
-    if( this.coverageLayer === undefined || this.URLWCPS === undefined ||
-        this.coverageTime === undefined || this.queriedLayers === undefined  )
-    {
-        alert("Not all mandatory values are set. LayerAndTime: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //IF something is not defined use standard query.
-    if( this.WCPSQuery.length === 0 )
-    {
-        for(var i=0; i< this.queriedLayers.length;i++)
-        {
-            this.WCPSQuery[i]  = "for data in (" + this.coverageLayer +")";
-            this.WCPSQuery[i] += "return encode(("+ this.dataModifier +"data[t(" + this.coverageTime +"),";
-            this.WCPSQuery[i] += 'd4('+ this.queriedLayers[i]+ ')]),"png")';
-        }
-    }
-    else //ALL set so use custom query
-    {
-        this.replaceSymbolsInString(this.WCPSQuery);
-    }
-
-    // request data
-    EarthServerGenericClient.requestWCPSImages(this,this.URLWCPS,this.WCPSQuery);
-};
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data array(!) from the ServerRequest.
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.receiveData = function( data)
-{
-    var failedData = 0;
-    for(var i=0;i<data.length;i++)
-    {
-        // TODO: delete only the one element and UI only if all failed.
-        if( !this.checkReceivedData( data[i] ) )
-            failedData++;
-    }
-
-    // if all data failed return
-    if( failedData == data.length) return;
-
-    // create transform
-    this.transformNode = this.createTransform(2,this.queriedLayers.length,2,0);
-    this.root.appendChild(this.transformNode);
-
-    // create terrain
-    EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-    this.terrain = new EarthServerGenericClient.VolumeTerrain(this.transformNode,data,this.index,this.noDataValue);
-    EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-
-};
-
-EarthServerGenericClient.Model_LayerAndTime.prototype.updateMaxShownElements = function(value)
-{
-    if( this.terrain !== undefined )
-        this.terrain.updateMaxShownElements(value);
-};
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_LayerAndTime.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendMaxShownElementsSlider(element,this.index,this.requests);
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: Module for underground data.
- * One service URL, one coverage
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Module_Sharad = function()
-{
-    this.setDefaults();
-    this.boundModelIndex = -1; // sharad modules can be bound to other modules. -1: unbound
-    this.name = "Sharad Underground";
-};
-EarthServerGenericClient.Module_Sharad.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-
-
-EarthServerGenericClient.Module_Sharad.prototype.setURL=function(serviceURL)
-{
-    this.serviceURL = serviceURL;
-};
-
-
-EarthServerGenericClient.Module_Sharad.prototype.setCoverages = function (coverage)
-{
-    this.coverage = coverage;
-};
-
-/**
- * Sets a complete custom querystring.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Module_Sharad.prototype.setWCPSQuery = function(querystring)
-{
-    /**
-     * The custom query.
-     * @type {String}
-     */
-    this.WCPSQuery = String(querystring);
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Module_Sharad.prototype.createModel=function(root,cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-    {   alert("root is not defined");    }
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.serviceURL === undefined || this.coverage === undefined || this.WCPSQuery === undefined )
-    {
-        alert("Not all mandatory values are set. Sharad: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //Replace $ symbols with the actual values
-    this.WCPSQuery = this.WCPSQuery.replace("$CI",this.coverage);
-    this.WCPSQuery = this.WCPSQuery.replace("$MINX",this.minx);
-    this.WCPSQuery = this.WCPSQuery.replace("$MINY",this.miny);
-    this.WCPSQuery = this.WCPSQuery.replace("$MAXX",this.maxx);
-    this.WCPSQuery = this.WCPSQuery.replace("$MAXY",this.maxy);
-    this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-    this.WCPSQuery = this.WCPSQuery.replace("$CRS" ,'"' + this.CRS + '"');
-    this.WCPSQuery = this.WCPSQuery.replace("$RESX",this.XResolution);
-    this.WCPSQuery = this.WCPSQuery.replace("$RESZ",this.ZResolution);
-
-    //2: Make ServerRequest
-    EarthServerGenericClient.requestWCPSImage(this,this.serviceURL,this.WCPSQuery);
-};
-
-EarthServerGenericClient.Module_Sharad.prototype.setMetaData = function( link )
-{
-
-    function getBinary(file)
-    {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", file, false);
-        xhr.overrideMimeType("text/plain; charset=x-user-defined");
-        xhr.send(null);
-        return xhr.responseText;
-    }
-
-    var descov = getBinary(link);
-
-    if(descov)
-    {
-        descov = descov.match(/gmlcov:metadata>(.+)<\/gmlcov:metadata/);
-        if(descov !== null)
-        {
-            descov = descov[0];
-            descov = descov.replace('coords','"coords"');
-            descov = '' + descov.substring(16,descov.length - 18);
-            var metadata = JSON.parse(descov);
-
-            if( metadata.coords.length > 0)
-            {   this.coords = metadata.coords; }
-        }
-        else
-        {
-            console.log("EarthServerGenericClient::Module_Sharad: Error in meta data response.") ;
-        }
-    }
-    else
-    {
-        console.log("EarthServerGenericClient::Module_Sharad: Can't access meta data.") ;
-    }
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Module_Sharad.prototype.receiveData = function(data)
-{
-    if( this.checkReceivedData(data))
-    {
-        // Remove the placeHolder
-        this.removePlaceHolder();
-
-        // This modules creates it's own transformation.
-        var trans = document.createElement('Transform');
-        trans.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
-
-        if(this.coords === undefined)
-        {
-            var width = Math.pow(2, Math.round(Math.log(data.texture.width)/Math.log(2)));
-            var height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
-
-            if( width  > x3dom.caps.MAX_TEXTURE_SIZE) width  = x3dom.caps.MAX_TEXTURE_SIZE;
-            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
-
-            this.YResolution = 1000;
-
-            var scaleX = (this.cubeSizeX*this.xScale)/(parseInt(width)-1);
-            var scaleY = (this.cubeSizeY*this.yScale)/1000;
-            var scaleZ = (this.cubeSizeY*this.yScale)/(parseInt(height)-1);
-
-            trans.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
-
-            var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0);
-            var yoff = (this.cubeSizeY * this.yOffset) + (height*scaleY) - (this.cubeSizeY/2.0);
-            var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0);
-            trans.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);
-
-            // turn upright
-            trans.setAttribute("rotation","1 0 0 1.57");
-        }
-        else
-        {
-            height = Math.pow(2, Math.round(Math.log(data.texture.height)/Math.log(2)));
-            if( height > x3dom.caps.MAX_TEXTURE_SIZE) height = x3dom.caps.MAX_TEXTURE_SIZE;
-
-            scaleY = (this.cubeSizeY*this.yScale)/height;
-            trans.setAttribute("scale", "1 " + scaleY + " 1");
-
-            this.YResolution = height;
-
-            var min = (-this.cubeSizeY/2.0) + EarthServerGenericClient.MainScene.getModelOffsetY(this.index) * this.cubeSizeY;
-            yoff = (this.cubeSizeY * this.yOffset) - (min*scaleY) - (this.cubeSizeY/2.0);
-            trans.setAttribute("translation", "0 " + yoff  + " 0");
-        }
-
-
-        this.root.appendChild( trans);
-
-        // Create terrain
-        var area = {};
-        area.minx = this.minx;
-        area.miny = this.miny;
-        area.maxx = this.maxx;
-        area.maxy = this.maxy;
-        this.terrain = new EarthServerGenericClient.SharadTerrain(trans, data, this.index,this.noData,this.coords,area);
-        this.terrain.createTerrain();
-    }
-};
-
-/**
- * Sets the index of the scene model the sharad module is bound to.
- * @param index - Index of the scene model.
- */
-EarthServerGenericClient.Module_Sharad.prototype.setBoundModuleIndex = function(index)
-{
-    if(index === this.index)//prevent to bind this module to itself
-    {
-        console.log("Module_Sharad: Can't bind module to itself.");
-    }
-    else
-    {
-        console.log("Module_Sharad: Bound to model: " + index);
-        this.boundModelIndex = index;
-    }
-};
-
-/**
- * Returns the index of the model sharad module is bound to.
- * @returns {number} - Index of the model or -1 if unbound.
- */
-EarthServerGenericClient.Module_Sharad.prototype.getBoundModuleIndex = function()
-{
-    return this.boundModelIndex;
-};
-
-/**
- * Resets the modelIndex sharad module is bound to back to -1 and marks it as unbound.
- */
-EarthServerGenericClient.Module_Sharad.prototype.releaseBinding = function()
-{
-    this.boundModelIndex = -1;
-};
-
-/**
- * If sharad module is bound to another module the sharad module shall move when the other module is moved.
- * This function shall receive the delta of the positions every time the module is moved.
- * @param axis - Axis of the movement.
- * @param delta - Delta to the last position.
- */
-EarthServerGenericClient.Module_Sharad.prototype.movementUpdateBoundModule = function(axis,delta)
-{
-   EarthServerGenericClient.MainScene.updateOffsetByDelta(this.index,axis,delta);
-};
-
-/**
- * This function notifies sharad module that the bound module's elevation was changed.
- * All annotation will be checked and altered in their position.
- */
-EarthServerGenericClient.Module_Sharad.prototype.elevationUpdateBoundModule = function(value)
-{
-    if(this.boundModelIndex >= 0)
-    {
-        var x = 0;
-        var z = 0;
-
-        // call elevation update to it self
-        EarthServerGenericClient.MainScene.updateElevation(this.index,value);
-        // get height of the bound module. (for now at the center of the cube
-        var value = EarthServerGenericClient.MainScene.getHeightAt3DPosition(this.boundModelIndex,x,z);
-        console.log(value);
-        // get own transformation by name "EarthServerGenericClient_modelTransform"+this.index);
-        var trans = document.getElementById("EarthServerGenericClient_modelTransform"+this.index);
-        if( trans)
-        {
-            var scale = trans.getAttribute("scale");
-            scale = scale.split(" ");
-            // determine exact value
-            value = value + (this.cubeSizeY/2) - ( this.YResolution * scale[1] * this.yScale );
-            //update offset
-            EarthServerGenericClient.MainScene.updateOffset(this.index,1,value);
-        }
-        else
-        {   console.log("EarthServerClient::Module_Sharad not able to find transform.");    }
-
-        trans = null;
-    }
-    else
-    {   console.log("EarthServerClient::Module_Sharad not bound to a model.");  }
-};
-
-
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model
- */
-EarthServerGenericClient.Module_Sharad.prototype.setSpecificElement= function(element)
-{
-    // updateLength() is called for elevation because the model is rotated. Scaling it's length
-    // scales the size on the y-axis in fact.
-    if(this.coords === undefined)
-    {
-        EarthServerGenericClient.appendGenericSlider(element,"EarthServerGenericClient_Slider_E_"+this.index,"Elevation",
-                                                this.index,0,100,10,EarthServerGenericClient.MainScene.updateLength);
-    }
-    else//normal elevation
-    {   EarthServerGenericClient.appendElevationSlider(element,this.index); }
-};
-//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WCPS Image with DEM in Alpha Channel
- * 1 URL for the service, 2 Coverage names for the image and dem.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WCPSDemAlpha = function()
-{
-    this.setDefaults();
-    this.name = "WCPS Image with DEM in alpha channel.";
-    /**
-     * Determines if progressive or complete loading of the model is used.
-     * @default false
-     * @type {Boolean}
-     */
-    this.progressiveLoading = false;
-
-    /**
-     * The custom or default WCPS Queries. The array contains either one element for complete loading
-     * or multiple (3) queries for progressive loading of the model.
-     * @type {Array}
-     */
-    this.WCPSQuery  = [];
-};
-EarthServerGenericClient.Model_WCPSDemAlpha.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-/**
- * Enables/Disables the progressive loading of the model.
- * @param value - True or False
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setProgressiveLoading=function(value){
-    this.progressiveLoading = value;
-
-    //Progressive Loading creates 3 requests while normal loading 1
-    if( this.progressiveLoading){ this.requests = 3; }
-    else{   this.requests = 1;  }
-};
-/**
- * Sets the URL for the service.
- * @param url
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setURL=function(url){
-    /**
-     * URL for the WCPS service.
-     * @type {String}
-     */
-    this.URLWCPS = String(url);
-};
-/**
- * Sets both coverage names.
- * @param coverageImage - Coverage name for the image data set.
- * @param coverageDem   - Coverage name for the dem data set.
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoverages = function (coverageImage, coverageDem) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageImage = String(coverageImage);
-    /**
-     * name of the dem coverage.
-     * @type {String}
-     */
-    this.coverageDEM = String(coverageDem);
-};
-/**
- * Sets a specific querystring for the RED channel of the WCPS query.
- * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelRED = function(querystring)
-{
-    this.WCPSQuery[0] = querystring;
-};
-/**
- * Sets a specific querystring for the GREEN channel of the WCPS query.
- * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelGREEN = function(querystring)
-{
-    this.WCPSQuery[1] = querystring;
-};
-/**
- * Sets a specific querystring for the BLUE channel of the WCPS query.
- * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelBLUE = function(querystring)
-{
-    this.WCPSQuery[2] = querystring;
-};
-/**
- * Sets a specific querystring for the ALPHA channel of the WCPS query.
- * All red,blue,green and alpha has to be set, otherwise the standard query will be used.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setWCPSForChannelALPHA = function(querystring)
-{
-    this.WCPSQuery[3] = querystring;
-};
-
-/**
- * Sets the Coordinate Reference System.
- * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
-*/
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setCoordinateReferenceSystem = function(value)
-{
-    this.CRS = value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.CRS === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
-    {
-        alert("Not all mandatory values are set. WCPSDemAlpha: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //2: create wcps query/queries
-    //Either the user query if all query strings are set. Or standard wcps query if wcps channels are not set.
-    //Build one query for complete loading and multiple queries for progressive loading
-
-    //IF something is not defined use standard query.
-    if( this.WCPSQuery[0] === undefined || this.WCPSQuery[1] === undefined || this.WCPSQuery[2] === undefined || this.WCPSQuery[3] === undefined)
-    {
-        for(var i=0; i<this.requests; i++)
-        {
-            var currentXRes = parseInt(this.XResolution / Math.pow(2,i) );
-            var currentZRes = parseInt(this.ZResolution / Math.pow(2,i) );
-            this.WCPSQuery[i] =  "for i in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-            this.WCPSQuery[i] += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
-            this.WCPSQuery[i] += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {}); ";
-            this.WCPSQuery[i] += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {});";
-            this.WCPSQuery[i] += 'alpha: (char) (((scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})) / 1349) * 255)";
-            this.WCPSQuery[i] += '}, "' + this.imageFormat +'" )';
-        }
-    }
-    else //ALL set so use custom query
-    {
-        //Create multiple queries if progressive loading is set or one if not.
-        for(var j=0; j<this.requests; j++)
-        {
-            //Replace $ symbols with the actual values
-            var tmpString = [];
-            for(i=0; i<4; i++)
-            {
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(this.WCPSQuery[i],"$CI","image");
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CD","dtm");
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINX",this.minx);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MINY",this.miny);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXX",this.maxx);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$MAXY",this.maxy);
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$CRS" ,'"' + this.CRS + '"');
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESX",parseInt(this.XResolution / Math.pow(2,j) ) );
-                tmpString[i] = EarthServerGenericClient.replaceAllFindsInString(tmpString[i],"$RESZ",parseInt(this.ZResolution / Math.pow(2,j) ) );
-            }
-            this.WCPSQuery[j] =  "for image in (" + this.coverageImage + "), dtm in (" + this.coverageDEM + ") return encode ( { ";
-            this.WCPSQuery[j] += "red: " + tmpString[0] + " ";
-            this.WCPSQuery[j] += "green: " + tmpString[1]+ " ";
-            this.WCPSQuery[j] += "blue: " + tmpString[2] + " ";
-            this.WCPSQuery[j] += "alpha: " + tmpString[3];
-            this.WCPSQuery[j] += '}, "' + this.imageFormat +'" )';
-        }
-    }
-
-    //3: Make ServerRequest and receive data.
-    if( !this.progressiveLoading)
-    {   EarthServerGenericClient.requestWCPSImageAlphaDem(this,this.URLWCPS,this.WCPSQuery[0]);  }
-    else
-    {   EarthServerGenericClient.progressiveWCPSImageLoader(this,this.URLWCPS,this.WCPSQuery,true);   }
-};
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.receiveData = function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //If progressive loading is enabled this function is called multiple times.
-        //The lower resolution version shall be removed and replaced with the new one.
-        //So the old transformNode will be removed and a new one created.
-        if(this.transformNode !== undefined )
-        {   this.root.removeChild(this.transformNode); }
-
-        //In the first receiveData call remove the placeholder.
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        this.transformNode = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild(this.transformNode);
-
-        //Create Terrain out of the received data
-        if( !this.progressiveLoading)
-        {
-            EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-            this.terrain = new EarthServerGenericClient.LODTerrain(this.transformNode, data, this.index, this.noData, this.demNoData);
-            this.terrain.createTerrain();
-            EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-            this.elevationUpdateBinding();
-            if(this.sidePanels)
-            {   this.terrain.createSidePanels(this.transformNode,1);    }
-            EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-        }
-        else
-        {
-            //Check if terrain is already created. Create it in the first function call.
-            if( this.terrain === undefined )
-            {   this.terrain = new EarthServerGenericClient.ProgressiveTerrain(this.index); }
-
-            //Add new data (with higher resolution) to the terrain
-            EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-            this.terrain.insertLevel(this.transformNode,data,this.noData, this.demNoData);
-            this.elevationUpdateBinding();
-            if(this.sidePanels)
-            {   this.terrain.createSidePanels(this.transformNode,1);    }
-            EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-
-            if( this.receivedDataCount === this.requests)
-            {   EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);   }
-        }
-
-        //Delete transformNode when the last response call is done.
-        //Until that the pointer is needed to delete the old terrain just before the new terrain is build.
-        if( this.receivedDataCount === this.requests )
-        {   this.transformNode = null;  }
-    }
-};
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WCPSDemAlpha.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendElevationSlider(element,this.index);
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WCPS Image with DEM from WCS Query
- * 2 URLs for the service, 2 Coverage names for the image and dem.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WCPSDemWCS = function()
-{
-    this.setDefaults();
-    this.name = "WCPS Image with DEM from WCS Query.";
-    /**
-     * WCS version for the query.
-     * @default "2.0.0"
-     * @type {String}
-     */
-    this.WCSVersion = "2.0.0";
-};
-EarthServerGenericClient.Model_WCPSDemWCS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-/**
- * Sets the url for both the WCPS and WCS Queries.
- * @param wcpsurl - Service URL for the WCPS Request
- * @param demurl  - Service URL for the WCS Request
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setURLs=function(wcpsurl, demurl){
-    /**
-     * URL for the WCPS service.
-     * @type {String}
-     */
-    this.URLWCPS = String(wcpsurl);
-    /**
-     * URL for the WCS service.
-     * @type {String}
-     */
-    this.URLDEM  = String(demurl);
-};
-/**
- * Sets both coveragenames
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageImage = String(coverageImage);
-    /**
-     * Name if the dem coverage.
-     * @type {String}
-     */
-    this.coverageDEM = String(coverageDem);
-};
-/**
- * Sets a complete custom querystring.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCPSQuery = function(querystring)
-{
-    /**
-     * The custom query.
-     * @type {String}
-     */
-    this.WCPSQuery = String(querystring);
-};
-
-/**
- * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
- * @param version - String with WCS version number.
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setWCSVersion = function(version)
-{
-    this.WCSVersion = String(version);
-};
-
-/**
- * Sets the Coordinate Reference System.
- * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setCoordinateReferenceSystem = function(value)
-{
-    this.CRS = value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWCPS === undefined || this.URLDEM === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
-    {
-        alert("Not all mandatory values are set. WCPSDemWCS: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //2: create wcps query
-    //If no query was defined use standard query.
-    if( this.WCPSQuery === undefined)
-    {
-        this.WCPSQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
-        this.WCPSQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
-        this.WCPSQuery += '}, "' + this.imageFormat +'" )';
-    }
-    else //A custom query was defined so use it
-    {
-        //Replace $ symbols with the actual values
-        this.WCPSQuery = this.replaceSymbolsInString(this.WCPSQuery);
-        console.log(this.WCPSQuery);
-    }
-    //3: Make ServerRequest and receive data.
-    var bb = {
-        minLongitude: this.miny,
-        maxLongitude: this.maxy,
-        minLatitude:  this.minx,
-        maxLatitude:  this.maxx
-    };
-    EarthServerGenericClient.requestWCPSImageWCSDem(this,this.URLWCPS,this.WCPSQuery,this.URLDEM,this.coverageDEM,bb,this.WCSVersion);
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.receiveData= function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //Remove the placeHolder
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
-
-        //Create Terrain out of the received data
-        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
-        this.terrain.createTerrain();
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdateBinding();
-
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(transform,1); }
-
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-
-        transform = null;
-    }
-};
-
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WCPSDemWCS.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendElevationSlider(element,this.index);
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WCPS Image with DEM from second WCPS Query
- * 2 URLs for the service, 2 Coverage names for the image and dem.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WCPSDemWCPS = function()
-{
-    this.setDefaults();
-    this.name = "WCPS Image with DEM from second WCPS Query.";
-};
-EarthServerGenericClient.Model_WCPSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-/**
- * Sets the urls for both WCPS Queries. If only one url is given it is used for both requests.
- * @param imageURL - Service URL for the WCPS Image Request
- * @param demURL - Service URL for the WCPS Dem Request
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setURLs=function(imageURL, demURL){
-    /**
-     * URL for the WCPS image service.
-     * @type {String}
-     */
-    this.imageURL = String(imageURL);
-    /**
-     * URL for the WCPS Dem service.
-     * @type {String}
-     */
-    this.demURL;
-    if(demURL === undefined) // if demURL is not defined use imageURL
-    {   this.demURL = String(imageURL); }
-    else
-    {   this.demURL  = String(demURL);  }
-};
-/**
- * Sets both coveragenames
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageImage = String(coverageImage);
-    /**
-     * Name if the dem coverage.
-     * @type {String}
-     */
-    this.coverageDEM = String(coverageDem);
-};
-/**
- * Sets a complete custom querystring.
- * @param querystring - the querystring. Use $CI (coverageImage), $CD (coverageDEM),
- * $MINX,$MINY,$MAXX,$MAXY(AoI) and $RESX,ResZ (Resolution) for automatic replacement.
- * Examples: $CI.red , x($MINX:$MINY)
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSImageQuery = function(querystring)
-{
-    /**
-     * The custom WCPS image query.
-     * @type {String}
-     */
-    this.WCPSImageQuery = String(querystring);
-};
-
-/**
- * Sets a custom query for the WCPS Dem request.
- * @param querystring - WCPS as a string.
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
-{
-    /**
-     * The custom WCPS Dem query.
-     * @type {String}
-     */
-    this.WCPSDemQuery = String(querystring);
-};
-
-
-/**
- * Sets the Coordinate Reference System.
- * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setCoordinateReferenceSystem = function(value)
-{
-    this.CRS = value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
-    {
-        alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //2: create wcps queries
-    //If no query was defined use standard query.
-    if( this.WCPSImageQuery === undefined)
-    {
-        this.WCPSImageQuery =  "for i in (" + this.coverageImage + ") return encode ( { ";
-        this.WCPSImageQuery += 'red: scale(trim(i.red, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSImageQuery += 'green: scale(trim(i.green, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {}); ";
-        this.WCPSImageQuery += 'blue: scale(trim(i.blue, {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + this.XResolution + '), y:"CRS:1"(0:' + this.ZResolution + ")}, {})";
-        this.WCPSImageQuery += '}, "' + this.imageFormat +'" )';
-    }
-    else //A custom query was defined so use it
-    {
-        //Replace $ symbols with the actual values
-        this.WCPSImageQuery = this.replaceSymbolsInString(this.WCPSImageQuery);
-    }
-
-    if( this.WCPSDemQuery === undefined)
-    {
-        var currentXRes = this.XResolution;
-        var currentZRes = this.ZResolution;
-        this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
-        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.CRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.CRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
-        this.WCPSDemQuery += ', "csv" )';
-    }
-    else //A custom query was defined so use it
-    {
-        //Replace $ symbols with the actual values
-        this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
-    }
-
-    EarthServerGenericClient.requestWCPSImageWCPSDem(this,this.imageURL,this.WCPSImageQuery,this.demURL,this.WCPSDemQuery);
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.receiveData= function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //Remove the placeHolder
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
-
-        //Create Terrain out of the received data
-        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
-        this.terrain.createTerrain();
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
-
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(transform,1); }
-
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-
-        transform = null;
-    }
-};
-
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WCPSDemWCPS.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendElevationSlider(element,this.index);
-};
-//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WCS Point Cloud
- * 1 URL for the service, 1 Coverage name point cloud
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WCSPointCloud = function()
-{
-    this.setDefaults();
-    this.name = "WCS Point Cloud";
-    /**
-     * WCS version for the query.
-     * @default "2.0.0"
-     * @type {String}
-     */
-    this.WCSVersion = "2.0.0";
-    /**
-     * Size of the drawn points.
-     * @default 3.0
-     * @type {number}
-     */
-    this.pointSize = 3.0;
-};
-EarthServerGenericClient.Model_WCSPointCloud.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-
-/**
- * Sets the URL for the service.
- * @param url
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.setURL=function(url){
-    /**
-     * URL for the WCS service.
-     * @type {String}
-     */
-    this.URLWCS = String(url);
-};
-/**
- * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
- * @param version - String with WCS version number.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.setWCSVersion = function(version)
-{
-    this.WCSVersion = String(version);
-};
-/**
- * Sets the coverage name.
- * @param coveragePointCloud - Coverage name for the image data set.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.setCoverage = function (coveragePointCloud)
-{
-    /**
-     * Name of the point cloud coverage.
-     * @type {String}
-     */
-    this.coveragePointCloud = String(coveragePointCloud);
-};
-
-/**
- * Sets the size of the points in the cloud.
- * @param pointSize - Size of the points in the cloud.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.setPointSize = function (pointSize)
-{
-    /**
-     * Size of the points in the cloud.
-     * @type {String}
-     */
-    this.pointSize = pointSize;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    // Check if mandatory values are set
-    if( this.coveragePointCloud === undefined || this.URLWCS === undefined || this.minh === undefined || this.maxh === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined )
-    {
-        alert("Not all mandatory values are set. WCSPointCloud: " + this.name );
-        console.log(this);
-        return;
-    }
-    // Make ServerRequest and receive data.
-    EarthServerGenericClient.requestWCSPointCloud(this,this.URLWCS,this.WCSVersion,this.coveragePointCloud,
-                    this.minx,this.maxx,this.miny,this.maxy,this.minh,this.maxh);
-};
-
-/**
- * Updates the size of points for this model.
- * @param value - Point size
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.updatePointSize = function(value)
-{
-    if( this.terrain )
-        this.terrain.setPointSize(value);
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.receiveData = function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //If progressive loading is enabled this function is called multiple times.
-        //The lower resolution version shall be removed and replaced with the new one.
-        //So the old transformNode will be removed and a new one created.
-        if(this.transformNode !== undefined )
-        {   this.root.removeChild(this.transformNode); }
-
-        //In the first receiveData call remove the placeholder.
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-
-        // build transform
-        this.transformNode = this.createTransform(data.width,YResolution,data.height,data.minHMvalue,data.minXvalue,data.minZvalue);
-        /*this.transformNode = document.createElement("transform");
-        this.transformNode.setAttribute("id", "EarthServerGenericClient_modelTransform"+this.index);
-        this.transformNode.setAttribute("onclick","EarthServerGenericClient.MainScene.OnClickFunction("+this.index+",event.hitPnt);");
-
-        var scaleX = (this.cubeSizeX*this.xScale)/(data.width);
-        var scaleY = (this.cubeSizeY*this.yScale)/ YResolution;
-        var scaleZ = (this.cubeSizeZ*this.zScale)/(data.height);
-        this.transformNode.setAttribute("scale", "" + scaleX + " " + scaleY + " " + scaleZ);
-
-        var xoff = (this.cubeSizeX * this.xOffset) - (this.cubeSizeX/2.0) - (scaleX * data.minXvalue);
-        var yoff = (this.cubeSizeY * this.yOffset) - (data.minHMvalue*scaleY) - (this.cubeSizeY/2.0);
-        var zoff = (this.cubeSizeZ * this.zOffset) - (this.cubeSizeZ/2.0) - (scaleZ * data.minZvalue);
-        this.transformNode.setAttribute("translation", "" + xoff+ " " + yoff  + " " + zoff);*/
-        this.root.appendChild(this.transformNode);
-
-        // create point cloud terrain
-        this.terrain = new EarthServerGenericClient.PointCloudTerrain(this.transformNode,data,this.index,this.pointSize);
-        this.terrain.createTerrain();
-    }
-};
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WCSPointCloud.prototype.setSpecificElement= function(element)
-{
-    // change point size
-    var id = "EarthServerGenericClient_SliderCell_ps_"+this.index;
-    EarthServerGenericClient.appendGenericSlider(element,id,"Point Size",this.index,1,10,this.pointSize, EarthServerGenericClient.MainScene.updatePointSize);
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WMS Image with DEM from WCS Query
- * 2 URLs for the service, 2 Coverage names for the image and dem.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WMSDemWCS = function()
-{
-    this.setDefaults();
-    this.name = "WMS Image with DEM from WCS Query.";
-    /**
-     * WCS version for the query.
-     * @default "2.0.0"
-     * @type {String}
-     */
-    this.WCSVersion = "2.0.0";
-    /**
-     * WMS version for the query.
-     * @default "1.3"
-     * @type {String}
-     */
-    this.WMSVersion = "1.3";
-};
-EarthServerGenericClient.Model_WMSDemWCS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-/**
- * Sets the url for both the WMS and WCS Queries.
- * @param WMSurl - Service URL for the WMS Request
- * @param demurl  - Service URL for the WCS Request
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setURLs=function(WMSurl, demurl){
-    /**
-     * URL for the WMS service.
-     * @type {String}
-     */
-    this.URLWMS = String(WMSurl);
-    /**
-     * URL for the WCS service.
-     * @type {String}
-     */
-    this.URLDEM  = String(demurl);
-};
-/**
- * Sets both coverage names
- * @param coverageImage - Coverage name for the image data set.
- * @param coverageDem   - Coverage name for the dem data set.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoverages = function (coverageImage, coverageDem) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageImage = String(coverageImage);
-    /**
-     * Name if the dem coverage.
-     * @type {String}
-     */
-    this.coverageDEM = String(coverageDem);
-};
-/**
- * Sets the WCS Version for the WCS Query String. Default: "2.0.0"
- * @param version - String with WCS version number.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setWCSVersion = function(version)
-{
-    this.WCSVersion = String(version);
-};
-/**
- * Sets the WMS Version for the WMS Query String. Default: "1.3"
- * @param version - String with WMS version number.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setWMSVersion = function(version)
-{
-    this.WMSVersion = String(version);
-};
-/**
- * Sets the Coordinate Reference System.
- * @param System - eg. CRS,SRS
- * @param value - eg. EPSG:4326
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setCoordinateReferenceSystem = function(System,value)
-{
-    this.CRS = System + "=" + value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.URLWMS === undefined || this.URLDEM === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.CRS === undefined )
-    {
-        alert("Not all mandatory values are set. WMSDemWCS: " + this.name );
-        console.log(this);
-        return;
-    }
-
-    //2: Make ServerRequest and receive data.
-    var bb = {
-        minLongitude: this.miny,
-        maxLongitude: this.maxy,
-        minLatitude:  this.minx,
-        maxLatitude:  this.maxx
-    };
-
-    EarthServerGenericClient.requestWMSImageWCSDem(this,bb,this.XResolution,this.ZResolution,
-                                                this.URLWMS,this.coverageImage,this.WMSVersion,this.CRS,this.imageFormat,
-                                                this.URLDEM,this.coverageDEM,this.WCSVersion);
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.receiveData= function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //Remove the placeHolder
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
-
-        //Create Terrain out of the received data
-        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
-        this.terrain.createTerrain();
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdateBinding();
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(this.transformNode,1);    }
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-
-        transform = null;
-    }
-};
-
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendElevationSlider(element,this.index);
-};//Namespace
-var EarthServerGenericClient = EarthServerGenericClient || {};
-
-/**
- * @class Scene Model: WMS Image with DEM from WCPS Query
- * 2 URLs for the service, 2 Coverage names for the image and dem.
- * @augments EarthServerGenericClient.AbstractSceneModel
- */
-EarthServerGenericClient.Model_WMSDemWCPS = function()
-{
-    this.setDefaults();
-    this.name = "WMS Image with DEM from WCPS Query.";
-
-    /**
-     * WMS version for the query.
-     * @default "1.3"
-     * @type {String}
-     */
-    this.WMSVersion = "1.3";
-};
-EarthServerGenericClient.Model_WMSDemWCPS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
-/**
- * Sets the urls for the WMS and WCPS Queries. If only one url is given it is used for both requests.
- * @param imageURL - Service URL for the WCPS Image Request
- * @param demURL - Service URL for the WCPS Dem Request
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setURLs=function(imageURL, demURL){
-    /**
-     * URL for the WCPS image service.
-     * @type {String}
-     */
-    this.imageURL = String(imageURL);
-    /**
-     * URL for the WCPS Dem service.
-     * @type {String}
-     */
-    this.demURL;
-    if(demURL === undefined) // if demURL is not defined use imageURL
-    {   this.demURL = String(imageURL); }
-    else
-    {   this.demURL  = String(demURL);  }
-};
-/**
- * Sets both coveragenames
- * @param coverageImage - Coverage name for the image dataset.
- * @param coverageDem   - Coverage name for the dem dataset.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setCoverages = function (coverageImage, coverageDem) {
-    /**
-     * Name of the image coverage.
-     * @type {String}
-     */
-    this.coverageImage = String(coverageImage);
-    /**
-     * Name if the dem coverage.
-     * @type {String}
-     */
-    this.coverageDEM = String(coverageDem);
-};
-
-/**
- * Sets the WMS Version for the WMS Query String. Default: "1.3"
- * @param version - String with WMS version number.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSVersion = function(version)
-{
-    this.WMSVersion = String(version);
-};
-
-/**
- * Sets a custom query for the WCPS Dem request.
- * @param querystring - WCPS as a string.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSDemQuery = function(querystring)
-{
-    /**
-     * The custom WCPS Dem query.
-     * @type {String}
-     */
-    this.WCPSDemQuery = String(querystring);
-};
-
-
-/**
- * Sets the Coordinate Reference System for the WCPS Query
- * @param value - eg. "http://www.opengis.net/def/crs/EPSG/0/27700"
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWCPSCoordinateReferenceSystem = function(value)
-{
-    this.WCPSCRS = value;
-};
-
-/**
-* Sets the Coordinate Reference System for the WMS Image.
-* @param System - eg. CRS,SRS
-* @param value - eg. EPSG:4326
-*/
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setWMSCoordinateReferenceSystem = function(System,value)
-{
-    this.WMSCRS = System + "=" + value;
-};
-
-/**
- * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
- * @param root - X3D node to append the model.
- * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
- * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
- * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.createModel=function(root, cubeSizeX, cubeSizeY, cubeSizeZ){
-    if( root === undefined)
-        alert("root is not defined");
-
-    EarthServerGenericClient.MainScene.timeLogStart("Create Model " + this.name);
-
-    this.cubeSizeX = cubeSizeX;
-    this.cubeSizeY = cubeSizeY;
-    this.cubeSizeZ = cubeSizeZ;
-
-    this.root = root;
-
-    //Create Placeholder
-    this.createPlaceHolder();
-
-    //1: Check if mandatory values are set
-    if( this.coverageImage === undefined || this.coverageDEM === undefined || this.imageURL === undefined || this.demURL === undefined
-        || this.minx === undefined || this.miny === undefined || this.maxx === undefined || this.maxy === undefined || this.WMSCRS === undefined || this.WCPSCRS === undefined )
-    {
-        alert("Not all mandatory values are set. WCPSDemWCPS: " + this.name );
-        console.log(this);
-        return;
-    }
-
-
-    if( this.WCPSDemQuery === undefined)
-    {
-        var currentXRes = this.XResolution;
-        var currentZRes = this.ZResolution;
-        this.WCPSDemQuery =  "for dtm in (" + this.coverageDEM + ") return encode (";
-        this.WCPSDemQuery += 'scale(trim(dtm , {x:"' + this.WCPSCRS + '"(' + this.minx + ":" +  this.maxx + '), y:"' + this.WCPSCRS + '"(' + this.miny + ":" + this.maxy + ') }), {x:"CRS:1"(0:' + currentXRes + '), y:"CRS:1"(0:' + currentZRes + ")}, {})";
-        this.WCPSDemQuery += ', "csv" )';
-    }
-    else //A custom query was defined so use it
-    {
-        //Replace $ symbols with the actual values
-        this.WCPSDemQuery = this.replaceSymbolsInString(this.WCPSDemQuery);
-    }
-
-    var bb = {
-        minLongitude: this.miny,
-        maxLongitude: this.maxy,
-        minLatitude:  this.minx,
-        maxLatitude:  this.maxx
-    };
-
-    // Request
-    EarthServerGenericClient.requestWMSImageWCPSDem(this,bb,this.XResolution,this.ZResolution,
-        this.imageURL,this.coverageImage,this.WMSVersion,this.WMSCRS,this.imageFormat,this.demURL,this.WCPSDemQuery);
-};
-
-/**
- * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
- * This is done automatically.
- * @param data - Received data from the ServerRequest.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.receiveData= function( data)
-{
-    if( this.checkReceivedData(data))
-    {
-        //Remove the placeHolder
-        this.removePlaceHolder();
-
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
-
-        //Create Terrain out of the received data
-        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
-        this.terrain.createTerrain();
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-        this.elevationUpdateBinding(); // notify all bindings about the terrain elevation update
-
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(transform,1); }
-
-        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
-
-        transform = null;
-    }
-};
-
-
-/**
- * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
- * @param element - The element where to append the specific UI elements for this model.
- */
-EarthServerGenericClient.Model_WMSDemWCPS.prototype.setSpecificElement= function(element)
-{
-    EarthServerGenericClient.appendElevationSlider(element,this.index);
-};
+EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
@@ -6518,6 +7486,26 @@ EarthServerGenericClient.createBasicUI = function(domElementID)
 
     cdiv=null;
     cp=null;
+
+    //Create Div Reset
+    var reset = document.createElement("h3");
+    reset.innerHTML = "Reset";
+    var rdiv = document.createElement("div");
+    var rp   = document.createElement("p");
+
+    var rbutton = document.createElement('button');
+    rbutton.setAttribute("onclick", "EarthServerGenericClient.MainScene.resetScene();return false;");
+    rbutton.innerHTML = "RESET";
+
+   rp.appendChild(rbutton);
+   rbutton = null;
+
+    rdiv.appendChild(rp);
+    UI_DIV.appendChild(reset);
+    UI_DIV.appendChild(rdiv);
+
+    rdiv=null;
+    rp=null;
 
     //Create Divs for a Light sources
     for(i=0; i<EarthServerGenericClient.MainScene.getLightCount();i++)
@@ -6783,525 +7771,160 @@ EarthServerGenericClient.createProgressBar =  function(DivID)
     };
 };
 
+
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
- * @class Annotation Layer to create multiple Annotations with the same style who belong together.
- * @param Name - Name of the Layer. To be displayed and to add annotations to it.
- * @param root - X3dom element to append the annotations.
- * @param fontSize - Font size of the annotations.
- * @param fontColor - Font color of the annotations
- * @param fontHover - The annotations hovers above the marker by this value.
- * @param markerSize - Size of the annotations marker.
- * @param markerColor - Color of the annotations marker.
+ * @class Abstract base class for visualisation tools.
  * @constructor
  */
-EarthServerGenericClient.AnnotationLayer = function(Name,root,fontSize,fontColor,fontHover,markerSize,markerColor)
+EarthServerGenericClient.AbstractVisualisation = function()
 {
+    var posX = 0;
+    var posY = 0;
+    var maxX = 0;
+    var maxY = 0;
+    var minX = 0;
+    var minY = 0;
+    var axis = "x";
+    var size = 50;
 
-    this.name = Name;   // Name of this layer
-    var annotationTransforms = []; // Array with all annotation text transforms
-    var annotations = [];   // The text of the annotations (displayed in the UI)
-    var markerTransforms = []; // Array with all marker transforms
-    var modelIndex = -1;    // Index of the model this layer is bound to (-1 for unbound)
-
-    /**
-     * Sets the index of the scene model this annotation layer is bound to.
-     * @param index - Index of the scene model.
-     */
-    this.setBoundModuleIndex = function(index)
+    this.setSize = function(newSize)
     {
-        modelIndex = index;
+        if( newSize > 0)
+        {   size = newSize; }
+        else
+        {   console.log("EarthServerGenericClient.AbstractVisualisation::setSize: A value smaller than 0 not allowed.");    }
+    };
+    this.getSize = function()
+    {   return size;    };
+
+    this.setBoundaries = function(minx,maxx,miny,maxy)
+    {
+        minX = minx;
+        minY = miny;
+        maxX = maxx;
+        maxY = maxy;
     };
 
-    /**
-     * Returns the index of the model this layer is bound to.
-     * @returns {number} - Index of the model or -1 if unbound.
-     */
-    this.getBoundModuleIndex = function()
+    this.move = function(deltaX,deltaY)
     {
-        return modelIndex;
+        if( posX+deltaX >= minX && posX+deltaX <maxX)
+        {   posX = posX+deltaX; }
+
+        if( posY+deltaY >= minY && posY+deltaY <maxY)
+        {   posY = posY+deltaY; }
+
+        this.updateVisualisation(posX,posY);
     };
 
-    /**
-     * Resets the modelIndex this annotation layer is bound to back to -1 and marks it as unbound.
-     */
-    this.releaseBinding = function()
+    this.moveTo = function(xVal,yVal)
     {
-        modelIndex = -1;
+        if( xVal > minX && xVal < maxX)
+        {   posX  = xVal;   }
+
+        if( yVal > minY && yVal < maxY)
+        {   posY = yVal;    }
+
+        this.updateVisualisation(posX,posY);
     };
 
-    /**
-     * If the annotation layer is bound to a module the annotations shall move when the module is moved.
-     * This function shall receive the delta of the positions every time the module is moved.
-     * @param axis - Axis of the movement.
-     * @param delta - Delta to the last position.
-     */
-    this.movementUpdateBoundModule = function(axis,delta)
+    this.getPosX = function()
+    {   return posX;    };
+    this.getPosY = function()
+    {   return posY;    };
+
+    this.setAxis = function(newAxis)
     {
-        if( axis >= 0 && axis < 3)
+        if(newAxis !== "x" && newAxis !== "y" && newAxis !== "z")
+        {   console.log("EarthServerGenericClient.AbstractVisualisation::setAxis: Can't set Axis. Has to be 'x','y' or 'z'.");}
+        else
+        {   axis = newAxis; }
+    };
+    this.getAxis = function()
+    {   return axis;    };
+
+    this.createImageTexture = function(width,height,imageData,canvasID)
+    {
+        this.canvasTexture = null;
+
+        if( imageData !== undefined || width <= 0 || height <= 0)
         {
-            for(var i=0; i<annotationTransforms.length;i++)
-            {
-                var trans = annotationTransforms[i].getAttribute("translation");
-                var transValue = trans.split(" ");
+            this.canvasTexture = document.createElement('canvas');
+            this.canvasTexture.style.display = "none";
+            this.canvasTexture.setAttribute("id",canvasID);
+            this.canvasTexture.width = width;
+            this.canvasTexture.height = height;
 
-                if( transValue.length < 3)
-                { transValue = trans.split(",");}
-
-                if(i%2 === 0 || axis === 1)
-                {   transValue[axis] = parseInt(transValue[axis]) - parseInt(delta); }
-                else
-                {   transValue[axis] = parseInt(transValue[axis]) + parseInt(delta); }
-
-                annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
-            }
-            for( i=0; i<markerTransforms.length;i++)
-            {
-                trans = markerTransforms[i].getAttribute("translation");
-                transValue = trans.split(" ");
-
-                if( transValue.length < 3)
-                { transValue = trans.split(",");}
-
-                transValue[axis] = parseInt(transValue[axis]) - parseInt(delta);
-                markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
-            }
+            var context = this.canvasTexture.getContext('2d');
+            context.putImageData(imageData,0,0);
         }
+        else
+        {   console.log("EarthServerGenericClient.AbstractVisualisation: Could not create Canvas."); }
 
-
+        return this.canvasTexture;
     };
 
-    /**
-     * This function notifies the annotation layer that the scene model's elevation was changed.
-     * All annotation will be checked and altered in their position.
-     */
-    this.elevationUpdateBoundModule = function()
+    this.updateCanvas = function(newImageData)
     {
-        for(var i=0; i<annotationTransforms.length;i++)
+        if( this.canvas)
         {
-            var trans = annotationTransforms[i].getAttribute("translation");
-            var transValue = trans.split(" ");
-            var mirror = 1;//We have to multiply the backside text positions with -1
-
-            if( transValue.length < 3)
-            { transValue = trans.split(",");}
-
-
-            if(i%2 === 1)
-            {   mirror = -1;    }
-
-            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0])*mirror,parseInt(transValue[2])*mirror) + fontHover;
-            annotationTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
+            var context = canvas.getContext('2d');
+            context.putImageData(newImageData,0,0);
         }
-
-        for( i=0; i<markerTransforms.length;i++)
-        {
-            trans = markerTransforms[i].getAttribute("translation");
-            transValue = trans.split(" ");
-
-            if( transValue.length < 3)
-            { transValue = trans.split(",");}
-
-            transValue[1] = EarthServerGenericClient.MainScene.getHeightAt3DPosition(modelIndex,parseInt(transValue[0]),parseInt(transValue[2]));
-            markerTransforms[i].setAttribute("translation",transValue[0] + " " + transValue[1] + " " + transValue[2]);
-        }
-
+        else
+        {   console.log("EarthServerGenericClient.AbstractVisualisation: Could not find Canvas.");    }
     };
 
-    /**
-     * Adds an annotation marker and -text to the annotation layer.
-     * @param xPos - Position on the X-Axis of the marker and center of the annotation.
-     * @param yPos - Position on the Y-Axis of the marker and center of the annotation.
-     * @param zPos - Position on the Z-Axis of the marker and center of the annotation.
-     * @param Text - Text for the annotation.
-     */
-    this.addAnnotation = function(xPos,yPos,zPos,Text)
+    this.rawDataToPixelData = function(rawData,hmMin,hmMax)
     {
+        var pixels = this.canvas.width*this.canvasTexture.height*4;
+        var pixelData = [pixels];
 
-        annotations.push(Text);//save the text for later queries
-
-        //We draw 2 texts without their back faces.
-        //So the user can see the text from most angles and not mirror inverted.
-        for(var i=0;i<2;i++)
+        //Draw complete white first
+        for(var i=0; i<pixels;i++)
         {
-            var textTransform = document.createElement('transform');
-            textTransform.setAttribute('scale', fontSize + " " + fontSize + " " + fontSize);
-            var shape = document.createElement('shape');
-            var appearance = document.createElement('appearance');
-            appearance.setAttribute("id","Layer_Appearance_"+Name);
-            var material = document.createElement('material');
-            material.setAttribute('emissiveColor', fontColor);
-            material.setAttribute('diffuseColor', fontColor);
-            var text = document.createElement('text');
-            text.setAttribute('string', Text);
-            var fontStyle = document.createElement('fontStyle');
-            fontStyle.setAttribute('family', 'calibri');
-            fontStyle.setAttribute('style', 'bold');
-            text.appendChild(fontStyle);
-            appearance.appendChild(material);
-            shape.appendChild(appearance);
-            shape.appendChild(text);
-            textTransform.appendChild(shape);
-
-            //one marker is enough
-            if(i===0)
-            {
-                var sphere_trans = document.createElement("Transform");
-                sphere_trans.setAttribute("scale",markerSize + " " + markerSize + " "+markerSize);
-                sphere_trans.setAttribute('translation', xPos + " " + yPos + " " + zPos);
-                var sphere_shape = document.createElement("Shape");
-                var sphere = document.createElement("Sphere");
-                var sphere_app = document.createElement("Appearance");
-                var sphere_material = document.createElement('material');
-                sphere_material.setAttribute('diffusecolor', markerColor);
-                sphere_app.appendChild(sphere_material);
-                sphere_shape.appendChild(sphere_app);
-                sphere_shape.appendChild(sphere);
-                sphere_trans.appendChild(sphere_shape);
-
-                root.appendChild(sphere_trans);
-                //annotationTransforms.push(sphere_trans);
-                markerTransforms.push(sphere_trans);
-
-                sphere_trans = null;
-                sphere_shape = null;
-                sphere = null;
-                sphere_app = null;
-                sphere_material = null;
-            }
-
-            var rootTransform = document.createElement('transform');
-
-            textTransform.setAttribute('translation', xPos + " " + (yPos+fontHover) + " " + zPos);
-            textTransform.setAttribute('scale', (-fontSize) + " " + (-fontSize) + " " + fontSize);
-
-            //One text "normal" and one "mirror inverted"
-            if(i===0)
-            {
-                textTransform.setAttribute('rotation', '0 0 1 3.14');
-            }
-            else
-            {
-                textTransform.setAttribute('rotation', '0 0 1 3.14');
-                textTransform.setAttribute('translation', -xPos + " " + (yPos+fontHover) + " " + -zPos);
-                rootTransform.setAttribute('rotation', '0 1 0 3.14');
-            }
-
-            //annotationTransforms.push(rootTransform);//save the transform to toggle rendering
-            annotationTransforms.push(textTransform);
-            rootTransform.appendChild(textTransform);
-            root.appendChild( rootTransform );
+            pixelData[i]=255;
         }
-
-        textTransform = null;
-        shape = null;
-        appearance = null;
-        material = null;
-        text = null;
-        fontStyle = null;
-    };
-
-    /**
-     * Determine the rendering of this layer.
-     * @param value - boolean
-     */
-    this.renderLayer = function( value )
-    {
-        for(var i=0; i<annotationTransforms.length;i++)
+        //Draw heightmap into the white canvas
+        for(i=0; i<rawData.length;i++)
         {
-            annotationTransforms[i].setAttribute("render",value);
+            var height = 0;
         }
-        for(i=0; i<markerTransforms.length;i++)
-        {
-            markerTransforms[i].setAttribute("render",value);
-        }
-    };
-
-
-    /**
-     * Returns an array with the annotation text.
-     * @returns {Array}
-     */
-    this.getAnnotationTexts = function()
-    {
-        var arrayReturn = [];
-
-        for(var i=0; i<annotations.length;i++)
-        {   arrayReturn.push(annotations[i]);    }
-
-        return arrayReturn;
-    };
+    }
 };
 
 /**
- * @class AxisLabels
- * @description This class generates labels for each axis and side (except bottom) of the bounding box.
- *
- * @param xSize - The width of the bounding box.
- * @param ySize - The height of the bounding box.
- * @param zSize - The depth of the bounding box.
- * @param textHover - Distance between the bounding box and the text.
+ * @class
+ * @constructor
+ * @augments EarthServerGenericClient.AbstractVisualisation
  */
-EarthServerGenericClient.AxisLabels = function(xSize, ySize, zSize, textHover)
+EarthServerGenericClient.HeightProfileVisualisation = function(index,getHeightmapFunction,size,hmWidth,hmHeight,axis,hmMin,hmMax)
 {
-    /**
-     * @description Defines the color of the text. Default at start: emissiveColor attribute is set, the diffuseColor one isn't.
-     * @type {string}
-     * @default "0.7 0.7 0.5"
-     */
-    var fontColor = "0.7 0.7 0.5";
+    this.setSize(size);
+    this.setBoundaries(0,hmWidth,0,hmHeight);
+    this.move(hmWidth/2,hmHeight/2);
+    this.setAxis(axis);
 
-    /**
-     * Distance between the bounding box and the text.
-     * @type {number}
-     */
-    var hover = textHover || ((xSize + ySize + zSize) / 150);
-
-    /**
-     * @description Array stores all X3DOM transform nodes. Each transform contains the shape, material, text and fontStyle node.
-     * @type {Array}
-     * @default Empty
-     */
-    var transforms = [];
-    /**
-     * @description Array stores all text nodes of the x-axis.
-     * @type {Array}
-     * @default Empty
-     */
-    var textNodesX = [];
-    /**
-     * @description Array stores all text nodes of the y-axis.
-     * @type {Array}
-     * @default Empty
-     */
-    var textNodesY = [];
-    /**
-     * @description Array stores all text nodes of the z-axis.
-     * @type {Array}
-     * @default Empty
-     */
-    var textNodesZ = [];
-
-    /**
-     * @description This function changes the text size of each label independent of its axis.
-     * @param size
-     * The parameter (positive value expected) represents the desired size of the font.
-     * Remember, the parameter represents the size in x3dom units not in pt like css.
-     * Hence the size value could be large.
-     */
-    this.changeFontSize = function(size)
+    this.updateVisualisation = function(posX,posY)
     {
-        size = Math.abs(size);
-        for(var i=0; i<transforms.length; i++)
+        var info = {};
+        info.xpos = posX;
+        info.ypos = posY;
+        if( this.getAxis() === "x")
         {
-            var scale =x3dom.fields.SFVec3f.parse(transforms[i].getAttribute('scale'));
-
-            if(scale.x>=0) scale.x = size; else scale.x = -1 * size;
-            if(scale.y>=0) scale.y = size; else scale.y = -1 * size;
-            if(scale.z>=0) scale.z = size; else scale.z = -1 * size;
-
-            transforms[i].setAttribute('scale', scale.x + " " + scale.y + " " + scale.z);
+            info.chunkHeight = 1;
+            info.chunkWidth  = this.getSize();
         }
-    };
-
-    /**
-     * This function changes the color of each label independent of its axis.
-     * @param color
-     * This parameter changes the current color value of each label.
-     * It expects a string in x3d color format.
-     * E.g. "1.0 1.0 1.0" for white and "0.0 0.0 0.0" for black.
-     */
-    this.changeColor = function(color)
-    {
-        for(var i=0; i<transforms.length; i++)
+        else
         {
-            var material = transforms[i].getElementsByTagName('material');
-
-            for(var j=0; j<material.length; j++)
-            {
-                material[j].setAttribute('emissiveColor', color);
-                material[j].setAttribute('diffuseColor', color);
-            }
-        }
-    };
-
-    /**
-     * @description This function changes the text of each label on the x-axis.
-     * @param string
-     * Defines the new text.
-     */
-    this.changeLabelNameX = function(string)
-    {
-        //Prevent multi line!
-        while(string.search("'")!=-1 || string.search("\"")!=-1)
-        {
-            string = string.replace("'", " ");
-            string = string.replace("\"", " ");
+            info.chunkHeight = this.getSize();
+            info.chunkWidth  = 1;
         }
 
-        for(var i=0; i<textNodesX.length; i++)
-        {
-            textNodesX[i].setAttribute('string', string);
-        }
-    };
-
-    /**
-     * @description This function changes the text of each label on the y-axis.
-     * @param string
-     * Defines the new text.
-     */
-    this.changeLabelNameY = function(string)
-    {
-        //Prevent multi line!
-        while(string.search("'")!=-1 || string.search("\"")!=-1)
-        {
-            string = string.replace("'", " ");
-            string = string.replace("\"", " ");
-        }
-
-        for(var i=0; i<textNodesY.length; i++)
-        {
-            textNodesY[i].setAttribute('string', string);
-        }
-    };
-
-    /**
-     * @param string
-     * Defines the new text.
-     */
-    this.changeLabelNameZ = function(string)
-    {
-        //Prevent multi line!
-        while(string.search("'")!=-1 || string.search("\"")!=-1)
-        {
-            string = string.replace("'", " ");
-            string = string.replace("\"", " ");
-        }
-
-        for(var i=0; i<textNodesZ.length; i++)
-        {
-            textNodesZ[i].setAttribute('string', string);
-        }
-    };
-
-    /**
-     * @description This function generates labels on all three axis (x,y,z). The labels will be
-     * added on each side (except bottom).
-     */
-    this.createAxisLabels = function(xLabel,yLabel,zLabel)
-    {
-        createLabel("x", "front", xLabel);
-        createLabel("x", "back",  xLabel);
-        createLabel("x", "top",   xLabel);
-
-        createLabel("y", "front", yLabel);
-        createLabel("y", "back",  yLabel);
-        createLabel("y", "left",  yLabel);
-        createLabel("y", "right", yLabel);
-
-        createLabel("z", "front", zLabel);
-        createLabel("z", "back",  zLabel);
-        createLabel("z", "top",   zLabel);
-    };
-
-    /**
-     * @description This (private) function creates the needed x3dom nodes.
-     *
-     * @param axis
-     * Which axis do you want? Available: x, y, z
-     *
-     * @param side
-     * Choose the side of the axis. <br>
-     * Available for x: front (default), back and top. <br>
-     * Available for y: front (default), back, left and right. <br>
-     * Available for z: front (default), back and top.
-     *
-     * @param label
-     * This text will appear at the given axis.
-     */
-    function createLabel(axis, side, label)
-    {
-        //Setup text
-        var textTransform = document.createElement('transform');
-        textTransform.setAttribute('scale', xSize/5 + " " + ySize/5 + " " + zSize/5);
-        var shape = document.createElement('shape');
-        var appearance = document.createElement('appearance');
-        var material = document.createElement('material');
-        material.setAttribute('emissiveColor', fontColor);
-        var text = document.createElement('text');
-        text.setAttribute('string', label);
-        var fontStyle = document.createElement('fontStyle');
-        fontStyle.setAttribute('family', 'calibri');
-        fontStyle.setAttribute('style', 'bold');
-        text.appendChild(fontStyle);
-        appearance.appendChild(material);
-        shape.appendChild(appearance);
-        shape.appendChild(text);
-        textTransform.appendChild(shape);
-
-        //var home = document.getElementById('x3dScene');
-        var home = document.getElementById('AnnotationsGroup');
-        var rotationTransform = document.createElement('transform');
-
-        if(axis=="x")
-        {
-            textTransform.setAttribute('translation', "0 " + (ySize+hover) + " " + zSize);
-
-            if(side=="back")
-            {
-                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
-            }
-            else if(side=="top")
-            {
-                textTransform.setAttribute('rotation', '1 0 0 -1.57');
-                textTransform.setAttribute('translation', "0 " + -ySize + " " + (-zSize-hover));
-            }
-            textNodesX[textNodesX.length] = text;
-        }
-        else if(axis=="y")
-        {
-            textTransform.setAttribute('translation', -(xSize+hover) + " 0 " + zSize);
-            textTransform.setAttribute('rotation', '0 0 1 1.57');
-
-            if(side=="back")
-            {
-                textTransform.setAttribute('translation', (xSize+hover) + " 0 " + zSize);
-                textTransform.setAttribute('rotation', '0 0 1 4.74');
-                rotationTransform.setAttribute('rotation', '1 0 0 3.14');
-            }
-            else if(side=="left")
-            {
-                rotationTransform.setAttribute('rotation', '0 1 0 -1.57');
-            }
-            else if(side=="right")
-            {
-                rotationTransform.setAttribute('rotation', '0 1 0 1.57');
-            }
-            textNodesY[textNodesY.length] = text;
-        }
-        else if(axis=="z")
-        {
-            textTransform.setAttribute('translation', xSize + " " + (ySize+hover) + " 0");
-            textTransform.setAttribute('rotation', '0 1 0 1.57');
-            if(side=="back")
-            {
-                rotationTransform.setAttribute('rotation', '0 1 0 3.14');
-            }
-            else if(side=="top")
-            {
-                textTransform.setAttribute('rotation', '0 1 0 1.57');
-                textTransform.setAttribute('translation', "0 0 0");
-
-                rotationTransform.setAttribute('rotation', '0 0 1 -4.71');
-                rotationTransform.setAttribute('translation', -(xSize+hover) + " " + -ySize + " 0");
-            }
-            textNodesZ[textNodesZ.length] = text;
-        }
-
-        transforms[transforms.length]=textTransform;
-        rotationTransform.appendChild(textTransform);
-        home.appendChild(rotationTransform);
+        var rawData   = getHeightmapFunction(info);
+        var pixelData = rawDataToPixelData(rawData,hmMin,hmMax);
     }
 };
+EarthServerGenericClient.HeightProfileVisualisation.inheritsFrom( EarthServerGenericClient.AbstractVisualisation);

@@ -1,6 +1,8 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
+"HA::P"
+
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
