@@ -3441,6 +3441,162 @@ EarthServerGenericClient.AbstractSceneModel = function(){
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
 /**
+ * @class Scene Model: WMS Image with DEM from WCS Query
+ * 2 URLs for the service, 2 Coverage names for the image and dem.
+ * @augments EarthServerGenericClient.AbstractSceneModel
+ */
+EarthServerGenericClient.Model_DEMWithOverlays = function() {
+    this.name = "DEM with overlay(s)";
+    this.demProvider = null;
+    this.imageryProvider = [];
+};
+EarthServerGenericClient.Model_DEMWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
+
+/**
+ * Sets the DEM provider.
+ * @param provider - Configured Provider object
+ * @see Provider
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.setDEMProvider = function(provider) {
+    this.demProvider = provider;
+};
+
+/**
+ * Adds an imagery provider.
+ * @param provider - Configured Provider object
+ * @see Provider
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.addImageryProvider = function(provider) {
+    this.imageryProvider.push(provider);
+};
+
+/**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.setTimespan = function(timespan) {
+    this.timespan = timespan;
+};
+
+/**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
+    this.bbox = {
+        minLongitude: miny,
+        maxLongitude: maxy,
+        minLatitude: minx,
+        maxLatitude: maxx
+    };
+};
+
+/**
+ * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
+ * @param root - X3D node to append the model.
+ * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
+ * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
+ * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
+    if (typeof root === 'undefined') {
+        throw Error('[Model_DEMWithOverlays::createModel] root is not defined')
+    }
+
+    EarthServerGenericClient.MainScene.timeLogStart("Create Model_DEMWithOverlays " + this.name);
+
+    this.cubeSizeX = cubeSizeX;
+    this.cubeSizeY = cubeSizeY;
+    this.cubeSizeZ = cubeSizeZ;
+
+    this.root = root;
+
+    //Create Placeholder
+    this.createPlaceHolder();
+
+    EarthServerGenericClient.getDEMWithOverlays(this, {
+        dem: this.demProvider,
+        imagery: this.imageryProvider,
+        bbox: this.bbox,
+        timespan: this.timespan,
+        resX: this.XResolution,
+        resZ: this.ZResolution
+    });
+};
+
+/**
+ * This is a callback method as soon as the ServerRequest in createModel() has received it's data.
+ * This is done automatically.
+ * @param data - Received data from the ServerRequest.
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.receiveData = function(dataArray) {
+    if (this.checkReceivedData(dataArray)) {
+        this.removePlaceHolder();
+
+        console.log('received layers #' + dataArray.length);
+
+        // var data = dataArray;
+
+        var data = null;
+        var lastidx = -1;
+        for (var idx=0; idx<dataArray.length; ++idx) {
+            if (dataArray[idx].heightmap) {
+                data = dataArray[idx];
+                lastidx = idx;
+                console.log('hm is in #' + idx);
+
+                break;
+            }
+        }
+
+        var idx = -1;
+        (lastidx === 0) ? idx = 1 : idx = 0;
+        data.textureUrl = dataArray[idx].textureUrl;
+        data.texture = dataArray[idx].texture;
+        data.transparency = dataArray[idx].transparency;
+        data.specularColor = dataArray[idx].specularColor;
+        data.diffuseColor = dataArray[idx].diffuseColor;
+
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
+        this.root.appendChild(transform);
+
+        EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+
+        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.createTerrain();
+
+        //this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, data, this.index, this.noData, this.demNoData);
+
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+
+        //this.elevationUpdateBinding();
+
+        // if (this.sidePanels) {
+        //     this.terrain.createSidePanels(this.transformNode, 1);
+        // }
+        EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+        transform = null;
+    }
+};
+
+// FIXXME!
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.checkReceivedData = function(dataArray) {
+    return true;
+}
+
+/**
+ * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
+ * @param element - The element where to append the specific UI elements for this model.
+ */
+EarthServerGenericClient.Model_DEMWithOverlays.prototype.setSpecificElement = function(element) {
+    EarthServerGenericClient.appendElevationSlider(element, this.index);
+};
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
  * @class Scene Model: Layer and Time. TODO: Add better description
  * 1 URL for the service, 1 Coverage name data.
  * @augments EarthServerGenericClient.AbstractSceneModel
@@ -5255,8 +5411,6 @@ EarthServerGenericClient.Model_WMSDemWCS.prototype.setSpecificElement= function(
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
-"HA::P"
-
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
@@ -5274,6 +5428,18 @@ EarthServerGenericClient.Model_WMSDemWMS = function()
     this.WMSVersion = "1.3";
 };
 EarthServerGenericClient.Model_WMSDemWMS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
+    this.bbox = {
+        minLongitude: miny,
+        maxLongitude: maxy,
+        minLatitude: minx,
+        maxLatitude: maxx
+    };
+};
 /**
  * Sets the url for both the WMS and WCS Queries.
  * @param WMSurl - Service URL for the WMS Request
@@ -5452,6 +5618,45 @@ EarthServerGenericClient.Model_WMSDemWMS.prototype.setSpecificElement= function(
 {
     EarthServerGenericClient.appendElevationSlider(element,this.index);
 };
+//Namespace
+var EarthServerGenericClient = EarthServerGenericClient || {};
+
+/**
+ * @class Provider: An abstract object providing data via an OGC protocol.
+ */
+EarthServerGenericClient.AbstractOGCProvider = function(opts) {}
+
+EarthServerGenericClient.AbstractOGCProvider.prototype.init = function(opts) {
+	// FIXXME: error handling!
+	this.protocol = opts.protocol;
+	this.id = opts.id;
+	this.urls = opts.urls;
+	this.style = opts.style || 'default';
+	this.crs = opts.crs;
+	this.format = opts.format;
+	this.version = opts.version;
+}
+
+EarthServerGenericClient.AbstractOGCProvider.prototype.toString = function() {
+	return '[' + this.protocol + '] id: ' + this.id;
+};
+
+EarthServerGenericClient.WMSProvider = function(opts) {
+	opts.protocol = 'WMS';
+	opts.version = opts.version || '1.0.0';
+	EarthServerGenericClient.AbstractOGCProvider.prototype.init.call(this, opts);
+}
+EarthServerGenericClient.WMSProvider.inheritsFrom(EarthServerGenericClient.AbstractOGCProvider)
+
+EarthServerGenericClient.WCSProvider = function(opts) {
+	opts.protocol = 'WCS';
+	opts.version = opts.version || '2.0.0';
+	EarthServerGenericClient.AbstractOGCProvider.prototype.init.call(this, opts);
+
+	this.outputCRS = opts.outputCRS;
+	this.datatype = opts.datatype;
+}
+EarthServerGenericClient.WCSProvider.inheritsFrom(EarthServerGenericClient.AbstractOGCProvider)
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
@@ -6121,6 +6326,78 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
     EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
 };
 
+/** 
+ * Convenience function. Its only purpose is to provide a meaningful API for models. Technically
+ * a Model could directly use 'startRequests'.
+ */
+EarthServerGenericClient.getDEMWithOverlays = function(calling_module, opts) {
+    var providers = [];
+    providers.push(opts.dem);
+    for (var idx=0; idx<opts.imagery.length; ++idx) {
+        providers.push(opts.imagery[idx]);
+    }
+
+    EarthServerGenericClient.startRequests(calling_module, providers, opts);
+}
+
+/**
+ * Carries out the requests from all OGCProviders stored in the parameter array.
+ * @param opts.timespan
+ * @param opts.bbox
+ * @param opts.resX
+ * @param opts.resY
+ */
+EarthServerGenericClient.startRequests = function(calling_module, providers, opts) {
+    var promise = new EarthServerGenericClient.combinedCallBack(calling_module, providers.length, true);
+
+    for (var idx = 0; idx < providers.length; ++idx) {
+        var provider = providers[idx];
+        var responseData = new EarthServerGenericClient.ServerResponseData();
+
+        switch (provider.protocol) {
+            case 'WMS':
+                var WMSurl = provider.urls[0];
+                var WMScoverID = provider.id;
+                var WMSCRS = 'SRS=' + provider.crs;
+                var WMSImageFormat = provider.format;
+                var BoundingBox = opts.bbox;
+                var WMSversion = provider.version;
+                var ResX = opts.resX;
+                var ResZ = opts.resZ;
+                var timespan = opts.timespan;
+
+                // FIXXME: get rid of the plethora of parameters and replace them with a single 'opts' object. It's Javascript, after all ;-)
+                //   API-Suggestion:  ESGC.getCoverageWMS(promise, opts, true/false) -> true/false determines if one ServerResponseData
+                //   object is created internally for all requests, or if each response gets its own ServerResponseData object.
+                //   Future API-Suggestion: The functionality of generating and carrying out a request is the sole responsibility of the 
+                //   'OGCProvider' class. 'startRequests' should simply iterate over the providers and let them do their jobs, e.g.:
+                //   provider.startRequest(promise, opts, true/false).
+                EarthServerGenericClient.getCoverageWMS(promise, responseData, WMSurl, WMScoverID, WMSCRS, WMSImageFormat, BoundingBox, WMSversion, ResX, ResZ, timespan);
+                break;
+            case 'WCS':
+                var WCSurl = provider.urls[0];
+                var WCScoverID = provider.id;
+                var WCSCRS = provider.crs;
+                var WCSMimeType = provider.format;
+                var WCSDataType = provider.datatype;
+                var WCSOutputFormat = provider.format;
+                var WCSOutputCRS = provider.outputCRS;
+                var BoundingBox = opts.bbox;
+                var WCSVersion = provider.version;
+                var ResX = opts.resX;
+                var ResZ = opts.resZ;
+                var timespan = opts.timespan;
+
+                // FIXXME: get rid of the plethora of parameters and replace them with a single 'opts' object
+                EarthServerGenericClient.getCoverageWCS(promise, responseData, WCSurl, WCScoverID, BoundingBox, WCSVersion, WCSMimeType, WCSDataType, WCSOutputFormat, ResX, ResZ, WCSOutputCRS);
+                break;
+            default:
+                console.log('[EarthServerGenericClient.performRequests] protocol "' + protocol + '"" not supported');
+                break;
+        }
+    }
+};
+
 /**
  * Requests an image via WMS and a dem via WCS.
  * @param callback - Module requesting this data.
@@ -6140,6 +6417,7 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
 EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,WCSOutputCRS,timespan)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
+    var responseData1 = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY,timespan);

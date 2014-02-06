@@ -1,8 +1,6 @@
 //Namespace
 var EarthServerGenericClient = EarthServerGenericClient || {};
 
-"HA::P"
-
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
@@ -20,6 +18,18 @@ EarthServerGenericClient.Model_WMSDemWMS = function()
     this.WMSVersion = "1.3";
 };
 EarthServerGenericClient.Model_WMSDemWMS.inheritsFrom( EarthServerGenericClient.AbstractSceneModel );
+/**
+ * Sets the timespan for the request
+ * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
+ */
+EarthServerGenericClient.Model_WMSDemWMS.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
+    this.bbox = {
+        minLongitude: miny,
+        maxLongitude: maxy,
+        minLatitude: minx,
+        maxLatitude: maxx
+    };
+};
 /**
  * Sets the url for both the WMS and WCS Queries.
  * @param WMSurl - Service URL for the WMS Request

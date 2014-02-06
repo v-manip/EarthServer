@@ -667,6 +667,78 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
     EarthServerGenericClient.getWCPSDemCoverage(combine,responseData,demURL,demQuery);
 };
 
+/** 
+ * Convenience function. Its only purpose is to provide a meaningful API for models. Technically
+ * a Model could directly use 'startRequests'.
+ */
+EarthServerGenericClient.getDEMWithOverlays = function(calling_module, opts) {
+    var providers = [];
+    providers.push(opts.dem);
+    for (var idx=0; idx<opts.imagery.length; ++idx) {
+        providers.push(opts.imagery[idx]);
+    }
+
+    EarthServerGenericClient.startRequests(calling_module, providers, opts);
+}
+
+/**
+ * Carries out the requests from all OGCProviders stored in the parameter array.
+ * @param opts.timespan
+ * @param opts.bbox
+ * @param opts.resX
+ * @param opts.resY
+ */
+EarthServerGenericClient.startRequests = function(calling_module, providers, opts) {
+    var promise = new EarthServerGenericClient.combinedCallBack(calling_module, providers.length, true);
+
+    for (var idx = 0; idx < providers.length; ++idx) {
+        var provider = providers[idx];
+        var responseData = new EarthServerGenericClient.ServerResponseData();
+
+        switch (provider.protocol) {
+            case 'WMS':
+                var WMSurl = provider.urls[0];
+                var WMScoverID = provider.id;
+                var WMSCRS = 'SRS=' + provider.crs;
+                var WMSImageFormat = provider.format;
+                var BoundingBox = opts.bbox;
+                var WMSversion = provider.version;
+                var ResX = opts.resX;
+                var ResZ = opts.resZ;
+                var timespan = opts.timespan;
+
+                // FIXXME: get rid of the plethora of parameters and replace them with a single 'opts' object. It's Javascript, after all ;-)
+                //   API-Suggestion:  ESGC.getCoverageWMS(promise, opts, true/false) -> true/false determines if one ServerResponseData
+                //   object is created internally for all requests, or if each response gets its own ServerResponseData object.
+                //   Future API-Suggestion: The functionality of generating and carrying out a request is the sole responsibility of the 
+                //   'OGCProvider' class. 'startRequests' should simply iterate over the providers and let them do their jobs, e.g.:
+                //   provider.startRequest(promise, opts, true/false).
+                EarthServerGenericClient.getCoverageWMS(promise, responseData, WMSurl, WMScoverID, WMSCRS, WMSImageFormat, BoundingBox, WMSversion, ResX, ResZ, timespan);
+                break;
+            case 'WCS':
+                var WCSurl = provider.urls[0];
+                var WCScoverID = provider.id;
+                var WCSCRS = provider.crs;
+                var WCSMimeType = provider.format;
+                var WCSDataType = provider.datatype;
+                var WCSOutputFormat = provider.format;
+                var WCSOutputCRS = provider.outputCRS;
+                var BoundingBox = opts.bbox;
+                var WCSVersion = provider.version;
+                var ResX = opts.resX;
+                var ResZ = opts.resZ;
+                var timespan = opts.timespan;
+
+                // FIXXME: get rid of the plethora of parameters and replace them with a single 'opts' object
+                EarthServerGenericClient.getCoverageWCS(promise, responseData, WCSurl, WCScoverID, BoundingBox, WCSVersion, WCSMimeType, WCSDataType, WCSOutputFormat, ResX, ResZ, WCSOutputCRS);
+                break;
+            default:
+                console.log('[EarthServerGenericClient.performRequests] protocol "' + protocol + '"" not supported');
+                break;
+        }
+    }
+};
+
 /**
  * Requests an image via WMS and a dem via WCS.
  * @param callback - Module requesting this data.
@@ -686,6 +758,7 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
 EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,WCSOutputCRS,timespan)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
+    var responseData1 = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY,timespan);
