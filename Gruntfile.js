@@ -14,8 +14,8 @@ module.exports = function(grunt) {
 				// src: ['js/SceneManager.js', 'js/*.js', 'js/VMANIP/*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
 				// dest: 'js/<%= pkg.name %>_DailyBuild.js'
 				files: {
-					'js/RectangularBoxViewer.debug.js': ['js/RBV/*.js'],
-					'js/<%= pkg.name %>_DailyBuild.js': ['js/SceneManager.js', 'js/*.js', '!js/RectangularBoxViewer*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
+					'dist/RectangularBoxViewer.debug.js': ['js/RBV/*.js'],
+					'dist/<%= pkg.name %>_DailyBuild.js': ['js/SceneManager.js', 'js/*.js', '!js/RectangularBoxViewer*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
 				}
 			}
 		},
@@ -25,11 +25,11 @@ module.exports = function(grunt) {
 				// dest: '<%= installdir %>'
 				files: [
 					{
-						src: ['js/RectangularBoxViewer.debug.js'],
+						src: ['dist/RectangularBoxViewer.debug.js'],
 						dest: '<%= installdir %>'
 					},
 					{
-						src: ['js/<%= pkg.name %>_DailyBuild.js'],
+						src: ['dist/<%= pkg.name %>_DailyBuild.js'],
 						dest: '<%= installdir %>'
 					},
 				]
