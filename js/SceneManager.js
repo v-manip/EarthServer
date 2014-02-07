@@ -330,9 +330,11 @@ EarthServerGenericClient.SceneManager = function()
         // clear all models and terrains
         for(var i=0; i<models.length; i++)
         {
-            models[i].terrain.clearMaterials();
-            models[i].terrain.clearDefinedAppearances();
-            models[i].terrain = null;
+            if (models[i].terrain) {
+                models[i].terrain.clearMaterials();
+                models[i].terrain.clearDefinedAppearances();
+                models[i].terrain = null;
+            }
         }
 
         // reset vars
