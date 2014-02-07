@@ -6,7 +6,10 @@ var RBV = RBV || {};
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
 RBV.Model_DemWithOverlays = function() {
+    this.setDefaults();
     this.name = "DEM with overlay(s)";
+
+    this.terrain = null;
     this.demRequest = null;
     this.imageryRequest = [];
 };
@@ -39,19 +42,6 @@ RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
 };
 
 /**
- * Sets the timespan for the request
- * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
- */
-RBV.Model_DemWithOverlays.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
-    this.bbox = {
-        minLongitude: miny,
-        maxLongitude: maxy,
-        minLatitude: minx,
-        maxLatitude: maxx
-    };
-};
-
-/**
  * Creates the x3d geometry and appends it to the given root node. This is done automatically by the SceneManager.
  * @param root - X3D node to append the model.
  * @param cubeSizeX - Size of the fishtank/cube on the x-axis.
@@ -69,15 +59,21 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
     this.cubeSizeY = cubeSizeY;
     this.cubeSizeZ = cubeSizeZ;
 
+    var bbox = {
+        minLongitude: this.miny,
+        maxLongitude: this.maxy,
+        minLatitude:  this.minx,
+        maxLatitude:  this.maxx
+    };
+
     this.root = root;
 
-    //Create Placeholder
     this.createPlaceHolder();
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
         dem: this.demRequest,
         imagery: this.imageryRequest,
-        bbox: this.bbox,
+        bbox: bbox,
         timespan: this.timespan,
         resX: this.XResolution,
         resZ: this.ZResolution
@@ -114,20 +110,16 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
         data.textureUrl = dataArray[idx].textureUrl;
         data.texture = dataArray[idx].texture;
 
-        data.transparency = 1; //this.transparency;
-        data.specularColor = EarthServerGenericClient.MainScene.getDefaultSpecularColor();
-        data.diffuseColor = EarthServerGenericClient.MainScene.getDefaultDiffuseColor();
-
         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
         var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
         this.root.appendChild(transform);
 
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
 
+
+        // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
-
-        //this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, data, this.index, this.noData, this.demNoData);
 
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
 
@@ -142,14 +134,50 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
     }
 };
 
-// FIXXME!
+/**
+ * Validates the received data from the server request.
+ */
 RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
-    // // add module specific values
-    // dataArray.transparency = 1; //this.transparency;
-    // data.specularColor = this.specularColor || EarthServerGenericClient.MainScene.getDefaultSpecularColor();
-    // data.diffuseColor = this.diffuseColor || EarthServerGenericClient.MainScene.getDefaultDiffuseColor();
+    for (var idx = 0; idx < dataArray.length; ++idx) {
+        var data = dataArray[idx];
+        this.receivedDataCount++;
+        this.reportProgress();
+
+        // No texture whished?
+        if (this.colorOnly && data !== null && data !== undefined) {
+            data.validateTexture = false; // disable check for texture
+            data.texture = undefined;
+        }
+
+        // if (data === null || !data.validate()) {
+        //     alert(this.name + ": Request not successful.");
+        //     console.log(data);
+        //     this.reportProgress(); //NO Terrain will be built so report the progress here
+        //     this.removePlaceHolder(); //Remove the placeHolder.
+
+        //     //delete UI elements
+        //     var header = document.getElementById("EarthServerGenericClient_ModelHeader_" + this.index);
+        //     var div = document.getElementById("EarthServerGenericClient_ModelDiv_" + this.index);
+
+        //     if (header && div) {
+        //         var parent = div.parentNode;
+
+        //         if (parent) {
+        //             parent.removeChild(div);
+        //             parent.removeChild(header);
+        //         }
+        //     }
+        //     return false;
+        // }
+
+        // add module specific values
+        data.transparency = this.transparency;
+        data.specularColor = this.specularColor || EarthServerGenericClient.MainScene.getDefaultSpecularColor();
+        data.diffuseColor = this.diffuseColor || EarthServerGenericClient.MainScene.getDefaultDiffuseColor();
+    }
+
     return true;
-}
+};
 
 /**
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
