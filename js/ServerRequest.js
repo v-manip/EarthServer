@@ -758,35 +758,10 @@ EarthServerGenericClient.startRequests = function(calling_module, providers, opt
 EarthServerGenericClient.requestWMSImageWCSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,WCSurl,WCScoverID,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,WCSOutputCRS,timespan)
 {
     var responseData = new EarthServerGenericClient.ServerResponseData();
-    var responseData1 = new EarthServerGenericClient.ServerResponseData();
     var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
 
     EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY,timespan);
     EarthServerGenericClient.getCoverageWCS(combine,responseData,WCSurl,WCScoverID,BoundingBox,WCSVersion,WCSMimeType,WCSDataType,WCSOutputFormat,ResX,ResY,WCSOutputCRS);
-};
-
-/**
- * Requests an image via WMS and a dem via WMS.
- * @param callback - Module requesting this data.
- * @param BoundingBox - Bounding box of the area, used in both requests.
- * @param ResX - Width of the response image via WMS.
- * @param ResY - Height of the response image via WMS.
- * @param WMSurl - URL of the WMS service.
- * @param WMScoverID - Layer ID used in WMS.
- * @param WMSversion - Version of the WMS service.
- * @param WMSCRS - The Coordinate Reference System. (Should be like: "crs=1")
- * @param ImageFormat - Image format for the WMS response.
- * @param DEMurl - URL of the WMS service.
- * @param DEMcoverID - Coverage ID used in WCS.
- * @param DEMOutputFormat - Output format of the WMS response.
- */
-EarthServerGenericClient.requestWMSImageWMSDem = function(callback,BoundingBox,ResX,ResY,WMSurl,WMScoverID,WMSversion,WMSCRS,WMSImageFormat,DEMurl,DEMcoverID,DEMOutputFormat)
-{
-    var responseData = new EarthServerGenericClient.ServerResponseData();
-    var combine = new EarthServerGenericClient.combinedCallBack(callback,2);
-
-    EarthServerGenericClient.getCoverageWMS(combine,responseData,WMSurl,WMScoverID,WMSCRS,WMSImageFormat,BoundingBox,WMSversion,ResX,ResY);
-    EarthServerGenericClient.getCoverageWCS(combine,responseData,DEMurl,DEMcoverID,BoundingBox,WMSversion);
 };
 
 /**
