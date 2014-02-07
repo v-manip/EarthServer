@@ -672,13 +672,13 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
  * a Model could directly use 'startRequests'.
  */
 EarthServerGenericClient.getDEMWithOverlays = function(calling_module, opts) {
-    var providers = [];
-    providers.push(opts.dem);
+    var requests = [];
+    requests.push(opts.dem);
     for (var idx=0; idx<opts.imagery.length; ++idx) {
-        providers.push(opts.imagery[idx]);
+        requests.push(opts.imagery[idx]);
     }
 
-    EarthServerGenericClient.startRequests(calling_module, providers, opts);
+    EarthServerGenericClient.startRequests(calling_module, requests, opts);
 }
 
 /**

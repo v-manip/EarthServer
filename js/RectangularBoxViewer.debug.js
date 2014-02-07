@@ -1,41 +1,40 @@
-//Namespace
-var VMANIP = VMANIP || {};
+var RBV = RBV || {};
 
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-VMANIP.RectangularBoxViewerModel = function() {
+RBV.Model_DemWithOverlays = function() {
     this.name = "DEM with overlay(s)";
-    this.demProvider = null;
-    this.imageryProvider = [];
+    this.demRequest = null;
+    this.imageryRequest = [];
 };
-VMANIP.RectangularBoxViewerModel.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
+RBV.Model_DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
 
 /**
- * Sets the DEM provider.
- * @param provider - Configured Provider object
- * @see Provider
+ * Sets the DEM request.
+ * @param request - Configured Request object
+ * @see Request
  */
-VMANIP.RectangularBoxViewerModel.prototype.setDEMProvider = function(provider) {
-    this.demProvider = provider;
+RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
+    this.demRequest = request;
 };
 
 /**
- * Adds an imagery provider.
- * @param provider - Configured Provider object
- * @see Provider
+ * Adds an imagery request.
+ * @param request - Configured Request object
+ * @see Request
  */
-VMANIP.RectangularBoxViewerModel.prototype.addImageryProvider = function(provider) {
-    this.imageryProvider.push(provider);
+RBV.Model_DemWithOverlays.prototype.addImageryRequest = function(request) {
+    this.imageryRequest.push(request);
 };
 
 /**
  * Sets the timespan for the request
  * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
  */
-VMANIP.RectangularBoxViewerModel.prototype.setTimespan = function(timespan) {
+RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
     this.timespan = timespan;
 };
 
@@ -43,7 +42,7 @@ VMANIP.RectangularBoxViewerModel.prototype.setTimespan = function(timespan) {
  * Sets the timespan for the request
  * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
  */
-VMANIP.RectangularBoxViewerModel.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
+RBV.Model_DemWithOverlays.prototype.setBoundingBox = function(minx, miny, maxx, maxy) {
     this.bbox = {
         minLongitude: miny,
         maxLongitude: maxy,
@@ -59,7 +58,7 @@ VMANIP.RectangularBoxViewerModel.prototype.setBoundingBox = function(minx, miny,
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-VMANIP.RectangularBoxViewerModel.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
+RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
     if (typeof root === 'undefined') {
         throw Error('[Model_DEMWithOverlays::createModel] root is not defined')
     }
@@ -76,8 +75,8 @@ VMANIP.RectangularBoxViewerModel.prototype.createModel = function(root, cubeSize
     this.createPlaceHolder();
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
-        dem: this.demProvider,
-        imagery: this.imageryProvider,
+        dem: this.demRequest,
+        imagery: this.imageryRequest,
         bbox: this.bbox,
         timespan: this.timespan,
         resX: this.XResolution,
@@ -90,7 +89,7 @@ VMANIP.RectangularBoxViewerModel.prototype.createModel = function(root, cubeSize
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-VMANIP.RectangularBoxViewerModel.prototype.receiveData = function(dataArray) {
+RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
     if (this.checkReceivedData(dataArray)) {
         this.removePlaceHolder();
 
@@ -144,7 +143,7 @@ VMANIP.RectangularBoxViewerModel.prototype.receiveData = function(dataArray) {
 };
 
 // FIXXME!
-VMANIP.RectangularBoxViewerModel.prototype.checkReceivedData = function(dataArray) {
+RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
     // // add module specific values
     // dataArray.transparency = 1; //this.transparency;
     // data.specularColor = this.specularColor || EarthServerGenericClient.MainScene.getDefaultSpecularColor();
@@ -156,6 +155,46 @@ VMANIP.RectangularBoxViewerModel.prototype.checkReceivedData = function(dataArra
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
  */
-VMANIP.RectangularBoxViewerModel.prototype.setSpecificElement = function(element) {
+RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
     EarthServerGenericClient.appendElevationSlider(element, this.index);
 };
+RBV.Request = RBV.Request || {};
+
+/**
+ * @class Request.OGCBase: An abstract object managing a request to a OGC service provider.
+ */
+RBV.Request.OGCBase = function(opts) {}
+
+RBV.Request.OGCBase.prototype.init = function(opts) {
+	// FIXXME: error handling!
+	this.protocol = opts.protocol;
+	this.id = opts.id;
+	this.urls = opts.urls;
+	this.style = opts.style || 'default';
+	this.crs = opts.crs;
+	this.format = opts.format;
+	this.version = opts.version;
+}
+
+RBV.Request.OGCBase.prototype.toString = function() {
+	return '[' + this.protocol + '] id: ' + this.id;
+};
+
+RBV.Request = RBV.Request || {};
+
+RBV.Request.WMS = function(opts) {
+	opts.protocol = 'WMS';
+	opts.version = opts.version || '1.0.0';
+	RBV.Request.OGCBase.prototype.init.call(this, opts);
+}
+RBV.Request.WMS.inheritsFrom(RBV.Request.OGCBase)
+
+RBV.Request.WCS = function(opts) {
+	opts.protocol = 'WCS';
+	opts.version = opts.version || '2.0.0';
+	RBV.Request.OGCBase.prototype.init.call(this, opts);
+
+	this.outputCRS = opts.outputCRS;
+	this.datatype = opts.datatype;
+}
+RBV.Request.WCS.inheritsFrom(RBV.Request.OGCBase)

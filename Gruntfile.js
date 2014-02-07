@@ -11,15 +11,28 @@ module.exports = function(grunt) {
 				separator: '\n'
 			},
 			dist: {
-				// FIXXME: Module_WMSDemWMS.js has to be manually included, for some reason...
-				src: ['js/SceneManager.js', 'js/*.js', 'js/Module_WMSDemWMS.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
-				dest: 'js/<%= pkg.name %>_DailyBuild.js'
+				// src: ['js/SceneManager.js', 'js/*.js', 'js/VMANIP/*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
+				// dest: 'js/<%= pkg.name %>_DailyBuild.js'
+				files: {
+					'js/RectangularBoxViewer.debug.js': ['js/RBV/*.js'],
+					'js/<%= pkg.name %>_DailyBuild.js': ['js/SceneManager.js', 'js/*.js', '!js/RectangularBoxViewer*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
+				}
 			}
 		},
 		copy: {
 			main: {
-				src: '<%= concat.dist.dest %>',
-				dest: '<%= installdir %>'
+				// src: '<%= concat.dist.dest %>',
+				// dest: '<%= installdir %>'
+				files: [
+					{
+						src: ['js/RectangularBoxViewer.debug.js'],
+						dest: '<%= installdir %>'
+					},
+					{
+						src: ['js/<%= pkg.name %>_DailyBuild.js'],
+						dest: '<%= installdir %>'
+					},
+				]
 			},
 		},
 	});
