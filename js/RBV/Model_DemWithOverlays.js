@@ -11,7 +11,7 @@ RBV.Model_DemWithOverlays = function() {
 
     this.terrain = null;
     this.demRequest = null;
-    this.imageryRequest = [];
+    this.imageryRequests = [];
 };
 RBV.Model_DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
 
@@ -30,7 +30,7 @@ RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
  * @see Request
  */
 RBV.Model_DemWithOverlays.prototype.addImageryRequest = function(request) {
-    this.imageryRequest.push(request);
+    this.imageryRequests.push(request);
 };
 
 /**
@@ -62,8 +62,8 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
     var bbox = {
         minLongitude: this.miny,
         maxLongitude: this.maxy,
-        minLatitude:  this.minx,
-        maxLatitude:  this.maxx
+        minLatitude: this.minx,
+        maxLatitude: this.maxx
     };
 
     this.root = root;
@@ -72,7 +72,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
         dem: this.demRequest,
-        imagery: this.imageryRequest,
+        imagery: this.imageryRequests,
         bbox: bbox,
         timespan: this.timespan,
         resX: this.XResolution,
@@ -119,6 +119,8 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.getAppearances = this.getAppearances;
+        this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();
 
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
@@ -185,4 +187,121 @@ RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
  */
 RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
     EarthServerGenericClient.appendElevationSlider(element, this.index);
+};
+
+/**
+ * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
+ * It returns the amount of appearances specified. For every name only one appearance exits, every other uses it.
+ * @param AppearanceName - Name of the appearance. If this name is not set in the array, it will be registered.
+ *      In the case the name is already set, the existing one will be used.
+ * @param AppearanceCount - Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.
+ * @param modelIndex - Index of the model using this appearance.
+ * @param canvasTexture - Canvas element to be used in the appearance as texture.
+ * @param transparency - Transparency of the appearance.
+ * @param specular - Specular color of the appearance.
+ * @param diffuse - Diffuse color of the appearance.
+ * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
+ * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
+ */
+RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
+    var appearance = document.createElement('Appearance');
+
+    if (transparency === 0) {
+        appearance.setAttribute('sortType', 'opaque');
+    } else {
+        appearance.setAttribute('sortType', 'transparent');
+    }
+
+    var texture = document.createElement('Texture');
+    texture.setAttribute('hideChildren', 'true');
+    texture.setAttribute("repeatS", 'true');
+    texture.setAttribute("repeatT", 'true');
+    texture.setAttribute("scale", "false");
+    texture.appendChild(canvasTexture);
+
+    var imageTransform = document.createElement('TextureTransform');
+    imageTransform.setAttribute("scale", "1,-1");
+    if (upright) {
+        imageTransform.setAttribute("rotation", "-1.57");
+    }
+
+    var material = document.createElement('material');
+    material.setAttribute("specularColor", specular);
+    material.setAttribute("diffuseColor", diffuse);
+    // material.setAttribute("diffuseColor", '0 0 1');
+    material.setAttribute('transparency', '0.5');
+    // material.setAttribute('transparency', transparency);
+    material.setAttribute('ID', AppearanceName + "_mat");
+    //Save this material ID to change transparency during runtime
+    this.materialNodes.push(AppearanceName + "_mat");
+
+    appearance.appendChild(material);
+    appearance.appendChild(imageTransform);
+    appearance.appendChild(texture);
+
+    // var myshader = document.getElementById('myshader');
+    // // var shader = myshader.cloneNode(false);
+    // var shader = $('#myshader').clone().attr('id', AppearanceName + "_mat");
+    // appearance.appendChild(shader.get()[0]);
+    // console.log('shader: ', shader.get()[0]);
+
+    var transparencyFieldID = AppearanceName + "_mat_transparency";
+    var cShader = document.createElement("composedShader");
+    var field1 = document.createElement("field");
+    field1.setAttribute("name", "diffuseColor");
+    field1.setAttribute("type", "SFVec3f");
+    field1.setAttribute("value", "1 0 1");
+    cShader.appendChild(field1);
+    var field2 = document.createElement("field");
+    field2.setAttribute("id", transparencyFieldID);
+    field2.setAttribute("name", "transparency");
+    field2.setAttribute("type", "SFFloat");
+    field2.setAttribute("value", "1");
+    cShader.appendChild(field2);
+
+    var fadeOut = function() {
+        var value = field2.getAttribute('value');
+        field2.setAttribute("value", String(value - 0.1));
+        setTimeout(fadeOut, 200);
+    };
+    setTimeout(fadeOut, 5000);
+
+    var vertexCode = "attribute vec3 position; \n";
+    vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
+    vertexCode += "void main() { \n";
+    vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); }\n";
+    var shaderPartVertex = document.createElement("shaderPart");
+    shaderPartVertex.setAttribute("type", "VERTEX");
+    shaderPartVertex.innerHTML = vertexCode;
+    cShader.appendChild(shaderPartVertex);
+
+    var fragmentCode = "#ifdef GL_ES \n";
+    fragmentCode += "precision highp float; \n";
+    fragmentCode += "#endif \n";
+    fragmentCode += "uniform vec3 diffuseColor; \n";
+    fragmentCode += "uniform float transparency; \n";
+    fragmentCode += "void main() { \n";
+    fragmentCode += "gl_FragColor = vec4(diffuseColor, transparency); } \n";
+
+    var shaderPartFragment = document.createElement("shaderPart");
+    shaderPartFragment.setAttribute("type", "FRAGMENT");
+    shaderPartFragment.innerHTML = fragmentCode;
+    cShader.appendChild(shaderPartFragment);
+
+    appearance.appendChild(cShader);
+
+    return [appearance];
+};
+
+/**
+ * Overwrites function from base terrain class. Sets the transparency in the shader.
+ * @param value - Transparency value between 0 (full visible) and 1 (invisible).
+ */
+RBV.Model_DemWithOverlays.prototype.setTransparency = function(value) {
+    var transparencyField = document.getElementById(this.transparencyFieldID);
+
+    if (transparencyField)
+        transparencyField.setAttribute("value", String(1.0 - value));
+    else
+        console.log("RBV.Model_DemWithOverlays: Can't find transparency field.")
 };

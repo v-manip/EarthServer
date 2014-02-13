@@ -11,7 +11,7 @@ RBV.Model_DemWithOverlays = function() {
 
     this.terrain = null;
     this.demRequest = null;
-    this.imageryRequest = [];
+    this.imageryRequests = [];
 };
 RBV.Model_DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
 
@@ -30,7 +30,7 @@ RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
  * @see Request
  */
 RBV.Model_DemWithOverlays.prototype.addImageryRequest = function(request) {
-    this.imageryRequest.push(request);
+    this.imageryRequests.push(request);
 };
 
 /**
@@ -62,8 +62,8 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
     var bbox = {
         minLongitude: this.miny,
         maxLongitude: this.maxy,
-        minLatitude:  this.minx,
-        maxLatitude:  this.maxx
+        minLatitude: this.minx,
+        maxLatitude: this.maxx
     };
 
     this.root = root;
@@ -72,7 +72,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
         dem: this.demRequest,
-        imagery: this.imageryRequest,
+        imagery: this.imageryRequests,
         bbox: bbox,
         timespan: this.timespan,
         resX: this.XResolution,
@@ -119,6 +119,8 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
         this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain.getAppearances = this.getAppearances;
+        this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();
 
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
@@ -186,6 +188,123 @@ RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
 RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
     EarthServerGenericClient.appendElevationSlider(element, this.index);
 };
+
+/**
+ * This function handles the creation and usage of the appearances. It can be called for every shape or LOD that should use a canvasTexture.
+ * It returns the amount of appearances specified. For every name only one appearance exits, every other uses it.
+ * @param AppearanceName - Name of the appearance. If this name is not set in the array, it will be registered.
+ *      In the case the name is already set, the existing one will be used.
+ * @param AppearanceCount - Number of appearance to be created. E.g. the LODs use a bunch of three appearance nodes.
+ * @param modelIndex - Index of the model using this appearance.
+ * @param canvasTexture - Canvas element to be used in the appearance as texture.
+ * @param transparency - Transparency of the appearance.
+ * @param specular - Specular color of the appearance.
+ * @param diffuse - Diffuse color of the appearance.
+ * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
+ * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
+ */
+RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
+    var appearance = document.createElement('Appearance');
+
+    if (transparency === 0) {
+        appearance.setAttribute('sortType', 'opaque');
+    } else {
+        appearance.setAttribute('sortType', 'transparent');
+    }
+
+    var texture = document.createElement('Texture');
+    texture.setAttribute('hideChildren', 'true');
+    texture.setAttribute("repeatS", 'true');
+    texture.setAttribute("repeatT", 'true');
+    texture.setAttribute("scale", "false");
+    texture.appendChild(canvasTexture);
+
+    var imageTransform = document.createElement('TextureTransform');
+    imageTransform.setAttribute("scale", "1,-1");
+    if (upright) {
+        imageTransform.setAttribute("rotation", "-1.57");
+    }
+
+    var material = document.createElement('material');
+    material.setAttribute("specularColor", specular);
+    material.setAttribute("diffuseColor", diffuse);
+    // material.setAttribute("diffuseColor", '0 0 1');
+    material.setAttribute('transparency', '0.5');
+    // material.setAttribute('transparency', transparency);
+    material.setAttribute('ID', AppearanceName + "_mat");
+    //Save this material ID to change transparency during runtime
+    this.materialNodes.push(AppearanceName + "_mat");
+
+    appearance.appendChild(material);
+    appearance.appendChild(imageTransform);
+    appearance.appendChild(texture);
+
+    // var myshader = document.getElementById('myshader');
+    // // var shader = myshader.cloneNode(false);
+    // var shader = $('#myshader').clone().attr('id', AppearanceName + "_mat");
+    // appearance.appendChild(shader.get()[0]);
+    // console.log('shader: ', shader.get()[0]);
+
+    var transparencyFieldID = AppearanceName + "_mat_transparency";
+    var cShader = document.createElement("composedShader");
+    var field1 = document.createElement("field");
+    field1.setAttribute("name", "diffuseColor");
+    field1.setAttribute("type", "SFVec3f");
+    field1.setAttribute("value", "1 0 1");
+    cShader.appendChild(field1);
+    var field2 = document.createElement("field");
+    field2.setAttribute("id", transparencyFieldID);
+    field2.setAttribute("name", "transparency");
+    field2.setAttribute("type", "SFFloat");
+    field2.setAttribute("value", "1");
+    cShader.appendChild(field2);
+
+    var fadeOut = function() {
+        var value = field2.getAttribute('value');
+        field2.setAttribute("value", String(value - 0.1));
+        setTimeout(fadeOut, 200);
+    };
+    setTimeout(fadeOut, 5000);
+
+    var vertexCode = "attribute vec3 position; \n";
+    vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
+    vertexCode += "void main() { \n";
+    vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); }\n";
+    var shaderPartVertex = document.createElement("shaderPart");
+    shaderPartVertex.setAttribute("type", "VERTEX");
+    shaderPartVertex.innerHTML = vertexCode;
+    cShader.appendChild(shaderPartVertex);
+
+    var fragmentCode = "#ifdef GL_ES \n";
+    fragmentCode += "precision highp float; \n";
+    fragmentCode += "#endif \n";
+    fragmentCode += "uniform vec3 diffuseColor; \n";
+    fragmentCode += "uniform float transparency; \n";
+    fragmentCode += "void main() { \n";
+    fragmentCode += "gl_FragColor = vec4(diffuseColor, transparency); } \n";
+
+    var shaderPartFragment = document.createElement("shaderPart");
+    shaderPartFragment.setAttribute("type", "FRAGMENT");
+    shaderPartFragment.innerHTML = fragmentCode;
+    cShader.appendChild(shaderPartFragment);
+
+    appearance.appendChild(cShader);
+
+    return [appearance];
+};
+
+/**
+ * Overwrites function from base terrain class. Sets the transparency in the shader.
+ * @param value - Transparency value between 0 (full visible) and 1 (invisible).
+ */
+RBV.Model_DemWithOverlays.prototype.setTransparency = function(value) {
+    var transparencyField = document.getElementById(this.transparencyFieldID);
+
+    if (transparencyField)
+        transparencyField.setAttribute("value", String(1.0 - value));
+    else
+        console.log("RBV.Model_DemWithOverlays: Can't find transparency field.")
+};
 RBV.Request = RBV.Request || {};
 
 /**
@@ -226,3 +345,165 @@ RBV.Request.WCS = function(opts) {
 	this.datatype = opts.datatype;
 }
 RBV.Request.WCS.inheritsFrom(RBV.Request.OGCBase)
+/**
+ * Terrain to display multiple layers.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @param pointSize - Size of the points.
+ * @constructor
+ */
+EarthServerGenericClient.PointCloudTerrain = function(root,data,index,pointSize)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.appearance = null;  // appearance
+    this.data = data;
+    this.index = index;
+    this.pointSize = parseFloat(pointSize);
+    this.transparencyFieldID = "EarthServerGenericClient_model_"+index+"_transparencyField";
+    this.pointSizeFieldID    = "EarthServerGenericClient_model_"+index+"_pointSizeField";
+
+    this.createTerrain = function()
+    {
+        // create material
+        this.appearance = document.createElement("Appearance");
+
+        // create shape,PointSet, etc.
+        var shape = document.createElement("Shape");
+        var pointSet = document.createElement("PointSet");
+        pointSet.setAttribute("solid","false");
+        var coords = document.createElement("coordinate");
+        coords.setAttribute("point", data.pointCloudCoordinates);
+
+        pointSet.appendChild(coords);
+        this.appendShader( this.appearance);
+        shape.appendChild(this.appearance);
+        shape.appendChild(pointSet);
+        root.appendChild(shape);
+
+        coords = null;
+        pointSet = null;
+        shape = null;
+        this.appearance = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    this.appendShader = function(domElement)
+    {
+        var cShader = document.createElement("composedShader");
+        var field1  = document.createElement("field");
+        field1.setAttribute("name","matCol");
+        field1.setAttribute("type","SFVec3f");
+        field1.setAttribute("value",data.diffuseColor);
+        cShader.appendChild(field1);
+        var field2  = document.createElement("field");
+        field2.setAttribute("id", this.transparencyFieldID);
+        field2.setAttribute("name","transparency");
+        field2.setAttribute("type","SFFloat");
+        field2.setAttribute("value",String(1.0 - data.transparency) );
+        cShader.appendChild(field2);
+        var field3  = document.createElement("field");
+        field3.setAttribute("id", this.pointSizeFieldID);
+        field3.setAttribute("name","pointSize");
+        field3.setAttribute("type","SFFloat");
+        field3.setAttribute("value",String(this.pointSize.toFixed(2)) );
+        cShader.appendChild(field3);
+
+        var vertexCode = "attribute vec3 position; \n";
+        vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "varying vec3 fNormal; \n";
+        vertexCode += "uniform float pointSize; \n";
+        vertexCode += "void main() { \n";
+        vertexCode += "fPosition = position; \n";
+        vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = pointSize; } \n";
+
+        /*var vertexCode = "precision highp float; \n";
+        vertexCode += "attribute vec3 position; \n";
+        vertexCode += "attribute vec3 normal; \n";
+        vertexCode += "uniform mat4 modelViewMatrix; \n";
+        vertexCode += "uniform mat4 projectionMatrix; \n";
+        vertexCode += "varying vec3 fPosition; \n";
+        vertexCode += "void main() \n";
+        vertexCode += "{ \n";
+        vertexCode += "vec4 pos = modelViewMatrix * vec4(position, 1.0); \n";
+        vertexCode += "gl_PointSize = " + pointSize.toFixed(2) +"; \n";
+        vertexCode += "fPosition = pos; \n";
+        vertexCode += "gl_Position = projectionMatrix * pos;} \n";*/
+
+        var shaderPartVertex = document.createElement("shaderPart");
+        shaderPartVertex.setAttribute("type","VERTEX");
+        shaderPartVertex.innerHTML = vertexCode;
+        cShader.appendChild(shaderPartVertex);
+
+        var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec3 matCol; \n";
+        fragmentCode += "uniform float transparency; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "gl_FragColor = vec4(matCol, transparency); } \n";
+
+        /*var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
+        fragmentCode += "precision highp float; \n";
+        fragmentCode += "#else \n";
+        fragmentCode += "precision mediump float; \n";
+        fragmentCode += "#endif \n";
+        fragmentCode += "uniform vec2 resolution; \n";
+        fragmentCode += "varying vec3 fPosition; \n";
+        fragmentCode += "void main() { \n";
+        fragmentCode += "float k = (fPosition.z) / (5.0); \n";
+        fragmentCode += "vec2 ss = vec2(gl_FragCoord.x / resolution.x, gl_FragCoord.y/resolution.y); \n";
+        fragmentCode += "gl_FragColor = vec4(ss, k, 1.0); \n";
+        //fragmentCode += "if (length(ss - vec2(0.5)) > 10.55) \n";
+        //agmentCode += "discard; \n";
+        fragmentCode += "} \n";*/
+
+
+        var shaderPartFragment = document.createElement("shaderPart");
+        shaderPartFragment.setAttribute("type","FRAGMENT");
+        shaderPartFragment.innerHTML = fragmentCode;
+        cShader.appendChild(shaderPartFragment);
+
+        domElement.appendChild( cShader );
+
+        cShader = null;
+        field1 = null;
+        shaderPartVertex = null;
+        shaderPartFragment = null;
+    };
+
+    /**
+     * Overwrites function from base terrain class. Sets the transparency in the shader.
+     * @param value - Transparency value between 0 (full visible) and 1 (invisible).
+     */
+    this.setTransparency = function(value)
+    {
+        var transparencyField = document.getElementById( this.transparencyFieldID);
+
+        if( transparencyField )
+            transparencyField.setAttribute("value", String(1.0-value) );
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find transparency field.")
+    };
+
+    /**
+     * Sets the size of the drawn points.
+     * @param value - Size if the points.
+     */
+    this.setPointSize = function(value)
+    {
+        var pointSizeField = document.getElementById( this.pointSizeFieldID );
+
+        if( pointSizeField)
+            pointSizeField.setAttribute("value", String(value));
+        else
+            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find point size field.")
+    }
+};
+EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
