@@ -118,7 +118,7 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain = new RBV.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.getAppearances = this.getAppearances;
         this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();

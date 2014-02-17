@@ -1,6 +1,153 @@
 var RBV = RBV || {};
 
 /**
+ * @class Viewer: The 'Viewer' object is a 'wrapper' around a RBV.Runtime that provides a
+ * predefined set of EarthServerClient models, which can be selected via the
+ * Viewer's API.
+ *
+ * Application which need direct control over runtimes can directly use
+ * the RBV.Runtime objects and manage them to their liking.
+ */
+RBV.Viewer = function(opts) {
+	this.runtime = new RBV.Runtime({});
+
+	// There is one context for all Models at the moment, for simplicity:
+	this.context = null;
+};
+
+RBV.Viewer.prototype.addModel = function(id, opts) {
+	// body...
+};
+
+RBV.Viewer.prototype.showModel = function(id, opts) {
+	// body...
+};
+
+RBV.Viewer.prototype.setContext = function(context) {
+	// body...
+};
+
+/**
+ * @class Context: Defines data and state for a model. Changes to the visualization
+ * of a model are done solely via the context object.
+ */
+RBV.Context = function(opts) {
+
+};
+var RBV = RBV || {};
+
+/**
+ * @class This terrain builds up a LOD with 3 levels of the received data.
+ * @param root - Dom Element to append the terrain to.
+ * @param data - Received Data of the Server request.
+ * @param index - Index of the model that uses this terrain.
+ * @param noDataValue - Array with the RGB values to be considered as no data available and shall be drawn transparent.
+ * @param noDemValue - The single value in the DEM that should be considered as NODATA
+ * @augments EarthServerGenericClient.AbstractTerrain
+ * @constructor
+ */
+RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDemValue*/) {
+    this.materialNodes = []; //Stores the IDs of the materials to change the transparency.
+    this.data = opts.data;
+    this.index = opts.index;
+    this.noData = opts.noDataValue;
+    this.noDemValue = opts.noDemValue;
+
+    /**
+     * Distance to change between full and 1/2 resolution.
+     * @type {number}
+     */
+    var lodRange1 = opts.lodRange1 || 5000;
+    /**
+     * Distance to change between 1/2 and 1/4 resolution.
+     * @type {number}
+     */
+    var lodRange2 = opts.lodRange1 || 17000;
+
+    /**
+     * The canvas that holds the received image.
+     * @type {HTMLElement}
+     */
+    this.canvasTexture = this.createCanvas(data.texture, index, noDataValue, data.removeAlphaChannel);
+
+    /**
+     * Size of one chunk. Chunks at the borders can be smaller.
+     * We want to build 3 chunks for the LOD with different resolution but the same size on the screen.
+     * With 121 values the length of the most detailed chunk is 120.
+     * The second chunk has 61 values and the length of 60. With a scale of 2 it's back to the size of 120.
+     * The third chunk has 31 values and the length if 30. With a scale of 4 it's also back to the size 120.
+     * @type {number}
+     */
+    var chunkSize = 121;
+    /**
+     * General information about the number of chunks needed to build the terrain.
+     * @type {number}
+     */
+    var chunkInfo = this.calcNumberOfChunks(data.width, data.height, chunkSize);
+
+    /**
+     * Counter for the insertion of chunks.
+     * @type {number}
+     */
+    var currentChunk = 0;
+
+    /**
+     * Builds the terrain and appends it into the scene.
+     */
+    this.createTerrain = function() {
+        for (currentChunk = 0; currentChunk < chunkInfo.numChunks; currentChunk++) {
+            EarthServerGenericClient.MainScene.enterCallbackForNextFrame(this.index);
+        }
+        currentChunk = 0;
+        //chunkInfo = null;
+
+        EarthServerGenericClient.MainScene.reportProgress(index);
+    };
+
+    /**
+     * The Scene Manager calls this function after a few frames since the last insertion of a chunk.
+     */
+    this.nextFrame = function() {
+        try {
+            //Build all necessary information and values to create a chunk
+            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, data.width, data.height);
+            var hm = this.getHeightMap(info);
+            var appearance = this.getAppearances("TerrainApp_" + index, 3, index, this.canvasTexture,
+                data.transparency, this.data.specularColor, this.data.diffuseColor);
+
+            var transform = document.createElement('Transform');
+            transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
+            transform.setAttribute("scale", "1.0 1.0 1.0");
+
+            var lodNode = document.createElement('LOD');
+            lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
+            lodNode.setAttribute("id", 'lod' + info.ID);
+
+            if (this.noData !== undefined || this.noDemValue != undefined) {
+                new GapGrid(lodNode, info, hm, appearance, this.noDemValue);
+            } else {
+                new ElevationGrid(lodNode, info, hm, appearance);
+            }
+
+            transform.appendChild(lodNode);
+            root.appendChild(transform);
+
+            currentChunk++;
+            //Delete vars avoid circular references
+            info = null;
+            hm = null;
+            appearance = null;
+            transform = null;
+            lodNode = null;
+        } catch (error) {
+            alert('Terrain::CreateNewChunk(): ' + error);
+        }
+    };
+};
+RBV.LODTerrainWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractTerrain);
+var RBV = RBV || {};
+
+/**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
@@ -118,7 +265,7 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new EarthServerGenericClient.LODTerrain(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain = new RBV.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.getAppearances = this.getAppearances;
         this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();
@@ -305,14 +452,14 @@ RBV.Model_DemWithOverlays.prototype.setTransparency = function(value) {
     else
         console.log("RBV.Model_DemWithOverlays: Can't find transparency field.")
 };
-RBV.Request = RBV.Request || {};
+RBV.Provider = RBV.Provider || {};
 
 /**
- * @class Request.OGCBase: An abstract object managing a request to a OGC service provider.
+ * @class OGCProvider: An abstract object managing a request to a OGC service provider.
  */
-RBV.Request.OGCBase = function(opts) {}
+RBV.Provider.OGCProvider = function(opts) {}
 
-RBV.Request.OGCBase.prototype.init = function(opts) {
+RBV.Provider.OGCProvider.prototype.init = function(opts) {
 	// FIXXME: error handling!
 	this.protocol = opts.protocol;
 	this.id = opts.id;
@@ -323,187 +470,36 @@ RBV.Request.OGCBase.prototype.init = function(opts) {
 	this.version = opts.version;
 }
 
-RBV.Request.OGCBase.prototype.toString = function() {
+RBV.Provider.OGCProvider.prototype.toString = function() {
 	return '[' + this.protocol + '] id: ' + this.id;
 };
 
-RBV.Request = RBV.Request || {};
-
-RBV.Request.WMS = function(opts) {
+/**
+ * @class WMS: A WMS provider.
+ */
+RBV.Provider.WMS = function(opts) {
 	opts.protocol = 'WMS';
 	opts.version = opts.version || '1.0.0';
-	RBV.Request.OGCBase.prototype.init.call(this, opts);
+	RBV.Provider.OGCProvider.prototype.init.call(this, opts);
 }
-RBV.Request.WMS.inheritsFrom(RBV.Request.OGCBase)
+RBV.Provider.WMS.inheritsFrom(RBV.Provider.OGCProvider)
 
-RBV.Request.WCS = function(opts) {
+/**
+ * @class WCS: A WCS provider.
+ */
+RBV.Provider.WCS = function(opts) {
 	opts.protocol = 'WCS';
 	opts.version = opts.version || '2.0.0';
-	RBV.Request.OGCBase.prototype.init.call(this, opts);
+	RBV.Provider.OGCProvider.prototype.init.call(this, opts);
 
 	this.outputCRS = opts.outputCRS;
 	this.datatype = opts.datatype;
 }
-RBV.Request.WCS.inheritsFrom(RBV.Request.OGCBase)
+RBV.Provider.WCS.inheritsFrom(RBV.Provider.OGCProvider)
 /**
- * Terrain to display multiple layers.
- * @param root - Dom Element to append the terrain to.
- * @param data - Received Data of the Server request.
- * @param index - Index of the model that uses this terrain.
- * @param pointSize - Size of the points.
- * @constructor
+ * @class Runtime: Manages multiple EarthServerClient-based models. It's main responsibility
+ * is to select a model to be shown.
  */
-EarthServerGenericClient.PointCloudTerrain = function(root,data,index,pointSize)
-{
-    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
-    this.appearance = null;  // appearance
-    this.data = data;
-    this.index = index;
-    this.pointSize = parseFloat(pointSize);
-    this.transparencyFieldID = "EarthServerGenericClient_model_"+index+"_transparencyField";
-    this.pointSizeFieldID    = "EarthServerGenericClient_model_"+index+"_pointSizeField";
+RBV.Runtime = function(opts) {
 
-    this.createTerrain = function()
-    {
-        // create material
-        this.appearance = document.createElement("Appearance");
-
-        // create shape,PointSet, etc.
-        var shape = document.createElement("Shape");
-        var pointSet = document.createElement("PointSet");
-        pointSet.setAttribute("solid","false");
-        var coords = document.createElement("coordinate");
-        coords.setAttribute("point", data.pointCloudCoordinates);
-
-        pointSet.appendChild(coords);
-        this.appendShader( this.appearance);
-        shape.appendChild(this.appearance);
-        shape.appendChild(pointSet);
-        root.appendChild(shape);
-
-        coords = null;
-        pointSet = null;
-        shape = null;
-        this.appearance = null;
-
-        EarthServerGenericClient.MainScene.reportProgress(index);
-    };
-
-    this.appendShader = function(domElement)
-    {
-        var cShader = document.createElement("composedShader");
-        var field1  = document.createElement("field");
-        field1.setAttribute("name","matCol");
-        field1.setAttribute("type","SFVec3f");
-        field1.setAttribute("value",data.diffuseColor);
-        cShader.appendChild(field1);
-        var field2  = document.createElement("field");
-        field2.setAttribute("id", this.transparencyFieldID);
-        field2.setAttribute("name","transparency");
-        field2.setAttribute("type","SFFloat");
-        field2.setAttribute("value",String(1.0 - data.transparency) );
-        cShader.appendChild(field2);
-        var field3  = document.createElement("field");
-        field3.setAttribute("id", this.pointSizeFieldID);
-        field3.setAttribute("name","pointSize");
-        field3.setAttribute("type","SFFloat");
-        field3.setAttribute("value",String(this.pointSize.toFixed(2)) );
-        cShader.appendChild(field3);
-
-        var vertexCode = "attribute vec3 position; \n";
-        vertexCode += "uniform mat4 modelViewProjectionMatrix; \n";
-        vertexCode += "uniform mat4 projectionMatrix; \n";
-        vertexCode += "varying vec3 fPosition; \n";
-        vertexCode += "varying vec3 fNormal; \n";
-        vertexCode += "uniform float pointSize; \n";
-        vertexCode += "void main() { \n";
-        vertexCode += "fPosition = position; \n";
-        vertexCode += "gl_Position = modelViewProjectionMatrix * vec4(position, 1.0); \n";
-        vertexCode += "gl_PointSize = pointSize; } \n";
-
-        /*var vertexCode = "precision highp float; \n";
-        vertexCode += "attribute vec3 position; \n";
-        vertexCode += "attribute vec3 normal; \n";
-        vertexCode += "uniform mat4 modelViewMatrix; \n";
-        vertexCode += "uniform mat4 projectionMatrix; \n";
-        vertexCode += "varying vec3 fPosition; \n";
-        vertexCode += "void main() \n";
-        vertexCode += "{ \n";
-        vertexCode += "vec4 pos = modelViewMatrix * vec4(position, 1.0); \n";
-        vertexCode += "gl_PointSize = " + pointSize.toFixed(2) +"; \n";
-        vertexCode += "fPosition = pos; \n";
-        vertexCode += "gl_Position = projectionMatrix * pos;} \n";*/
-
-        var shaderPartVertex = document.createElement("shaderPart");
-        shaderPartVertex.setAttribute("type","VERTEX");
-        shaderPartVertex.innerHTML = vertexCode;
-        cShader.appendChild(shaderPartVertex);
-
-        var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
-        fragmentCode += "precision highp float; \n";
-        fragmentCode += "#else \n";
-        fragmentCode += "precision mediump float; \n";
-        fragmentCode += "#endif \n";
-        fragmentCode += "uniform vec3 matCol; \n";
-        fragmentCode += "uniform float transparency; \n";
-        fragmentCode += "void main() { \n";
-        fragmentCode += "gl_FragColor = vec4(matCol, transparency); } \n";
-
-        /*var fragmentCode = "#ifdef GL_FRAGMENT_PRECISION_HIGH \n";
-        fragmentCode += "precision highp float; \n";
-        fragmentCode += "#else \n";
-        fragmentCode += "precision mediump float; \n";
-        fragmentCode += "#endif \n";
-        fragmentCode += "uniform vec2 resolution; \n";
-        fragmentCode += "varying vec3 fPosition; \n";
-        fragmentCode += "void main() { \n";
-        fragmentCode += "float k = (fPosition.z) / (5.0); \n";
-        fragmentCode += "vec2 ss = vec2(gl_FragCoord.x / resolution.x, gl_FragCoord.y/resolution.y); \n";
-        fragmentCode += "gl_FragColor = vec4(ss, k, 1.0); \n";
-        //fragmentCode += "if (length(ss - vec2(0.5)) > 10.55) \n";
-        //agmentCode += "discard; \n";
-        fragmentCode += "} \n";*/
-
-
-        var shaderPartFragment = document.createElement("shaderPart");
-        shaderPartFragment.setAttribute("type","FRAGMENT");
-        shaderPartFragment.innerHTML = fragmentCode;
-        cShader.appendChild(shaderPartFragment);
-
-        domElement.appendChild( cShader );
-
-        cShader = null;
-        field1 = null;
-        shaderPartVertex = null;
-        shaderPartFragment = null;
-    };
-
-    /**
-     * Overwrites function from base terrain class. Sets the transparency in the shader.
-     * @param value - Transparency value between 0 (full visible) and 1 (invisible).
-     */
-    this.setTransparency = function(value)
-    {
-        var transparencyField = document.getElementById( this.transparencyFieldID);
-
-        if( transparencyField )
-            transparencyField.setAttribute("value", String(1.0-value) );
-        else
-            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find transparency field.")
-    };
-
-    /**
-     * Sets the size of the drawn points.
-     * @param value - Size if the points.
-     */
-    this.setPointSize = function(value)
-    {
-        var pointSizeField = document.getElementById( this.pointSizeFieldID );
-
-        if( pointSizeField)
-            pointSizeField.setAttribute("value", String(value));
-        else
-            console.log("EarthServerGenericClient.PointCloudTerrain: Can't find point size field.")
-    }
 };
-EarthServerGenericClient.PointCloudTerrain.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
