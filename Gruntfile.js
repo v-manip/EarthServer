@@ -35,7 +35,16 @@ module.exports = function(grunt) {
 				]
 			},
 		},
+
+		watch: {
+            scripts: {
+                files: 'js/RBV/src/*.js',
+                tasks: ['default']
+            }
+        }
 	});
+
+    grunt.loadNpmTasks('grunt-contrib-watch');
 
 	grunt.registerTask('default', ['concat', 'copy']);
 };
