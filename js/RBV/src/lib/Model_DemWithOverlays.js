@@ -1,27 +1,27 @@
-var RBV = RBV || {};
+RBV.Models = RBV.Models || {};
 
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-RBV.Model_DemWithOverlays = function() {
+RBV.Models.DemWithOverlays = function() {
     this.setDefaults();
     this.name = "DEM with overlay(s)";
 
     this.terrain = null;
     this.demRequest = null;
-    this.imageryRequests = [];
+    this.imageryProviders = [];
 };
-RBV.Model_DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
+RBV.Models.DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
 
 /**
  * Sets the DEM request.
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
-    this.demRequest = request;
+RBV.Models.DemWithOverlays.prototype.setDemProvider = function(provider) {
+    this.demRequest = provider;
 };
 
 /**
@@ -29,15 +29,17 @@ RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Model_DemWithOverlays.prototype.addImageryRequest = function(request) {
-    this.imageryRequests.push(request);
+RBV.Models.DemWithOverlays.prototype.setImageryProviders = function(providers) {
+    for (var idx = 0; idx < providers.length; idx++) {
+        this.imageryProviders.push(providers[idx]);
+    };
 };
 
 /**
  * Sets the timespan for the request
  * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
  */
-RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
+RBV.Models.DemWithOverlays.prototype.setTimespan = function(timespan) {
     this.timespan = timespan;
 };
 
@@ -48,7 +50,7 @@ RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
+RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
     if (typeof root === 'undefined') {
         throw Error('[Model_DEMWithOverlays::createModel] root is not defined')
     }
@@ -72,7 +74,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
         dem: this.demRequest,
-        imagery: this.imageryRequests,
+        imagery: this.imageryProviders,
         bbox: bbox,
         timespan: this.timespan,
         resX: this.XResolution,
@@ -85,7 +87,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
+RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
     if (this.checkReceivedData(dataArray)) {
         this.removePlaceHolder();
 
@@ -118,7 +120,14 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new RBV.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain = new RBV.LODTerrainWithOverlays({
+            transform: transform,
+            data: data,
+            index: this.index,
+            noData: this.noData,
+            demNoData: this.demNoData,
+            root: this.root
+        });
         this.terrain.getAppearances = this.getAppearances;
         this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();
@@ -139,7 +148,7 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 /**
  * Validates the received data from the server request.
  */
-RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
+RBV.Models.DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
     for (var idx = 0; idx < dataArray.length; ++idx) {
         var data = dataArray[idx];
         this.receivedDataCount++;
@@ -185,7 +194,7 @@ RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
  */
-RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
+RBV.Models.DemWithOverlays.prototype.setSpecificElement = function(element) {
     EarthServerGenericClient.appendElevationSlider(element, this.index);
 };
 
@@ -203,7 +212,7 @@ RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
  * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
  * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
  */
-RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
+RBV.Models.DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
     var appearance = document.createElement('Appearance');
 
     if (transparency === 0) {
@@ -297,11 +306,11 @@ RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, Ap
  * Overwrites function from base terrain class. Sets the transparency in the shader.
  * @param value - Transparency value between 0 (full visible) and 1 (invisible).
  */
-RBV.Model_DemWithOverlays.prototype.setTransparency = function(value) {
+RBV.Models.DemWithOverlays.prototype.setTransparency = function(value) {
     var transparencyField = document.getElementById(this.transparencyFieldID);
 
     if (transparencyField)
         transparencyField.setAttribute("value", String(1.0 - value));
     else
-        console.log("RBV.Model_DemWithOverlays: Can't find transparency field.")
+        console.log("RBV.Models.DemWithOverlays: Can't find transparency field.")
 };

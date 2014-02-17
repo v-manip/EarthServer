@@ -1,32 +1,3 @@
-var RBV = RBV || {};
-
-/**
- * @class Viewer: The 'Viewer' object is a 'wrapper' around a RBV.Runtime that provides a
- * predefined set of EarthServerClient models, which can be selected via the
- * Viewer's API.
- *
- * Application which need direct control over runtimes can directly use
- * the RBV.Runtime objects and manage them to their liking.
- */
-RBV.Viewer = function(opts) {
-	this.runtime = new RBV.Runtime({});
-
-	// There is one context for all Models at the moment, for simplicity:
-	this.context = null;
-};
-
-RBV.Viewer.prototype.addModel = function(id, opts) {
-	// body...
-};
-
-RBV.Viewer.prototype.showModel = function(id, opts) {
-	// body...
-};
-
-RBV.Viewer.prototype.setContext = function(context) {
-	// body...
-};
-
 /**
  * @class Context: Defines data and state for a model. Changes to the visualization
  * of a model are done solely via the context object.
@@ -52,6 +23,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
     this.index = opts.index;
     this.noData = opts.noDataValue;
     this.noDemValue = opts.noDemValue;
+    this.root = opts.root;
 
     /**
      * Distance to change between full and 1/2 resolution.
@@ -68,7 +40,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    this.canvasTexture = this.createCanvas(data.texture, index, noDataValue, data.removeAlphaChannel);
+    this.canvasTexture = this.createCanvas(opts.data.texture, opts.index, opts.noDataValue, opts.data.removeAlphaChannel);
 
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
@@ -83,7 +55,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
      * General information about the number of chunks needed to build the terrain.
      * @type {number}
      */
-    var chunkInfo = this.calcNumberOfChunks(data.width, data.height, chunkSize);
+    var chunkInfo = this.calcNumberOfChunks(opts.data.width, opts.data.height, chunkSize);
 
     /**
      * Counter for the insertion of chunks.
@@ -101,7 +73,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
         currentChunk = 0;
         //chunkInfo = null;
 
-        EarthServerGenericClient.MainScene.reportProgress(index);
+        EarthServerGenericClient.MainScene.reportProgress(this.index);
     };
 
     /**
@@ -110,10 +82,10 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
     this.nextFrame = function() {
         try {
             //Build all necessary information and values to create a chunk
-            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, data.width, data.height);
+            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, this.data.width, this.data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_" + index, 3, index, this.canvasTexture,
-                data.transparency, this.data.specularColor, this.data.diffuseColor);
+            var appearance = this.getAppearances("TerrainApp_" + this.index, 3, this.index, this.canvasTexture,
+                this.data.transparency, this.data.specularColor, this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -130,7 +102,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
             }
 
             transform.appendChild(lodNode);
-            root.appendChild(transform);
+            this.root.appendChild(transform);
 
             currentChunk++;
             //Delete vars avoid circular references
@@ -145,30 +117,30 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
     };
 };
 RBV.LODTerrainWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractTerrain);
-var RBV = RBV || {};
+RBV.Models = RBV.Models || {};
 
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
  * @augments EarthServerGenericClient.AbstractSceneModel
  */
-RBV.Model_DemWithOverlays = function() {
+RBV.Models.DemWithOverlays = function() {
     this.setDefaults();
     this.name = "DEM with overlay(s)";
 
     this.terrain = null;
     this.demRequest = null;
-    this.imageryRequests = [];
+    this.imageryProviders = [];
 };
-RBV.Model_DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
+RBV.Models.DemWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractSceneModel);
 
 /**
  * Sets the DEM request.
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
-    this.demRequest = request;
+RBV.Models.DemWithOverlays.prototype.setDemProvider = function(provider) {
+    this.demRequest = provider;
 };
 
 /**
@@ -176,15 +148,17 @@ RBV.Model_DemWithOverlays.prototype.setDEMRequest = function(request) {
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Model_DemWithOverlays.prototype.addImageryRequest = function(request) {
-    this.imageryRequests.push(request);
+RBV.Models.DemWithOverlays.prototype.setImageryProviders = function(providers) {
+    for (var idx = 0; idx < providers.length; idx++) {
+        this.imageryProviders.push(providers[idx]);
+    };
 };
 
 /**
  * Sets the timespan for the request
  * @param timespan - eg. '2013-06-05T00:00:00Z/2013-06-08T00:00:00Z'
  */
-RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
+RBV.Models.DemWithOverlays.prototype.setTimespan = function(timespan) {
     this.timespan = timespan;
 };
 
@@ -195,7 +169,7 @@ RBV.Model_DemWithOverlays.prototype.setTimespan = function(timespan) {
  * @param cubeSizeY - Size of the fishtank/cube on the y-axis.
  * @param cubeSizeZ - Size of the fishtank/cube on the z-axis.
  */
-RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
+RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cubeSizeY, cubeSizeZ) {
     if (typeof root === 'undefined') {
         throw Error('[Model_DEMWithOverlays::createModel] root is not defined')
     }
@@ -219,7 +193,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
         dem: this.demRequest,
-        imagery: this.imageryRequests,
+        imagery: this.imageryProviders,
         bbox: bbox,
         timespan: this.timespan,
         resX: this.XResolution,
@@ -232,7 +206,7 @@ RBV.Model_DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cube
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
-RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
+RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
     if (this.checkReceivedData(dataArray)) {
         this.removePlaceHolder();
 
@@ -265,7 +239,14 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 
 
         // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new RBV.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
+        this.terrain = new RBV.LODTerrainWithOverlays({
+            transform: transform,
+            data: data,
+            index: this.index,
+            noData: this.noData,
+            demNoData: this.demNoData,
+            root: this.root
+        });
         this.terrain.getAppearances = this.getAppearances;
         this.terrain.setTransparency = this.setTransparency;
         this.terrain.createTerrain();
@@ -286,7 +267,7 @@ RBV.Model_DemWithOverlays.prototype.receiveData = function(dataArray) {
 /**
  * Validates the received data from the server request.
  */
-RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
+RBV.Models.DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
     for (var idx = 0; idx < dataArray.length; ++idx) {
         var data = dataArray[idx];
         this.receivedDataCount++;
@@ -332,7 +313,7 @@ RBV.Model_DemWithOverlays.prototype.checkReceivedData = function(dataArray) {
  * Every Scene Model creates it's own specific UI elements. This function is called automatically by the SceneManager.
  * @param element - The element where to append the specific UI elements for this model.
  */
-RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
+RBV.Models.DemWithOverlays.prototype.setSpecificElement = function(element) {
     EarthServerGenericClient.appendElevationSlider(element, this.index);
 };
 
@@ -350,7 +331,7 @@ RBV.Model_DemWithOverlays.prototype.setSpecificElement = function(element) {
  * @param upright - Flag if the terrain is upright (underground data) and the texture stands upright in the cube.
  * @returns {Array} - Array of appearance nodes. If any error occurs, the function will return null.
  */
-RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
+RBV.Models.DemWithOverlays.prototype.getAppearances = function(AppearanceName, AppearanceCount, modelIndex, canvasTexture, transparency, specular, diffuse, upright) {
     var appearance = document.createElement('Appearance');
 
     if (transparency === 0) {
@@ -444,13 +425,13 @@ RBV.Model_DemWithOverlays.prototype.getAppearances = function(AppearanceName, Ap
  * Overwrites function from base terrain class. Sets the transparency in the shader.
  * @param value - Transparency value between 0 (full visible) and 1 (invisible).
  */
-RBV.Model_DemWithOverlays.prototype.setTransparency = function(value) {
+RBV.Models.DemWithOverlays.prototype.setTransparency = function(value) {
     var transparencyField = document.getElementById(this.transparencyFieldID);
 
     if (transparencyField)
         transparencyField.setAttribute("value", String(1.0 - value));
     else
-        console.log("RBV.Model_DemWithOverlays: Can't find transparency field.")
+        console.log("RBV.Models.DemWithOverlays: Can't find transparency field.")
 };
 RBV.Provider = RBV.Provider || {};
 
@@ -468,10 +449,35 @@ RBV.Provider.OGCProvider.prototype.init = function(opts) {
 	this.crs = opts.crs;
 	this.format = opts.format;
 	this.version = opts.version;
+
+	this.mimeTypeHandlers = {};
 }
 
 RBV.Provider.OGCProvider.prototype.toString = function() {
 	return '[' + this.protocol + '] id: ' + this.id;
+};
+
+/**
+ * Registers a handler for a specific format for preprocessing data received
+ * by a data request. An eventual registered handler with the same mimetype
+ * will be overwritten.
+ *
+ * @param mimetype - MIME type name (i.e. 'image/x-aaigrid')
+ * @returns {boolean} - TRUE if a handler for the given format was already registered,
+ * FALSE if not
+ */
+RBV.Provider.OGCProvider.prototype.registerMimeTypeHandler = function(mimetype, handler) {
+	var wasRegistered = false;
+	if (this.mimeTypeHandlers[mimetype]) {
+		wasRegistered = true;
+	}
+	this.mimeTypeHandlers[mimetype] = handler;
+
+	return wasRegistered;
+};
+
+RBV.Provider.OGCProvider.prototype.getMimeTypeHandlers = function() {
+	return this.mimeTypeHandlers;
 };
 
 /**
@@ -502,4 +508,109 @@ RBV.Provider.WCS.inheritsFrom(RBV.Provider.OGCProvider)
  */
 RBV.Runtime = function(opts) {
 
+};
+var RBV = RBV || {};
+
+/**
+ * @class Scene: The 'Scene' object is a 'wrapper' around a RBV.Runtime that provides a
+ * predefined set of EarthServerClient models, which can be selected via the
+ * Scene's API.
+ *
+ * RBV.Provider objects can be added to the Scene. Depending on the displayed Model one
+ * ore more providers are selected to provide the data base for the model.
+ *
+ * Application which need direct control over runtimes can directly use
+ * the RBV.Runtime objects and manage them to their liking.
+ */
+RBV.Scene = function(opts) {
+	this.runtime = new RBV.Runtime({});
+
+	// There is one context for all Models at the moment (for simplicity):
+	this.context = null;
+	this.provider = {};
+	this.toi = null;
+	this.aoi = null;
+
+	// FIXXME: those values are model specific, how to handle?
+	this.resolution = opts.resolution || [500, 500];
+	this.noDemValue = opts.noDemValue || 0;
+
+	this._setupEarthServerGenericClient(opts);
+};
+
+// FIXXME: Currently the model needs to know if a Provider has a custom
+// mimetype handler attached. This is due to the slightly "clumpsy" way
+// the EarthServerGenericClient library is handling data requests.
+// Adding a provider or request based abstraction to the EarthServerGenericClient
+// would solve the problem, as then the abstraction layer takes care of the
+// mimetype handling, not the model itself.
+RBV.Scene.prototype.addModel = function(model, providers) {
+	for (var idx = 0; idx < providers.length; idx++) {
+		var mimeTypeHandlers = providers[idx].getMimeTypeHandlers();
+		for (var key in mimeTypeHandlers) {
+			if (mimeTypeHandlers.hasOwnProperty(key)) {
+				model.registerMIMETypeHandler(key, mimeTypeHandlers[key]);
+			}
+		}
+	};
+	EarthServerGenericClient.MainScene.addModel(model);
+
+	this.model = model;
+};
+
+RBV.Scene.prototype.show = function(opts) {
+	this.model.setAreaOfInterest(this.aoi[0], this.aoi[1], this.aoi[2], this.aoi[3], this.aoi[4], this.aoi[5]);
+	this.model.setTimespan(this.toi);
+	// this.model.setOffset(0, 0.2, 0);
+	// this.model.setScale(1, 3, 1);
+
+	// create the viewer: Cube has 60% height compared to width and length
+	// EarthServerGenericClient.MainScene.createScene('x3dScene', 'theScene', 1, 0.6, 1);
+	// EarthServerGenericClient.MainScene.createScene('x3dScene', 'x3dScene', 1, 0.6, 1);
+	// FIXXME: this was the only combination that worked, investigate API!
+	EarthServerGenericClient.MainScene.createScene(opts.x3dscene_id, opts.x3dscene_id, 1, 0.8, 1);
+	EarthServerGenericClient.MainScene.createAxisLabels("Latitude", "Height", "Longitude");
+	var pb = new EarthServerGenericClient.createProgressBar("progressbar");
+	EarthServerGenericClient.MainScene.setProgressCallback(pb.updateValue);
+	EarthServerGenericClient.MainScene.createUI('x3domUI');
+	EarthServerGenericClient.MainScene.createModels();
+};
+
+RBV.Scene.prototype.setContext = function(context) {
+	// body...
+};
+
+RBV.Scene.prototype.addProvider = function(protocol, provider) {
+	if (!this.provider[protocol]) {
+		this.provider[protocol] = [];
+	}
+	this.provider[protocol].push(provider);
+};
+
+RBV.Scene.prototype.setToI = function(timespan) {
+	this.toi = timespan;
+};
+
+RBV.Scene.prototype.setAoI = function(bbox, min_height, max_height) {
+	this.aoi = bbox;
+	this.aoi.push(min_height, max_height);
+};
+
+/**
+ * Registers a handler for a specific format for preprocessing data received
+ * by a data request. An eventual registered handler with the same mimetype
+ * will be overwritten.
+ *
+ * @param mimetype - MIME type name (i.e. 'image/x-aaigrid')
+ */
+RBV.Scene.prototype.registerMIMETypeHandler = function(mimetype, handler) {
+	this.mimeTypeHandlers[mimetype, handler];
+	// FIXXME: has to be delegated to a Model!
+};
+
+RBV.Scene.prototype._setupEarthServerGenericClient = function(opts) {
+	EarthServerGenericClient.MainScene.resetScene();
+	EarthServerGenericClient.MainScene.setTimeLog(opts.setTimeLog);
+	EarthServerGenericClient.MainScene.addLightToScene(opts.addLightToScene);
+	EarthServerGenericClient.MainScene.setBackground(opts.background[0], opts.background[1], opts.background[2], opts.background[3]);
 };

@@ -14,10 +14,35 @@ RBV.Provider.OGCProvider.prototype.init = function(opts) {
 	this.crs = opts.crs;
 	this.format = opts.format;
 	this.version = opts.version;
+
+	this.mimeTypeHandlers = {};
 }
 
 RBV.Provider.OGCProvider.prototype.toString = function() {
 	return '[' + this.protocol + '] id: ' + this.id;
+};
+
+/**
+ * Registers a handler for a specific format for preprocessing data received
+ * by a data request. An eventual registered handler with the same mimetype
+ * will be overwritten.
+ *
+ * @param mimetype - MIME type name (i.e. 'image/x-aaigrid')
+ * @returns {boolean} - TRUE if a handler for the given format was already registered,
+ * FALSE if not
+ */
+RBV.Provider.OGCProvider.prototype.registerMimeTypeHandler = function(mimetype, handler) {
+	var wasRegistered = false;
+	if (this.mimeTypeHandlers[mimetype]) {
+		wasRegistered = true;
+	}
+	this.mimeTypeHandlers[mimetype] = handler;
+
+	return wasRegistered;
+};
+
+RBV.Provider.OGCProvider.prototype.getMimeTypeHandlers = function() {
+	return this.mimeTypeHandlers;
 };
 
 /**

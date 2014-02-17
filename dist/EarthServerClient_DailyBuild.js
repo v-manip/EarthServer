@@ -3029,6 +3029,10 @@ EarthServerGenericClient.AbstractSceneModel = function(){
      */
     this.preprocessReceivedData = function(data, responseData, mimetype)
     {
+        if (!this.mimetypeHandlers) {
+            return false;
+        }
+        
         var mimetypeHandler = this.mimetypeHandlers[mimetype];
         if (!mimetypeHandler) {
             return false;

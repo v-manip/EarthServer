@@ -16,6 +16,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
     this.index = opts.index;
     this.noData = opts.noDataValue;
     this.noDemValue = opts.noDemValue;
+    this.root = opts.root;
 
     /**
      * Distance to change between full and 1/2 resolution.
@@ -32,7 +33,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    this.canvasTexture = this.createCanvas(data.texture, index, noDataValue, data.removeAlphaChannel);
+    this.canvasTexture = this.createCanvas(opts.data.texture, opts.index, opts.noDataValue, opts.data.removeAlphaChannel);
 
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
@@ -47,7 +48,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
      * General information about the number of chunks needed to build the terrain.
      * @type {number}
      */
-    var chunkInfo = this.calcNumberOfChunks(data.width, data.height, chunkSize);
+    var chunkInfo = this.calcNumberOfChunks(opts.data.width, opts.data.height, chunkSize);
 
     /**
      * Counter for the insertion of chunks.
@@ -65,7 +66,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
         currentChunk = 0;
         //chunkInfo = null;
 
-        EarthServerGenericClient.MainScene.reportProgress(index);
+        EarthServerGenericClient.MainScene.reportProgress(this.index);
     };
 
     /**
@@ -74,10 +75,10 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
     this.nextFrame = function() {
         try {
             //Build all necessary information and values to create a chunk
-            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, data.width, data.height);
+            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, this.data.width, this.data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_" + index, 3, index, this.canvasTexture,
-                data.transparency, this.data.specularColor, this.data.diffuseColor);
+            var appearance = this.getAppearances("TerrainApp_" + this.index, 3, this.index, this.canvasTexture,
+                this.data.transparency, this.data.specularColor, this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -94,7 +95,7 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
             }
 
             transform.appendChild(lodNode);
-            root.appendChild(transform);
+            this.root.appendChild(transform);
 
             currentChunk++;
             //Delete vars avoid circular references
