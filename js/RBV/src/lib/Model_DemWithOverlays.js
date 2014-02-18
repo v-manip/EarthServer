@@ -1,5 +1,7 @@
 RBV.Models = RBV.Models || {};
 
+"use strict";
+
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
  * 2 URLs for the service, 2 Coverage names for the image and dem.
@@ -69,7 +71,6 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
     };
 
     this.root = root;
-
     this.createPlaceHolder();
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
@@ -87,13 +88,61 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
+// RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
+//     if (this.checkReceivedData(dataArray)) {
+//         this.removePlaceHolder();
+
+//         console.log('received layers #' + dataArray.length);
+
+//         // var data = dataArray;
+
+//         var data = null;
+//         var lastidx = -1;
+//         for (var idx = 0; idx < dataArray.length; ++idx) {
+//             if (dataArray[idx].heightmap) {
+//                 data = dataArray[idx];
+//                 lastidx = idx;
+//                 console.log('hm is in #' + idx);
+
+//                 break;
+//             }
+//         }
+
+//         // var idx = -1;
+//         // (lastidx === 0) ? idx = 1 : idx = 0;
+//         // data.textureUrl = dataArray[idx].textureUrl;
+//         // data.texture = dataArray[idx].texture;
+
+//         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
+//         var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
+//         this.root.appendChild(transform);
+
+//         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+
+//         this.terrain = new EarthServerGenericClient.LODTerrain(this.root, data, this.index, this.noData, this.demNoData);
+//         // this.terrain = new RBV.LODTerrainWithOverlays(this.root, data, this.index, this.noData, this.demNoData);
+//         // this.terrain.getAppearances = this.getAppearances;
+//         // this.terrain.setTransparency = this.setTransparency;
+//         this.terrain.createTerrain();
+
+//         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+
+//         //this.elevationUpdateBinding();
+
+//         // if (this.sidePanels) {
+//         //     this.terrain.createSidePanels(this.transformNode, 1);
+//         // }
+//         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+//         transform = null;
+//     }
+// };
+
 RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
-    if (this.checkReceivedData(dataArray)) {
+    if( this.checkReceivedData(dataArray))
+    {
+        //Remove the placeHolder
         this.removePlaceHolder();
-
-        console.log('received layers #' + dataArray.length);
-
-        // var data = dataArray;
 
         var data = null;
         var lastidx = -1;
@@ -107,38 +156,18 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
             }
         }
 
-        var idx = -1;
-        (lastidx === 0) ? idx = 1 : idx = 0;
-        data.textureUrl = dataArray[idx].textureUrl;
-        data.texture = dataArray[idx].texture;
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
 
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
-        var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
-        this.root.appendChild(transform);
-
+        //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-
-
-        // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new RBV.LODTerrainWithOverlays({
-            transform: transform,
-            data: data,
-            index: this.index,
-            noData: this.noData,
-            demNoData: this.demNoData,
-            root: this.root
-        });
-        this.terrain.getAppearances = this.getAppearances;
-        this.terrain.setTransparency = this.setTransparency;
+        this.terrain = new RBV.Visualization.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
-
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-
-        //this.elevationUpdateBinding();
-
-        // if (this.sidePanels) {
-        //     this.terrain.createSidePanels(this.transformNode, 1);
-        // }
+        this.elevationUpdateBinding();
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(this.transformNode,1);    }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;

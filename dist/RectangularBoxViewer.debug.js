@@ -1,3 +1,5 @@
+var RBV = RBV || {};
+
 /**
  * @class Context: Defines data and state for a model. Changes to the visualization
  * of a model are done solely via the context object.
@@ -5,7 +7,7 @@
 RBV.Context = function(opts) {
 
 };
-var RBV = RBV || {};
+RBV.Visualization = RBV.Visualization || {};
 
 /**
  * @class This terrain builds up a LOD with 3 levels of the received data.
@@ -17,30 +19,30 @@ var RBV = RBV || {};
  * @augments EarthServerGenericClient.AbstractTerrain
  * @constructor
  */
-RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDemValue*/) {
-    this.materialNodes = []; //Stores the IDs of the materials to change the transparency.
-    this.data = opts.data;
-    this.index = opts.index;
-    this.noData = opts.noDataValue;
-    this.noDemValue = opts.noDemValue;
-    this.root = opts.root;
+RBV.Visualization.LODTerrainWithOverlays = function(root, data,index,noDataValue,noDemValue)
+{
+    this.materialNodes = [];//Stores the IDs of the materials to change the transparency.
+    this.data = data;
+    this.index = index;
+    this.noData = noDataValue;
+    this.noDemValue = noDemValue;
 
     /**
      * Distance to change between full and 1/2 resolution.
      * @type {number}
      */
-    var lodRange1 = opts.lodRange1 || 5000;
+    var lodRange1       = 5000;
     /**
      * Distance to change between 1/2 and 1/4 resolution.
      * @type {number}
      */
-    var lodRange2 = opts.lodRange1 || 17000;
+    var lodRange2       = 17000;
 
     /**
      * The canvas that holds the received image.
      * @type {HTMLElement}
      */
-    this.canvasTexture = this.createCanvas(opts.data.texture, opts.index, opts.noDataValue, opts.data.removeAlphaChannel);
+    this.canvasTexture   = this.createCanvas( data.texture,index,noDataValue,data.removeAlphaChannel);
 
     /**
      * Size of one chunk. Chunks at the borders can be smaller.
@@ -55,37 +57,41 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
      * General information about the number of chunks needed to build the terrain.
      * @type {number}
      */
-    var chunkInfo = this.calcNumberOfChunks(opts.data.width, opts.data.height, chunkSize);
+    var chunkInfo       = this.calcNumberOfChunks(data.width,data.height,chunkSize);
 
     /**
      * Counter for the insertion of chunks.
      * @type {number}
      */
-    var currentChunk = 0;
+    var currentChunk    = 0;
 
     /**
      * Builds the terrain and appends it into the scene.
      */
-    this.createTerrain = function() {
-        for (currentChunk = 0; currentChunk < chunkInfo.numChunks; currentChunk++) {
-            EarthServerGenericClient.MainScene.enterCallbackForNextFrame(this.index);
+    this.createTerrain= function()
+    {
+        for(currentChunk=0; currentChunk< chunkInfo.numChunks;currentChunk++)
+        {
+            EarthServerGenericClient.MainScene.enterCallbackForNextFrame( this.index );
         }
-        currentChunk = 0;
+        currentChunk=0;
         //chunkInfo = null;
 
-        EarthServerGenericClient.MainScene.reportProgress(this.index);
+        EarthServerGenericClient.MainScene.reportProgress(index);
     };
 
     /**
      * The Scene Manager calls this function after a few frames since the last insertion of a chunk.
      */
-    this.nextFrame = function() {
-        try {
+    this.nextFrame = function()
+    {
+        try
+        {
             //Build all necessary information and values to create a chunk
-            var info = this.createChunkInfo(this.index, chunkSize, chunkInfo, currentChunk, this.data.width, this.data.height);
+            var info = this.createChunkInfo(this.index,chunkSize,chunkInfo,currentChunk,data.width,data.height);
             var hm = this.getHeightMap(info);
-            var appearance = this.getAppearances("TerrainApp_" + this.index, 3, this.index, this.canvasTexture,
-                this.data.transparency, this.data.specularColor, this.data.diffuseColor);
+            var appearance = this.getAppearances("TerrainApp_"+index,3,index,this.canvasTexture,
+                data.transparency,this.data.specularColor,this.data.diffuseColor);
 
             var transform = document.createElement('Transform');
             transform.setAttribute("translation", info.xpos + " 0 " + info.ypos);
@@ -95,14 +101,13 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
             lodNode.setAttribute("Range", lodRange1 + ',' + lodRange2);
             lodNode.setAttribute("id", 'lod' + info.ID);
 
-            if (this.noData !== undefined || this.noDemValue != undefined) {
-                new GapGrid(lodNode, info, hm, appearance, this.noDemValue);
-            } else {
-                new ElevationGrid(lodNode, info, hm, appearance);
-            }
+            if( this.noData !== undefined || this.noDemValue != undefined)
+            {   new GapGrid(lodNode,info, hm, appearance,this.noDemValue); }
+            else
+            {   new ElevationGrid(lodNode,info, hm, appearance);  }
 
             transform.appendChild(lodNode);
-            this.root.appendChild(transform);
+            root.appendChild(transform);
 
             currentChunk++;
             //Delete vars avoid circular references
@@ -111,13 +116,18 @@ RBV.LODTerrainWithOverlays = function(opts/*root, data, index, noDataValue, noDe
             appearance = null;
             transform = null;
             lodNode = null;
-        } catch (error) {
+        }
+        catch(error)
+        {
             alert('Terrain::CreateNewChunk(): ' + error);
         }
     };
 };
-RBV.LODTerrainWithOverlays.inheritsFrom(EarthServerGenericClient.AbstractTerrain);
+RBV.Visualization.LODTerrainWithOverlays.inheritsFrom( EarthServerGenericClient.AbstractTerrain);
+
 RBV.Models = RBV.Models || {};
+
+"use strict";
 
 /**
  * @class Scene Model: WMS Image with DEM from WCS Query
@@ -188,7 +198,6 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
     };
 
     this.root = root;
-
     this.createPlaceHolder();
 
     EarthServerGenericClient.getDEMWithOverlays(this, {
@@ -206,13 +215,61 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
  * This is done automatically.
  * @param data - Received data from the ServerRequest.
  */
+// RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
+//     if (this.checkReceivedData(dataArray)) {
+//         this.removePlaceHolder();
+
+//         console.log('received layers #' + dataArray.length);
+
+//         // var data = dataArray;
+
+//         var data = null;
+//         var lastidx = -1;
+//         for (var idx = 0; idx < dataArray.length; ++idx) {
+//             if (dataArray[idx].heightmap) {
+//                 data = dataArray[idx];
+//                 lastidx = idx;
+//                 console.log('hm is in #' + idx);
+
+//                 break;
+//             }
+//         }
+
+//         // var idx = -1;
+//         // (lastidx === 0) ? idx = 1 : idx = 0;
+//         // data.textureUrl = dataArray[idx].textureUrl;
+//         // data.texture = dataArray[idx].texture;
+
+//         var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
+//         var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
+//         this.root.appendChild(transform);
+
+//         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
+
+//         this.terrain = new EarthServerGenericClient.LODTerrain(this.root, data, this.index, this.noData, this.demNoData);
+//         // this.terrain = new RBV.LODTerrainWithOverlays(this.root, data, this.index, this.noData, this.demNoData);
+//         // this.terrain.getAppearances = this.getAppearances;
+//         // this.terrain.setTransparency = this.setTransparency;
+//         this.terrain.createTerrain();
+
+//         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
+
+//         //this.elevationUpdateBinding();
+
+//         // if (this.sidePanels) {
+//         //     this.terrain.createSidePanels(this.transformNode, 1);
+//         // }
+//         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
+
+//         transform = null;
+//     }
+// };
+
 RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
-    if (this.checkReceivedData(dataArray)) {
+    if( this.checkReceivedData(dataArray))
+    {
+        //Remove the placeHolder
         this.removePlaceHolder();
-
-        console.log('received layers #' + dataArray.length);
-
-        // var data = dataArray;
 
         var data = null;
         var lastidx = -1;
@@ -226,38 +283,18 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
             }
         }
 
-        var idx = -1;
-        (lastidx === 0) ? idx = 1 : idx = 0;
-        data.textureUrl = dataArray[idx].textureUrl;
-        data.texture = dataArray[idx].texture;
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
+        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
+        this.root.appendChild( transform);
 
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
-        var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
-        this.root.appendChild(transform);
-
+        //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
-
-
-        // this.terrain = new EarthServerGenericClient.VolumeTerrain(transform, dataArray, this.index, this.noData, this.demNoData);
-        this.terrain = new RBV.LODTerrainWithOverlays({
-            transform: transform,
-            data: data,
-            index: this.index,
-            noData: this.noData,
-            demNoData: this.demNoData,
-            root: this.root
-        });
-        this.terrain.getAppearances = this.getAppearances;
-        this.terrain.setTransparency = this.setTransparency;
+        this.terrain = new RBV.Visualization.LODTerrainWithOverlays(transform, data, this.index, this.noData, this.demNoData);
         this.terrain.createTerrain();
-
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
-
-        //this.elevationUpdateBinding();
-
-        // if (this.sidePanels) {
-        //     this.terrain.createSidePanels(this.transformNode, 1);
-        // }
+        this.elevationUpdateBinding();
+        if(this.sidePanels)
+        {   this.terrain.createSidePanels(this.transformNode,1);    }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;
