@@ -4,31 +4,24 @@ module.exports = function(grunt) {
 
 	grunt.initConfig({
 		// Installation directory based on the V-MANIP organization repository:
-		installdir: '../WebClient-Framework/app/bower_components/rectangularboxviewer/',
+		installdir: '../RectangularBoxViewer/libs/',
 		pkg: grunt.file.readJSON('package.json'),
 		concat: {
 			options: {
 				separator: '\n'
 			},
 			dist: {
-				// src: ['js/SceneManager.js', 'js/*.js', 'js/VMANIP/*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
-				// dest: 'js/<%= pkg.name %>_DailyBuild.js'
 				files: {
-					'dist/RectangularBoxViewer.debug.js': ['js/RBV/src/viewer.js', 'js/RBV/**/*.js'],
-					'dist/<%= pkg.name %>_DailyBuild.js': ['js/SceneManager.js', 'js/*.js', '!js/RectangularBoxViewer*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
+					'dist/<%= pkg.name %>_DailyBuild.js': ['js/SceneManager.js', 'js/*.js', '!js/EarthServerClient*.js', '!js/UI_v1.js'],
 				}
 			}
 		},
 		copy: {
 			main: {
-				// src: '<%= concat.dist.dest %>',
-				// dest: '<%= installdir %>'
 				files: [
 					{
-						src: ['dist/RectangularBoxViewer.debug.js'],
-						dest: '<%= installdir %>'
-					},
-					{
+						flatten: true,
+						expand: true,
 						src: ['dist/<%= pkg.name %>_DailyBuild.js'],
 						dest: '<%= installdir %>'
 					},
@@ -38,7 +31,7 @@ module.exports = function(grunt) {
 
 		watch: {
             scripts: {
-                files: ['js/RBV/src/*.js', 'js/RBV/src/lib/*.js'],
+                files: ['js/*.js'],
                 tasks: ['default']
             }
         }

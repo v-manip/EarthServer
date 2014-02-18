@@ -1,5 +1,5 @@
 {
-  "name": "EarthServerClient",
+  "name": "EarthServerGenericClient",
   "version": "0.6.0",
   "devDependencies": {
     "grunt": "~0.4.2",
