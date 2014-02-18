@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 
 	grunt.initConfig({
 		// Installation directory based on the V-MANIP organization repository:
-		installdir: '../RectangularBoxViewer/libs/',
+		installdir: '../RectangularBoxViewer/deps/',
 		pkg: grunt.file.readJSON('package.json'),
 		concat: {
 			options: {
