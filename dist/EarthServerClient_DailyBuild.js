@@ -6203,7 +6203,7 @@ EarthServerGenericClient.startRequests = function(calling_module, providers, opt
                 EarthServerGenericClient.getCoverageWCS(promise, responseData, WCSurl, WCScoverID, BoundingBox, WCSVersion, WCSMimeType, WCSDataType, WCSOutputFormat, ResX, ResZ, WCSOutputCRS);
                 break;
             default:
-                console.log('[EarthServerGenericClient.performRequests] protocol "' + protocol + '"" not supported');
+                console.log('[EarthServerGenericClient.performRequests] protocol "' + provider.protocol + '"" not supported');
                 break;
         }
     }

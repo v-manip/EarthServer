@@ -12,13 +12,8 @@ var RBV = RBV || {};
  * the RBV.Runtime objects and manage them to their liking.
  */
 RBV.Scene = function(opts) {
-	this.runtime = new RBV.Runtime({});
-
 	// There is one context for all Models at the moment (for simplicity):
-	this.context = null;
-	this.provider = {};
-	this.toi = null;
-	this.aoi = null;
+	this.context = opts.context || null;
 
 	// FIXXME: those values are model specific, how to handle?
 	this.resolution = opts.resolution || [500, 500];
@@ -48,8 +43,8 @@ RBV.Scene.prototype.addModel = function(model, providers) {
 };
 
 RBV.Scene.prototype.show = function(opts) {
-	this.model.setAreaOfInterest(this.aoi[0], this.aoi[1], this.aoi[2], this.aoi[3], this.aoi[4], this.aoi[5]);
-	this.model.setTimespan(this.toi);
+	this.model.setAreaOfInterest(this.context.aoi[0], this.context.aoi[1], this.context.aoi[2], this.context.aoi[3], this.context.aoi[4], this.context.aoi[5]);
+	this.model.setTimespan(this.context.toi);
 	// this.model.setOffset(0, 0.2, 0);
 	// this.model.setScale(1, 3, 1);
 
@@ -66,23 +61,7 @@ RBV.Scene.prototype.show = function(opts) {
 };
 
 RBV.Scene.prototype.setContext = function(context) {
-	// body...
-};
-
-RBV.Scene.prototype.addProvider = function(protocol, provider) {
-	if (!this.provider[protocol]) {
-		this.provider[protocol] = [];
-	}
-	this.provider[protocol].push(provider);
-};
-
-RBV.Scene.prototype.setToI = function(timespan) {
-	this.toi = timespan;
-};
-
-RBV.Scene.prototype.setAoI = function(bbox, min_height, max_height) {
-	this.aoi = bbox;
-	this.aoi.push(min_height, max_height);
+	this.context = context;
 };
 
 /**

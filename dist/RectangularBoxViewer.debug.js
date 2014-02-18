@@ -5,7 +5,51 @@ var RBV = RBV || {};
  * of a model are done solely via the context object.
  */
 RBV.Context = function(opts) {
+	this.toi = opts.toi || null;
+	if (typeof opts.aoi !== 'undefined') {
+		this.aoi = opts.aoi[0];
+		this.aoi.push(opts.aoi[1]);
+		this.aoi.push(opts.aoi[2]);
+	} else {
+		this.aoi = null;
+	}
 
+	this.providers = {};
+};
+
+RBV.Context.prototype.setToI = function(timespan) {
+	this.toi = timespan;
+};
+
+RBV.Context.prototype.setAoI = function(bbox, min_height, max_height) {
+	this.aoi = bbox;
+	this.aoi.push(min_height, max_height);
+};
+
+RBV.Context.prototype.addProvider = function(type, id, provider) {
+	var provider_desc = {
+		id: id,
+		provider: provider
+	};
+
+	if (!this.providers[type]) {
+		this.providers[type] = [];
+	}
+	this.providers[type].push(provider_desc);
+};
+
+RBV.Context.prototype.getProvider = function(type, id) {
+	if (!this.providers[type]) {
+		return null;
+	}
+
+	for (var idx = 0; idx < this.providers[type].length; idx++) {
+		if (this.providers[type][idx].id === id) {
+			return this.providers[type][idx].provider;
+		}
+	};
+
+	return null;
 };
 RBV.Visualization = RBV.Visualization || {};
 
@@ -158,10 +202,8 @@ RBV.Models.DemWithOverlays.prototype.setDemProvider = function(provider) {
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Models.DemWithOverlays.prototype.setImageryProviders = function(providers) {
-    for (var idx = 0; idx < providers.length; idx++) {
-        this.imageryProviders.push(providers[idx]);
-    };
+RBV.Models.DemWithOverlays.prototype.addImageryProvider = function(provider) {
+    this.imageryProviders.push(provider);
 };
 
 /**
@@ -266,8 +308,7 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
 // };
 
 RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
-    if( this.checkReceivedData(dataArray))
-    {
+    if (this.checkReceivedData(dataArray)) {
         //Remove the placeHolder
         this.removePlaceHolder();
 
@@ -283,9 +324,9 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
             }
         }
 
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
+        this.root.appendChild(transform);
 
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
@@ -293,8 +334,9 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdateBinding();
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(this.transformNode,1);    }
+        if (this.sidePanels) {
+            this.terrain.createSidePanels(this.transformNode, 1);
+        }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;
@@ -560,13 +602,8 @@ var RBV = RBV || {};
  * the RBV.Runtime objects and manage them to their liking.
  */
 RBV.Scene = function(opts) {
-	this.runtime = new RBV.Runtime({});
-
 	// There is one context for all Models at the moment (for simplicity):
-	this.context = null;
-	this.provider = {};
-	this.toi = null;
-	this.aoi = null;
+	this.context = opts.context || null;
 
 	// FIXXME: those values are model specific, how to handle?
 	this.resolution = opts.resolution || [500, 500];
@@ -596,8 +633,8 @@ RBV.Scene.prototype.addModel = function(model, providers) {
 };
 
 RBV.Scene.prototype.show = function(opts) {
-	this.model.setAreaOfInterest(this.aoi[0], this.aoi[1], this.aoi[2], this.aoi[3], this.aoi[4], this.aoi[5]);
-	this.model.setTimespan(this.toi);
+	this.model.setAreaOfInterest(this.context.aoi[0], this.context.aoi[1], this.context.aoi[2], this.context.aoi[3], this.context.aoi[4], this.context.aoi[5]);
+	this.model.setTimespan(this.context.toi);
 	// this.model.setOffset(0, 0.2, 0);
 	// this.model.setScale(1, 3, 1);
 
@@ -614,23 +651,7 @@ RBV.Scene.prototype.show = function(opts) {
 };
 
 RBV.Scene.prototype.setContext = function(context) {
-	// body...
-};
-
-RBV.Scene.prototype.addProvider = function(protocol, provider) {
-	if (!this.provider[protocol]) {
-		this.provider[protocol] = [];
-	}
-	this.provider[protocol].push(provider);
-};
-
-RBV.Scene.prototype.setToI = function(timespan) {
-	this.toi = timespan;
-};
-
-RBV.Scene.prototype.setAoI = function(bbox, min_height, max_height) {
-	this.aoi = bbox;
-	this.aoi.push(min_height, max_height);
+	this.context = context;
 };
 
 /**

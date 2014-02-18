@@ -31,10 +31,8 @@ RBV.Models.DemWithOverlays.prototype.setDemProvider = function(provider) {
  * @param request - Configured Request object
  * @see Request
  */
-RBV.Models.DemWithOverlays.prototype.setImageryProviders = function(providers) {
-    for (var idx = 0; idx < providers.length; idx++) {
-        this.imageryProviders.push(providers[idx]);
-    };
+RBV.Models.DemWithOverlays.prototype.addImageryProvider = function(provider) {
+    this.imageryProviders.push(provider);
 };
 
 /**
@@ -139,8 +137,7 @@ RBV.Models.DemWithOverlays.prototype.createModel = function(root, cubeSizeX, cub
 // };
 
 RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
-    if( this.checkReceivedData(dataArray))
-    {
+    if (this.checkReceivedData(dataArray)) {
         //Remove the placeHolder
         this.removePlaceHolder();
 
@@ -156,9 +153,9 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
             }
         }
 
-        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue) );
-        var transform = this.createTransform(data.width,YResolution,data.height,parseFloat(data.minHMvalue),data.minXvalue,data.minZvalue);
-        this.root.appendChild( transform);
+        var YResolution = this.YResolution || (parseFloat(data.maxHMvalue) - parseFloat(data.minHMvalue));
+        var transform = this.createTransform(data.width, YResolution, data.height, parseFloat(data.minHMvalue), data.minXvalue, data.minZvalue);
+        this.root.appendChild(transform);
 
         //Create Terrain out of the received data
         EarthServerGenericClient.MainScene.timeLogStart("Create Terrain " + this.name);
@@ -166,8 +163,9 @@ RBV.Models.DemWithOverlays.prototype.receiveData = function(dataArray) {
         this.terrain.createTerrain();
         EarthServerGenericClient.MainScene.timeLogEnd("Create Terrain " + this.name);
         this.elevationUpdateBinding();
-        if(this.sidePanels)
-        {   this.terrain.createSidePanels(this.transformNode,1);    }
+        if (this.sidePanels) {
+            this.terrain.createSidePanels(this.transformNode, 1);
+        }
         EarthServerGenericClient.MainScene.timeLogEnd("Create Model " + this.name);
 
         transform = null;
