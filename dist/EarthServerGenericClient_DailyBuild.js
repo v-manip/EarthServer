@@ -1505,7 +1505,9 @@ EarthServerGenericClient.SceneManager = function()
         if( nextFrameCallback.length !== 0 && lastFrameInsert >= framesBetweenDomInsertion)
         {
             var callbackIndex = nextFrameCallback.shift();
-            models[callbackIndex].terrain.nextFrame();
+            if (models[callbackIndex]) {
+                models[callbackIndex].terrain.nextFrame();
+            }
             lastFrameInsert = 0;
         }
     };
@@ -1517,6 +1519,22 @@ EarthServerGenericClient.SceneManager = function()
     this.enterCallbackForNextFrame = function( modelIndex )
     {
         nextFrameCallback.push( modelIndex );
+    };
+
+    /**
+     * This function removes eventual callbacks for a model (e.g. if a model is removed during pending callbacks).
+     * @param modelIndex - Index of the model that uses the terrain.
+     */
+    this.removeModelCallbacks = function( modelIndex )
+    {
+        var newCallbacks = [];
+
+        for (var idx = 0; idx < nextFrameCallback.length; idx++) {
+            if (nextFrameCallback[idx] !== modelIndex) {
+                newCallbacks.push(nextFrameCallback[idx]);
+            }
+        };
+        nextFrameCallback = newCallbacks;
     };
 
     /**
@@ -6147,50 +6165,50 @@ EarthServerGenericClient.requestWCPSImageWCPSDem = function(callback,imageURL,im
  * @param opts.resX
  * @param opts.resY
  */
-EarthServerGenericClient.sendRequests = function(calling_module, providers, opts) {
-    var promise = new EarthServerGenericClient.combinedCallBack(calling_module, providers.length, true);
+EarthServerGenericClient.sendRequests = function(calling_module, layerRequests, opts) {
+    var promise = new EarthServerGenericClient.combinedCallBack(calling_module, layerRequests.length, true);
 
-    for (var idx = 0; idx < providers.length; ++idx) {
-        var provider = providers[idx];
+    for (var idx = 0; idx < layerRequests.length; ++idx) {
+        var layerRequest = layerRequests[idx];
         var responseData = new EarthServerGenericClient.ServerResponseData();
         // FIXXME: necessary for LODTerrainWithOverlays. The 'info' object is _not_ (yet) specified in ServerResponseData!
         responseData.layerInfo = {
-            id: provider.id,
-            opacity: provider.opacity,
-            ordinal: provider.ordinal
+            id: layerRequest.id,
+            opacity: layerRequest.opacity,
+            ordinal: layerRequest.ordinal
         };
 
-        switch (provider.protocol) {
+        switch (layerRequest.protocol) {
             case 'WMS':
-                var WMSurl = provider.urls[0];
-                var WMScoverID = provider.id;
-                var WMSCRS = 'SRS=' + provider.crs;
-                var WMSImageFormat = provider.format;
+                var WMSurl = layerRequest.urls[0];
+                var WMScoverID = layerRequest.id;
+                var WMSCRS = 'SRS=' + layerRequest.crs;
+                var WMSImageFormat = layerRequest.format;
                 var BoundingBox = opts.bbox;
-                var WMSversion = provider.version;
+                var WMSversion = layerRequest.version;
                 var ResX = opts.resX;
                 var ResZ = opts.resZ;
                 var timespan = opts.timespan;
-                var transparent = provider.transparent;
+                var transparent = layerRequest.transparent;
 
                 // FIXXME: get rid of the plethora of parameters and replace them with a single 'opts' object. It's Javascript, after all ;-)
                 //   API-Suggestion:  ESGC.getCoverageWMS(promise, opts, true/false) -> true/false determines if one ServerResponseData
                 //   object is created internally for all requests, or if each response gets its own ServerResponseData object.
                 //   Future API-Suggestion: The functionality of generating and carrying out a request is the sole responsibility of the 
-                //   'OGCProvider' class. 'sendRequests' should simply iterate over the providers and let them do their jobs, e.g.:
-                //   provider.startRequest(promise, opts, true/false).
+                //   'OGCRequest' class. 'sendRequests' should simply iterate over the layerRequests and let them do their jobs, e.g.:
+                //   layerRequest.startRequest(promise, opts, true/false).
                 EarthServerGenericClient.getCoverageWMS(promise, responseData, WMSurl, WMScoverID, WMSCRS, WMSImageFormat, BoundingBox, WMSversion, ResX, ResZ, timespan, transparent);
                 break;
             case 'WCS':
-                var WCSurl = provider.urls[0];
-                var WCScoverID = provider.id;
-                var WCSCRS = provider.crs;
-                var WCSMimeType = provider.format;
-                var WCSDataType = provider.datatype;
-                var WCSOutputFormat = provider.format;
-                var WCSOutputCRS = provider.outputCRS;
+                var WCSurl = layerRequest.urls[0];
+                var WCScoverID = layerRequest.id;
+                var WCSCRS = layerRequest.crs;
+                var WCSMimeType = layerRequest.format;
+                var WCSDataType = layerRequest.datatype;
+                var WCSOutputFormat = layerRequest.format;
+                var WCSOutputCRS = layerRequest.outputCRS;
                 var BoundingBox = opts.bbox;
-                var WCSVersion = provider.version;
+                var WCSVersion = layerRequest.version;
                 var ResX = opts.resX;
                 var ResZ = opts.resZ;
                 var timespan = opts.timespan;
@@ -6199,7 +6217,7 @@ EarthServerGenericClient.sendRequests = function(calling_module, providers, opts
                 EarthServerGenericClient.getCoverageWCS(promise, responseData, WCSurl, WCScoverID, BoundingBox, WCSVersion, WCSMimeType, WCSDataType, WCSOutputFormat, ResX, ResZ, WCSOutputCRS);
                 break;
             default:
-                console.log('[EarthServerGenericClient.performRequests] protocol "' + provider.protocol + '"" not supported');
+                console.log('[EarthServerGenericClient.performRequests] protocol "' + layerRequest.protocol + '"" not supported');
                 break;
         }
     }

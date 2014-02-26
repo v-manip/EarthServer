@@ -1505,7 +1505,9 @@ EarthServerGenericClient.SceneManager = function()
         if( nextFrameCallback.length !== 0 && lastFrameInsert >= framesBetweenDomInsertion)
         {
             var callbackIndex = nextFrameCallback.shift();
-            models[callbackIndex].terrain.nextFrame();
+            if (models[callbackIndex]) {
+                models[callbackIndex].terrain.nextFrame();
+            }
             lastFrameInsert = 0;
         }
     };
@@ -1517,6 +1519,22 @@ EarthServerGenericClient.SceneManager = function()
     this.enterCallbackForNextFrame = function( modelIndex )
     {
         nextFrameCallback.push( modelIndex );
+    };
+
+    /**
+     * This function removes eventual callbacks for a model (e.g. if a model is removed during pending callbacks).
+     * @param modelIndex - Index of the model that uses the terrain.
+     */
+    this.removeModelCallbacks = function( modelIndex )
+    {
+        var newCallbacks = [];
+
+        for (var idx = 0; idx < nextFrameCallback.length; idx++) {
+            if (nextFrameCallback[idx] !== modelIndex) {
+                newCallbacks.push(nextFrameCallback[idx]);
+            }
+        };
+        nextFrameCallback = newCallbacks;
     };
 
     /**
